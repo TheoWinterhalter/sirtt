@@ -1,4 +1,7 @@
 -R theories SIRTT
 
 theories/Util.v
+
 theories/Level.v
+theories/SAst.v
+theories/SIRTT.v
