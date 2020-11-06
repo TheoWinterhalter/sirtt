@@ -11,7 +11,7 @@ Inductive level :=
 (* Relation of levels *)
 Reserved Notation "u ⊏ v" (at level 20).
 
-Inductive more_relevant : level -> level -> Type :=
+Inductive more_relevant : level → level → Type :=
 | R_S : R ⊏ S
 | R_I : R ⊏ I
 | S_I : S ⊏ I

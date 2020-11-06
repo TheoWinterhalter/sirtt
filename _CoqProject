@@ -4,4 +4,5 @@ theories/Util.v
 
 theories/Level.v
 theories/SAst.v
+theories/SReduction.v
 theories/SIRTT.v

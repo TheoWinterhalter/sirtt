@@ -9,4 +9,5 @@ I use coq 8.12.0 and Equations 1.2.3
 | `Util.v` | Global utility |
 | `Level.v` | Relevance levels |
 | `SAst.v` | SIRTT AST |
+| `SReduction.v`| Reduction for SIRTT |
 | `SIRTT.v` | All of SIRTT in one module for practicality |
