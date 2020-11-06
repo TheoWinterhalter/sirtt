@@ -50,18 +50,17 @@ Fixpoint topnorm_acc (u : term) (σ : list term) : term × list term :=
 Definition topnorm u := topnorm_acc u [].
 
 Lemma topnorm_acc_sound :
-  ∀ v σ w θ,
-    topnorm_acc v σ = (w, θ) →
-    ∀ u,
-      u ▹* v | σ →
-      u ▹* w | θ.
+  ∀ u σ v θ,
+    topnorm_acc u σ = (v, θ) →
+    ∑ τ, u ▹* v | τ × θ = τ ++ σ.
 Proof.
-  intros v σ w θ e u h.
-  induction v in u, σ, w, θ, e, h |- *.
+  intros u σ v θ e.
+  induction u in v, σ, θ, e |- *.
   all: try solve [
-    simpl in e ; inversion e ; subst ; assumption
+    simpl in e ; inversion e ; subst ;
+    exists [] ; intuition constructor
   ].
-  - lazymatch type of e with
+  (* - lazymatch type of e with
     | topnorm_acc (app ?x ?y ?z)  _= _ =>
       rename x into l, y into v1, z into v2
     end.
@@ -78,5 +77,5 @@ Proof.
     1:{ simpl in e. inversion e. subst. assumption. }
     + destruct l'.
       1,3: simpl in e ; inversion e ; subst ; assumption.
-      (* eapply IHv1_2. 1: eassumption. *)
+      (* eapply IHv1_2. 1: eassumption. *) *)
 Abort.
