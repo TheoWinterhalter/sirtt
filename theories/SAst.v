@@ -1,6 +1,6 @@
 (* Syntax for SIRTT *)
 
-Require Import Level.
+Require Import Util Level.
 
 (* Could be anything really *)
 Definition sort := nat.
@@ -27,3 +27,6 @@ Inductive term :=
 (* No equality yet, we'll try to have something abstract,
   maybe that should still go in the syntax somehow.
 *)
+
+(* A binding comes with a relevance level and a type *)
+Definition context := list (level × term).
