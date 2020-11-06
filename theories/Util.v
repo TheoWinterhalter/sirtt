@@ -24,5 +24,5 @@ Record prod A B := pair {
 
 Arguments pair {_ _} _ _.
 
-Notation "A × B" := (prod A B) (left associativity, at level 10).
+Notation "A × B" := (prod A B) (left associativity, at level 76).
 Notation "'(' u ',' v ')'" := (pair u v) (left associativity, at level 10).

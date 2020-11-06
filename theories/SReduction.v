@@ -5,6 +5,8 @@ Require Import Util SAst.
 
 Import ListNotations.
 
+Set Default Goal Selector "!".
+
 (*
   First we define a notion of "top-level" reduction to reveal relevant terms
   hidden under (shape-)irrelevant operations.
@@ -35,3 +37,46 @@ Inductive topreds : term → term → list term → Type :=
       u ▹* w | (θ ++ σ)
 
 where "u ▹* v | σ" := (topreds u v σ).
+
+(* We can actually define normalisation for top-level reduction easily *)
+Fixpoint topnorm_acc (u : term) (σ : list term) : term × list term :=
+  match u with
+  | app Level.I (lam Level.I A t) u => topnorm_acc t (u :: σ)
+  | app Level.S (lam Level.S A t) u => topnorm_acc t (u :: σ)
+  | wit (ex t p) => topnorm_acc t σ
+  | _ => (u, σ)
+  end.
+
+Definition topnorm u := topnorm_acc u [].
+
+Lemma topnorm_acc_sound :
+  ∀ v σ w θ,
+    topnorm_acc v σ = (w, θ) →
+    ∀ u,
+      u ▹* v | σ →
+      u ▹* w | θ.
+Proof.
+  intros v σ w θ e u h.
+  induction v in u, σ, w, θ, e, h |- *.
+  all: try solve [
+    simpl in e ; inversion e ; subst ; assumption
+  ].
+  - lazymatch type of e with
+    | topnorm_acc (app ?x ?y ?z)  _= _ =>
+      rename x into l, y into v1, z into v2
+    end.
+    clear IHv1 IHv2.
+    induction v1 in l, v2, σ, w, θ, e, u, h |- *.
+    all: try solve [
+      simpl in e ; destruct l ; inversion e ; subst ; assumption
+    ].
+    lazymatch type of e with
+    | topnorm_acc (app _ (lam ?a ?b ?c) _)  _= _ =>
+      rename a into l', b into A, c into t
+    end.
+    destruct l.
+    1:{ simpl in e. inversion e. subst. assumption. }
+    + destruct l'.
+      1,3: simpl in e ; inversion e ; subst ; assumption.
+      (* eapply IHv1_2. 1: eassumption. *)
+Abort.
