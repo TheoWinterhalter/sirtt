@@ -125,10 +125,24 @@ Qed.
 
 Reserved Notation "u ↦ v" (at level 10).
 
-(* TODO Define substitution first *)
-(* Inductive red : term → term :=
+Inductive red : term → term → Type :=
 (* Computation rules *)
 | beta :
-    ∀ v u,
+    ∀ v u A t σ,
       v ▹* lam Level.R A t | σ →
-      app Level.R v u ↦ subs (subs t σ) [u] *)
+      (app Level.R v u) ↦ ((subst σ 0 t){ 0 := u })
+
+| elim_nat_zero :
+    ∀ P z s t σ,
+      t ▹* zero | σ →
+      (elim_nat P z s t) ↦ z
+
+| elim_nat_succ :
+    ∀ P z s t n σ,
+      t ▹* succ n | σ →
+      (elim_nat P z s t) ↦
+      (app Level.R s (app Level.R (subst σ 0 n) (elim_nat P z s (subst σ 0 n))))
+
+(* Congruence rules TODO *)
+
+where "u ↦ v" := (red u v).
