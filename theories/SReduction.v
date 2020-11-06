@@ -1,7 +1,7 @@
 (* Reduction for SIRTT *)
 
 From Coq Require Import Utf8 List.
-Require Import Util SAst SSubst.
+Require Import Util Level SAst SSubst.
 
 Import ListNotations.
 
@@ -19,8 +19,8 @@ Set Default Goal Selector "!".
 Reserved Notation "u ▹ v | σ" (at level 10).
 
 Inductive topred : term → term → list term → Type :=
-| ibeta A t u : app Level.I (lam Level.I A t) u ▹ t | [ u ]
-| sbeta A t u : app Level.S (lam Level.S A t) u ▹ t | [ u ]
+| ibeta A t u : app I (lam I A t) u ▹ t | [ u ]
+| sbeta A t u : app S (lam S A t) u ▹ t | [ u ]
 | wit_ex t p : wit (ex t p) ▹ t | []
 
 where "u ▹ v | σ" := (topred u v σ).
@@ -41,8 +41,8 @@ where "u ▹* v | σ" := (topreds u v σ).
 (* We can actually define normalisation for top-level reduction easily *)
 Fixpoint topnorm_acc (u : term) (σ : list term) : term × list term :=
   match u with
-  | app Level.I (lam Level.I A t) u => topnorm_acc t (u :: σ)
-  | app Level.S (lam Level.S A t) u => topnorm_acc t (u :: σ)
+  | app I (lam I A t) u => topnorm_acc t (u :: σ)
+  | app S (lam S A t) u => topnorm_acc t (u :: σ)
   | wit (ex t p) => topnorm_acc t σ
   | _ => (u, σ)
   end.
@@ -121,7 +121,23 @@ Proof.
   assumption.
 Qed.
 
+(* TODO MOVE *)
+Fixpoint appsR (t : term) (l : list term) :=
+  match l with
+  | u :: l => appsR (app R t u) l
+  | [] => t
+  end.
+
+Fixpoint apps (t : term) (l : list (level × term)) :=
+  match l with
+  | (ℓ, u) :: l => apps (app ℓ t u) l
+  | [] => t
+  end.
+
 (* We can now define proper reduction ↦ *)
+(* Note that we do not reduce in irrelevant positions when it can be safely
+  determined.
+*)
 
 Reserved Notation "u ↦ v" (at level 10).
 
@@ -129,8 +145,8 @@ Inductive red : term → term → Type :=
 (* Computation rules *)
 | beta :
     ∀ v u A t σ,
-      v ▹* lam Level.R A t | σ →
-      (app Level.R v u) ↦ ((subst σ 0 t){ 0 := u })
+      v ▹* lam R A t | σ →
+      (app R v u) ↦ ((subst σ 0 t){ 0 := u })
 
 | elim_nat_zero :
     ∀ P z s t σ,
@@ -141,8 +157,80 @@ Inductive red : term → term → Type :=
     ∀ P z s t n σ,
       t ▹* succ n | σ →
       (elim_nat P z s t) ↦
-      (app Level.R s (app Level.R (subst σ 0 n) (elim_nat P z s (subst σ 0 n))))
+      (appsR s [ subst σ 0 n ; elim_nat P z s (subst σ 0 n) ])
 
-(* Congruence rules TODO *)
+| elim_vec_vnil :
+    ∀ A P e c n t B σ,
+      t ▹* vnil B | σ →
+      (elim_vec A P e c n t) ↦ e
+
+| elim_vec_vcons :
+    ∀ A P e c n t B a m v σ,
+      t ▹* vcons B a m v | σ →
+      (elim_vec A P e c n t) ↦
+      (apps c [
+        (R, subst σ 0 a) ;
+        (I, subst σ 0 m) ;
+        (R, subst σ 0 v) ;
+        (R, elim_vec A P e c (subst σ 0 m) (subst σ 0 v))
+      ])
+
+(* Congruence rules *)
+| lam_ty : ∀ l A t A', A ↦ A' → (lam l A t) ↦ (lam l A' t)
+| lam_tm : ∀ l A t t', t ↦ t' → (lam l A t) ↦ (lam l A t')
+
+| app_l : ∀ l u v u', u ↦ u' → (app l u v) ↦ (app l u' v)
+| app_r : ∀ l u v v', v ↦ v' → (app l u v) ↦ (app l u v')
+
+| Prod_l : ∀ l A B A', A ↦ A' → (Prod l A B) ↦ (Prod l A' B)
+| Prod_r : ∀ l A B B', B ↦ B' → (Prod l A B) ↦ (Prod l A B')
+
+| ex_wit : ∀ u p u', u ↦ u' → (ex u p) ↦ (ex u' p)
+
+| wit_arg : ∀ t t', t ↦ t' → (wit t) ↦ (wit t')
+
+| Sum_l : ∀ A P A', A ↦ A' → (Sum A P) ↦ (Sum A' P)
+
+| succ_arg : ∀ t t', t ↦ t' → (succ t) ↦ (succ t')
+
+| elim_nat_p : ∀ P z s t P', P ↦ P' → (elim_nat P z s t) ↦ (elim_nat P' z s t)
+| elim_nat_z : ∀ P z s t z', z ↦ z' → (elim_nat P z s t) ↦ (elim_nat P z' s t)
+| elim_nat_s : ∀ P z s t s', s ↦ s' → (elim_nat P z s t) ↦ (elim_nat P z s' t)
+| elim_nat_t : ∀ P z s t t', t ↦ t' → (elim_nat P z s t) ↦ (elim_nat P z s t')
+
+| vnil_ty : ∀ A A', A ↦ A' → (vnil A) ↦ (vnil A')
+
+| vcons_ty : ∀ A a n v A', A ↦ A' → (vcons A a n v) ↦ (vcons A' a n v)
+| vcons_arg : ∀ A a n v a', a ↦ a' → (vcons A a n v) ↦ (vcons A a' n v)
+| vcons_nat : ∀ A a n v n', n ↦ n' → (vcons A a n v) ↦ (vcons A a n' v)
+| vcons_vec : ∀ A a n v v', v ↦ v' → (vcons A a n v) ↦ (vcons A a n v')
+
+| elim_vec_ty :
+    ∀ A P e c m v A',
+      A ↦ A' →
+      (elim_vec A P e c m v) ↦ (elim_vec A' P e c m v)
+| elim_vec_p :
+    ∀ A P e c m v P',
+      P ↦ P' →
+      (elim_vec A P e c m v) ↦ (elim_vec A P' e c m v)
+| elim_vec_e :
+    ∀ A P e c m v e',
+      e ↦ e' →
+      (elim_vec A P e c m v) ↦ (elim_vec A P e' c m v)
+| elim_vec_c :
+    ∀ A P e c m v c',
+      c ↦ c' →
+      (elim_vec A P e c m v) ↦ (elim_vec A P e c' m v)
+| elim_vec_nat :
+    ∀ A P e c m v m',
+      m ↦ m' →
+      (elim_vec A P e c m v) ↦ (elim_vec A P e c m' v)
+| elim_vec_vec :
+    ∀ A P e c m v v',
+      v ↦ v' →
+      (elim_vec A P e c m v) ↦ (elim_vec A P e c m v')
+
+| vec_ty : ∀ A n A', A ↦ A' → (vec A n) ↦ (vec A' n)
+| vec_nat : ∀ A n n', n ↦ n' → (vec A n) ↦ (vec A n')
 
 where "u ↦ v" := (red u v).
