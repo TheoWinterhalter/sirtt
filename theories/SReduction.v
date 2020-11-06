@@ -120,3 +120,15 @@ Proof.
   rewrite app_nil_r in e. subst.
   assumption.
 Qed.
+
+(* We can now define proper reduction ↦ *)
+
+Reserved Notation "u ↦ v" (at level 10).
+
+(* TODO Define substitution first *)
+(* Inductive red : term → term :=
+(* Computation rules *)
+| beta :
+    ∀ v u,
+      v ▹* lam Level.R A t | σ →
+      app Level.R v u ↦ subs (subs t σ) [u] *)
