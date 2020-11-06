@@ -1,7 +1,7 @@
 (* Reduction for SIRTT *)
 
 From Coq Require Import Utf8 List.
-Require Import Util SAst.
+Require Import Util SAst SSubst.
 
 Import ListNotations.
 
