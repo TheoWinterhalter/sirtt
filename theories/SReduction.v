@@ -54,28 +54,69 @@ Lemma topnorm_acc_sound :
     topnorm_acc u σ = (v, θ) →
     ∑ τ, u ▹* v | τ × θ = τ ++ σ.
 Proof.
+  fix aux 1.
   intros u σ v θ e.
-  induction u in v, σ, θ, e |- *.
+  destruct u.
   all: try solve [
     simpl in e ; inversion e ; subst ;
     exists [] ; intuition constructor
   ].
-  (* - lazymatch type of e with
+  - lazymatch type of e with
     | topnorm_acc (app ?x ?y ?z)  _= _ =>
-      rename x into l, y into v1, z into v2
+      rename x into l, y into f, z into u
     end.
-    clear IHv1 IHv2.
-    induction v1 in l, v2, σ, w, θ, e, u, h |- *.
+    destruct f.
     all: try solve [
-      simpl in e ; destruct l ; inversion e ; subst ; assumption
+      simpl in e ; destruct l ; inversion e ; subst ;
+      exists [] ; intuition constructor
     ].
     lazymatch type of e with
     | topnorm_acc (app _ (lam ?a ?b ?c) _)  _= _ =>
       rename a into l', b into A, c into t
     end.
     destruct l.
-    1:{ simpl in e. inversion e. subst. assumption. }
+    1:{
+      simpl in e. inversion e. subst.
+      exists []. intuition constructor.
+    }
     + destruct l'.
-      1,3: simpl in e ; inversion e ; subst ; assumption.
-      (* eapply IHv1_2. 1: eassumption. *) *)
-Abort.
+      1,3: simpl in e ; inversion e ; subst ; exists [] ; intuition constructor.
+      cbn in e. apply aux in e.
+      destruct e as [τ [h e]]. subst.
+      eexists. split.
+      * eapply topred_trans. 2: eassumption.
+        constructor. constructor.
+      * rewrite <- app_assoc. cbn. reflexivity.
+    + destruct l'.
+      1,2: simpl in e ; inversion e ; subst ; exists [] ; intuition constructor.
+      cbn in e. apply aux in e.
+      destruct e as [τ [h e]]. subst.
+      eexists. split.
+      * eapply topred_trans. 2: eassumption.
+        constructor. constructor.
+      * rewrite <- app_assoc. cbn. reflexivity.
+  - destruct u.
+    all: try solve [
+      simpl in e ; inversion e ; subst ;
+      exists [] ; intuition constructor
+    ].
+    cbn in e. apply aux in e.
+    destruct e as [τ [h e]]. subst.
+    eexists. split.
+    + eapply topred_trans. 2: eassumption.
+      constructor. constructor.
+    + rewrite <- app_assoc. cbn. reflexivity.
+Qed.
+
+Corollary topnorm_sound :
+  ∀ u v σ,
+    topnorm u = (v, σ) →
+    u ▹* v | σ.
+Proof.
+  intros u v σ e.
+  unfold topnorm in e.
+  apply topnorm_acc_sound in e.
+  destruct e as [τ [h e]].
+  rewrite app_nil_r in e. subst.
+  assumption.
+Qed.
