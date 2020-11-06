@@ -1,6 +1,9 @@
 (* Syntax for SIRTT *)
 
+From Coq Require Import List.
 Require Import Util Level.
+
+Import ListNotations.
 
 (* Could be anything really *)
 Definition sort := nat.
@@ -30,3 +33,16 @@ Inductive term :=
 
 (* A binding comes with a relevance level and a type *)
 Definition context := list (level × term).
+
+
+Fixpoint appsR (t : term) (l : list term) :=
+  match l with
+  | u :: l => appsR (app R t u) l
+  | [] => t
+  end.
+
+Fixpoint apps (t : term) (l : list (level × term)) :=
+  match l with
+  | (ℓ, u) :: l => apps (app ℓ t u) l
+  | [] => t
+  end.

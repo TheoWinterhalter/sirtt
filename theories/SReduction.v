@@ -121,19 +121,6 @@ Proof.
   assumption.
 Qed.
 
-(* TODO MOVE *)
-Fixpoint appsR (t : term) (l : list term) :=
-  match l with
-  | u :: l => appsR (app R t u) l
-  | [] => t
-  end.
-
-Fixpoint apps (t : term) (l : list (level × term)) :=
-  match l with
-  | (ℓ, u) :: l => apps (app ℓ t u) l
-  | [] => t
-  end.
-
 (* We can now define proper reduction ↦ *)
 (* Note that we do not reduce in irrelevant positions when it can be safely
   determined.
