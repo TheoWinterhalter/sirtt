@@ -7,3 +7,5 @@ theories/SAst.v
 theories/SSubst.v
 theories/SReduction.v
 theories/SIRTT.v
+theories/TAst.v
+theories/MLTT.v

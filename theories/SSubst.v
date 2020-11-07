@@ -25,7 +25,7 @@ Fixpoint lift n k t : term :=
   | elim_vec A P e c m v =>
     elim_vec (lift n k A) (lift n k P)
              (lift n k e) (lift n k c) (lift n k m) (lift n k v)
-  | vec A m => vec (lift n k A) (lift n k m)
+  | Vec A m => Vec (lift n k A) (lift n k m)
   | univ s => univ s
   end.
 
@@ -57,7 +57,7 @@ Fixpoint subst s k u :=
   | elim_vec A P e c m v =>
     elim_vec (subst s k A) (subst s k P)
              (subst s k e) (subst s k c) (subst s k m) (subst s k v)
-  | vec A m => vec (subst s k A) (subst s k m)
+  | Vec A m => Vec (subst s k A) (subst s k m)
   | univ s => univ s
   end.
 

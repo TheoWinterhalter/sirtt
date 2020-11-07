@@ -217,7 +217,7 @@ Inductive red : term → term → Type :=
       v ↦ v' →
       (elim_vec A P e c m v) ↦ (elim_vec A P e c m v')
 
-| vec_ty : ∀ A n A', A ↦ A' → (vec A n) ↦ (vec A' n)
-| vec_nat : ∀ A n n', n ↦ n' → (vec A n) ↦ (vec A n')
+| Vec_ty : ∀ A n A', A ↦ A' → (Vec A n) ↦ (Vec A' n)
+| Vec_nat : ∀ A n n', n ↦ n' → (Vec A n) ↦ (Vec A n')
 
 where "u ↦ v" := (red u v).
