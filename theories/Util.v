@@ -25,6 +25,8 @@ Record prod A B := pair {
 }.
 
 Arguments pair {_ _} _ _.
+Arguments π₁ {_ _} _.
+Arguments π₂ {_ _} _.
 
 Notation "A × B" := (prod A B) (right associativity, at level 80).
 Notation "( u , v )" := (pair u v).

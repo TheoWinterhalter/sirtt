@@ -31,8 +31,16 @@ Inductive term :=
   maybe that should still go in the syntax somehow.
 *)
 
+(* A scope contains only relevance information of the binders *)
+Definition scope := list level.
+
 (* A binding comes with a relevance level and a type *)
 Definition context := list (level × term).
+
+Definition context_to_scope (Γ : context) : scope :=
+  map π₁ Γ.
+
+Coercion context_to_scope : context >-> scope.
 
 
 Fixpoint appsR (t : term) (l : list term) :=
