@@ -9,4 +9,5 @@ theories/SReduction.v
 theories/SIRTT.v
 theories/TAst.v
 theories/TSubst.v
+theories/TReduction.v
 theories/MLTT.v

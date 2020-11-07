@@ -14,4 +14,5 @@ I use coq 8.12.0 and Equations 1.2.3
 | `SIRTT.v` | All of SIRTT in one module for practicality |
 | `TAst.v` | MLTT AST |
 | `TSubst.v` | MLTT Lifting and substitution |
+| `TReduction.v`| Reduction for MLTT |
 | `MLTT.v` | All of MLTT in one module for practicality |
