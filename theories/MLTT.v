@@ -1,3 +1,3 @@
 (* SIRTT, all in one file *)
 
-Require Export TAst.
+Require Export TAst TSubst.

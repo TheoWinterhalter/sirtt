@@ -8,4 +8,5 @@ theories/SSubst.v
 theories/SReduction.v
 theories/SIRTT.v
 theories/TAst.v
+theories/TSubst.v
 theories/MLTT.v

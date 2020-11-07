@@ -1,4 +1,4 @@
-(* Syntax for SIRTT *)
+(* Syntax for MLTT *)
 
 From Coq Require Import List.
 Require Import Util Level.
