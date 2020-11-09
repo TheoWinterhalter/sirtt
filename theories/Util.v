@@ -1,6 +1,7 @@
 (* Global utility *)
 
-From Coq Require Import Utf8.
+From Coq Require Import Utf8 List.
+Import ListNotations.
 
 Set Primitive Projections.
 
@@ -42,3 +43,16 @@ Notation "( x ; y ; z )" := (x ; ( y ; z)).
 Notation "( x ; y ; z ; t )" := (x ; ( y ; (z ; t))).
 Notation "( x ; y ; z ; t ; u )" := (x ; ( y ; (z ; (t ; u)))).
 Notation "( x ; y ; z ; t ; u ; v )" := (x ; ( y ; (z ; (t ; (u ; v))))).
+
+
+Lemma nth_error_map :
+  ∀ {A B} (f : A → B) n l,
+    nth_error (map f l) n = option_map f (nth_error l n).
+Proof.
+  intros A B f n l.
+  induction l in n |- *.
+  - cbn. destruct n. all: reflexivity.
+  - cbn. destruct n.
+    + cbn. reflexivity.
+    + cbn. apply IHl.
+Qed.
