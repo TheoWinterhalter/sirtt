@@ -1,3 +1,6 @@
 (* SIRTT, all in one file *)
 
-Require Export TAst TSubst TReduction.
+Require TAst TSubst TReduction.
+Include TAst.
+Include TSubst.
+Include TReduction.
