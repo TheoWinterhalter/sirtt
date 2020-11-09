@@ -24,7 +24,14 @@ Inductive term :=
 | univ (s : sort)
 .
 
+Definition scope := nat.
+
 Definition context := list term.
+
+Definition context_to_scope (Γ : context) : scope :=
+  #|Γ|.
+
+Coercion context_to_scope : context >-> scope.
 
 Fixpoint apps (t : term) (l : list term) :=
   match l with
