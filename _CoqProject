@@ -6,6 +6,7 @@ theories/Level.v
 theories/SAst.v
 theories/SSubst.v
 theories/SReduction.v
+theories/SScoping.v
 theories/SIRTT.v
 theories/TAst.v
 theories/TSubst.v
