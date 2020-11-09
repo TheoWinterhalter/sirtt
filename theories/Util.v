@@ -1,6 +1,6 @@
 (* Global utility *)
 
-From Coq Require Import Utf8 List.
+From Coq Require Import Utf8 List Lia.
 Import ListNotations.
 
 Set Primitive Projections.
@@ -59,3 +59,29 @@ Qed.
 
 
 Notation "#| l |" := (length l).
+
+Lemma filter_length :
+  ∀ A (l : list A) p,
+    #| filter p l | ≤ #|l|.
+Proof.
+  intros A l p.
+  induction l.
+  - auto.
+  - cbn. destruct p.
+    + cbn. lia.
+    + lia.
+Qed.
+
+Lemma filter_firstn_length :
+  ∀ A (l : list A) n p,
+    #| filter p (firstn n l) | ≤ #| filter p l |.
+Proof.
+  intros A l n p.
+  induction l in n |- *.
+  - cbn. destruct n. all: auto.
+  - cbn. destruct n.
+    + cbn. lia.
+    + cbn. destruct p.
+      * cbn. specialize (IHl n). lia.
+      * apply IHl.
+Qed.

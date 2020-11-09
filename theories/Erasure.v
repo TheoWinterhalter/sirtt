@@ -1,11 +1,14 @@
 (* Erasure translation from SIRTT to MLTT *)
 
-From Coq Require Import Utf8 List Nat.
+From Coq Require Import Utf8 List Nat Lia.
 Require Import Util SIRTT MLTT.
 
 Import ListNotations.
 
 Definition dummy : MLTT.term := MLTT.var 0.
+
+Definition scope_trans Γ :=
+  filter Level.relevant Γ.
 
 (* Because the context of the translated term is not the same
   we need to track which variables are removed, hence the need for a scope
@@ -13,7 +16,7 @@ Definition dummy : MLTT.term := MLTT.var 0.
 *)
 Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   match t with
-  | SIRTT.var i => MLTT.var #| filter Level.relevant (firstn i Γ) |
+  | SIRTT.var i => MLTT.var #| scope_trans (firstn i Γ) |
   | SIRTT.lam Level.R A t => MLTT.lam (trans Γ A) (trans (Level.R :: Γ) t)
   | SIRTT.lam l A t => trans (l :: Γ) t
   | SIRTT.app Level.R u v => MLTT.app (trans Γ u) (trans Γ v)
@@ -38,6 +41,67 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   end.
 
 (* Some properties about the translation itself *)
+
+Lemma scope_trans_app :
+  ∀ Γ Δ,
+    scope_trans (Γ ++ Δ) = scope_trans Γ ++ scope_trans Δ.
+Proof.
+  intros Γ Δ.
+  unfold scope_trans. apply filter_app.
+Qed.
+
+Lemma scope_trans_length :
+  ∀ Γ,
+    #| scope_trans Γ | ≤ #|Γ|.
+Proof.
+  intros Γ. apply filter_length.
+Qed.
+
+Lemma scope_trans_firstn_length :
+  ∀ Ξ n,
+    #| scope_trans (firstn n Ξ) | ≤ #| scope_trans Ξ |.
+Proof.
+  intros Ξ n.
+  apply filter_firstn_length.
+Qed.
+
+Lemma erase_lift :
+  ∀ Γ Δ Ξ t,
+    trans (Ξ ++ Δ ++ Γ) (SIRTT.lift #|Δ| #|Ξ| t) =
+    MLTT.lift #|scope_trans Δ| #|scope_trans Ξ| (trans (Ξ ++ Γ) t).
+Proof.
+  intros Γ Δ Ξ t.
+  induction t in Γ, Δ, Ξ |- *.
+  - cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+    + rewrite firstn_app. rewrite firstn_all2 by lia.
+      rewrite firstn_app. rewrite firstn_all2 by lia.
+      replace (#| Δ | + n - #| Ξ | - #| Δ |) with (n - #|Ξ|) by lia.
+      rewrite firstn_app. rewrite firstn_all2 with (l := Ξ) by lia.
+      rewrite !scope_trans_app. rewrite !app_length.
+      lazymatch goal with
+      | |- context [ if ?u <=? ?v then _ else _ ] =>
+        destruct (PeanoNat.Nat.leb_spec u v)
+      end.
+      2: lia.
+      f_equal. lia.
+    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      lazymatch goal with
+      | |- context [ if ?u <=? ?v then _ else _ ] =>
+        destruct (PeanoNat.Nat.leb_spec u v)
+      end.
+      1:{
+        (* Here we have a case where the variable should not exist...
+          Hence the discrepancy. Maybe we should return dummy in those cases
+          as well?
+        *)
+        pose proof (scope_trans_firstn_length Ξ n).
+        give_up.
+      }
+      reflexivity.
+Abort.
 
 (* Need to figure out how to translate substitutions properly *)
 (* Lemma erase_subst :
