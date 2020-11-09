@@ -1,5 +1,6 @@
 (* Erasure translation from SIRTT to MLTT *)
 
+From Coq Require Import Utf8.
 Require Import Util SIRTT MLTT.
 
 Definition dummy : MLTT.term := MLTT.var 0.
@@ -7,8 +8,10 @@ Definition dummy : MLTT.term := MLTT.var 0.
 Fixpoint trans (t : SIRTT.term) : MLTT.term :=
   match t with
   | SIRTT.var i => MLTT.var i
-  | SIRTT.lam l A t => MLTT.lam (trans A) (trans t)
-  | SIRTT.app l u v => MLTT.app (trans u) (trans v)
+  | SIRTT.lam Level.R A t => MLTT.lam (trans A) (trans t)
+  | SIRTT.lam l A t => trans t
+  | SIRTT.app Level.R u v => MLTT.app (trans u) (trans v)
+  | SIRTT.app l u v => trans u
   | SIRTT.Prod l A B => MLTT.Prod (trans A) (trans B)
   | SIRTT.ex u p => trans u
   | SIRTT.wit t => trans t
@@ -26,3 +29,15 @@ Fixpoint trans (t : SIRTT.term) : MLTT.term :=
   | SIRTT.Vec A m => MLTT.List (trans A)
   | SIRTT.univ s => MLTT.univ s
   end.
+
+(* Some properties about the translation itself *)
+
+Lemma erase_topred_term :
+  ∀ u v σ,
+    u ▹ v | σ →
+    trans u = trans v.
+Proof.
+  intros u v σ h.
+  induction h.
+  all: reflexivity.
+Qed.
