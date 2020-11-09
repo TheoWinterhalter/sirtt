@@ -8,6 +8,12 @@ Inductive level :=
 | S (* Shape-irrelevant *)
 | I (* Irrelevant *).
 
+Definition relevant l :=
+  match l with
+  | R => true
+  | _ => false
+  end.
+
 (* Relation of levels *)
 Reserved Notation "u ⊏ v" (at level 20).
 

@@ -56,3 +56,6 @@ Proof.
     + cbn. reflexivity.
     + cbn. apply IHl.
 Qed.
+
+
+Notation "#| l |" := (length l).
