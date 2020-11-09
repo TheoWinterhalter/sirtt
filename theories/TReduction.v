@@ -7,6 +7,8 @@ Import ListNotations.
 
 Set Default Goal Selector "!".
 
+Open Scope t_scope.
+
 
 Reserved Notation "u ↦ v" (at level 10).
 
@@ -80,4 +82,4 @@ Inductive red : term → term → Type :=
 
 | List_ty : ∀ A A', A ↦ A' → (List A) ↦ (List A')
 
-where "u ↦ v" := (red u v).
+where "u ↦ v" := (red u v) : t_scope.

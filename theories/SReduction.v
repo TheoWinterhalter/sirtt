@@ -7,6 +7,8 @@ Import ListNotations.
 
 Set Default Goal Selector "!".
 
+Open Scope s_scope.
+
 (*
   First we define a notion of "top-level" reduction to reveal relevant terms
   hidden under (shape-)irrelevant operations.
@@ -23,7 +25,7 @@ Inductive topred : term → term → list term → Type :=
 | sbeta A t u : app S (lam S A t) u ▹ t | [ u ]
 | wit_ex t p : wit (ex t p) ▹ t | []
 
-where "u ▹ v | σ" := (topred u v σ).
+where "u ▹ v | σ" := (topred u v σ) : s_scope.
 
 Reserved Notation "u ▹* v | σ" (at level 10).
 
@@ -36,7 +38,7 @@ Inductive topreds : term → term → list term → Type :=
       v ▹* w | θ →
       u ▹* w | (θ ++ σ)
 
-where "u ▹* v | σ" := (topreds u v σ).
+where "u ▹* v | σ" := (topreds u v σ) : s_scope.
 
 (* We can actually define normalisation for top-level reduction easily *)
 Fixpoint topnorm_acc (u : term) (σ : list term) : term × list term :=
@@ -220,4 +222,4 @@ Inductive red : term → term → Type :=
 | Vec_ty : ∀ A n A', A ↦ A' → (Vec A n) ↦ (Vec A' n)
 | Vec_nat : ∀ A n n', n ↦ n' → (Vec A n) ↦ (Vec A n')
 
-where "u ↦ v" := (red u v).
+where "u ↦ v" := (red u v) : s_scope.

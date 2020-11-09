@@ -5,6 +5,9 @@ Require Import Util SAst.
 
 Import ListNotations.
 
+Declare Scope s_scope.
+Delimit Scope s_scope with s.
+
 Fixpoint lift n k t : term :=
   match t with
   | var i => var (if Nat.leb k i then (n + i) else i)
@@ -65,4 +68,5 @@ Fixpoint subst s k u :=
 Notation subst0 t := (subst t 0).
 Definition subst1 t k u := subst [t] k u.
 Notation subst10 t := (subst1 t 0).
-Notation "M { j := N }" := (subst1 N j M) (at level 10, right associativity).
+Notation "M { j := N }" :=
+  (subst1 N j M) (at level 10, right associativity) : s_scope.

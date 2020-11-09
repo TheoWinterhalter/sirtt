@@ -11,3 +11,4 @@ theories/TAst.v
 theories/TSubst.v
 theories/TReduction.v
 theories/MLTT.v
+theories/Erasure.v
