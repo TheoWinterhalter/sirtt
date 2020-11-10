@@ -7,6 +7,8 @@ From Equations Require Import Equations.
 Require Import Util SIRTT MLTT.
 Import ListNotations.
 
+Set Default Goal Selector "!".
+
 Definition dummy : MLTT.term := MLTT.var 0.
 
 Definition scope_trans Γ :=
@@ -81,6 +83,13 @@ Lemma erase_scoping :
 Proof.
   intros Γ t h.
   dependent induction h.
+  all: try solve [
+    cbn ; auto ; constructor ; auto
+  ].
+  all: try solve [
+    destruct ℓ' ;
+    cbn ; auto ; constructor ; auto
+  ].
   - constructor.
     apply nth_error_Some_split in e as h.
     rewrite h. rewrite firstn_app. rewrite firstn_firstn.
@@ -94,8 +103,11 @@ Proof.
     1:{ intro. lia. }
     rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
     rewrite firstn_O. cbn. lia.
-  -
-Abort.
+  - destruct ℓ.
+    2:{ inversion p. subst. inversion H. }
+    2:{ inversion p. subst. inversion H. }
+    eapply IHh. reflexivity.
+Qed.
 
 Lemma erase_lift :
   ∀ Γ Δ Ξ t,
