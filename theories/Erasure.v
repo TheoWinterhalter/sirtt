@@ -111,11 +111,12 @@ Qed.
 
 Lemma erase_lift :
   ∀ Γ Δ Ξ t,
+    SIRTT.scoping (Ξ ++ Γ) Level.R t →
     trans (Ξ ++ Δ ++ Γ) (SIRTT.lift #|Δ| #|Ξ| t) =
     MLTT.lift #|scope_trans Δ| #|scope_trans Ξ| (trans (Ξ ++ Γ) t).
 Proof.
-  intros Γ Δ Ξ t.
-  induction t in Γ, Δ, Ξ |- *.
+  intros Γ Δ Ξ t h.
+  dependent induction h.
   - cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
     + rewrite firstn_app. rewrite firstn_all2 by lia.
       rewrite firstn_app. rewrite firstn_all2 by lia.
@@ -137,12 +138,15 @@ Proof.
         destruct (PeanoNat.Nat.leb_spec u v)
       end.
       1:{
-        (* Here we have a case where the variable should not exist...
-          Hence the discrepancy. Maybe we should return dummy in those cases
-          as well?
-        *)
-        pose proof (scope_trans_firstn_length Ξ n).
-        give_up.
+        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
+        { pose proof (scope_trans_firstn_length Ξ n). lia. }
+        clear H0.
+        rewrite nth_error_app1 in e. 2: lia.
+        apply nth_error_Some_split in e as h.
+        apply (f_equal scope_trans) in h.
+        rewrite scope_trans_app in h. cbn - [skipn] in h.
+        rewrite h in el.
+        rewrite app_length in el. cbn - [skipn] in el. lia.
       }
       reflexivity.
 Abort.
