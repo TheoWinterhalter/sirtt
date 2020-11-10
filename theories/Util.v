@@ -45,6 +45,9 @@ Notation "( x ; y ; z ; t ; u )" := (x ; ( y ; (z ; (t ; u)))).
 Notation "( x ; y ; z ; t ; u ; v )" := (x ; ( y ; (z ; (t ; (u ; v))))).
 
 
+Notation "#| l |" := (length l).
+
+
 Lemma nth_error_map :
   ∀ {A B} (f : A → B) n l,
     nth_error (map f l) n = option_map f (nth_error l n).
@@ -57,8 +60,33 @@ Proof.
     + cbn. apply IHl.
 Qed.
 
+Lemma nth_error_Some_length :
+  ∀ {A} (l : list A) x n,
+    nth_error l n = Some x →
+    n < #|l|.
+Proof.
+  intros A l x n e.
+  induction l in n, x, e |- *.
+  - destruct n. all: discriminate.
+  - destruct n.
+    + cbn. lia.
+    + cbn. cbn in e. eapply IHl in e. lia.
+Qed.
 
-Notation "#| l |" := (length l).
+Lemma nth_error_Some_split :
+  ∀ {A} (l : list A) x n,
+    nth_error l n = Some x →
+    l = firstn n l ++ x :: skipn (S n) l.
+Proof.
+  intros A l x n e.
+  induction l in x, n, e |- *.
+  - destruct n. all: discriminate.
+  - destruct n.
+    + cbn. cbn in e. inversion e. reflexivity.
+    + cbn in e. eapply IHl in e.
+      cbn - [skipn]. f_equal.
+      assumption.
+Qed.
 
 Lemma filter_length :
   ∀ A (l : list A) p,

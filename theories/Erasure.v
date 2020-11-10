@@ -1,8 +1,10 @@
 (* Erasure translation from SIRTT to MLTT *)
 
 From Coq Require Import Utf8 List Nat Lia.
+Require Import Equations.Prop.DepElim.
+Require Import Equations.Prop.Classes.
+From Equations Require Import Equations.
 Require Import Util SIRTT MLTT.
-
 Import ListNotations.
 
 Definition dummy : MLTT.term := MLTT.var 0.
@@ -64,6 +66,36 @@ Proof.
   intros Ξ n.
   apply filter_firstn_length.
 Qed.
+
+Derive Signature for SIRTT.scoping.
+Derive NoConfusion NoConfusionHom EqDec for Level.level.
+Derive NoConfusion NoConfusionHom EqDec for SIRTT.term.
+(* Derive NoConfusionHom for SIRTT.scoping. *)
+
+Set Equations With UIP.
+
+Lemma erase_scoping :
+  ∀ Γ t,
+    SIRTT.scoping Γ Level.R t →
+    MLTT.scoping #|scope_trans Γ| (trans Γ t).
+Proof.
+  intros Γ t h.
+  dependent induction h.
+  - constructor.
+    apply nth_error_Some_split in e as h.
+    rewrite h. rewrite firstn_app. rewrite firstn_firstn.
+    replace (min n n) with n by lia.
+    apply nth_error_Some_length in e.
+    rewrite 2!scope_trans_app. rewrite 2!app_length.
+    match goal with
+    | |- ?x + ?y < ?x + ?z =>
+      cut (y < z)
+    end.
+    1:{ intro. lia. }
+    rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
+    rewrite firstn_O. cbn. lia.
+  -
+Abort.
 
 Lemma erase_lift :
   ∀ Γ Δ Ξ t,

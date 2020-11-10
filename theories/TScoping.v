@@ -10,7 +10,7 @@ Set Default Goal Selector "!".
 Inductive scoping (Γ : scope) : term → Type :=
 | scope_var :
     ∀ n,
-      n ≤ Γ →
+      n < Γ →
       scoping Γ (var n)
 
 | scope_lam :
