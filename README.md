@@ -16,5 +16,6 @@ I use coq 8.12.0 and Equations 1.2.3
 | `TAst.v` | MLTT AST |
 | `TSubst.v` | MLTT Lifting and substitution |
 | `TReduction.v`| Reduction for MLTT |
+| `TScoping.v`| Scoping in MLTT |
 | `MLTT.v` | All of MLTT in one module for practicality |
 | `Erasure.v` | Erasure translation from SIRTT to MLTT |
