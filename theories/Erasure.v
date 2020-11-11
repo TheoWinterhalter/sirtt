@@ -69,11 +69,6 @@ Proof.
   apply filter_firstn_length.
 Qed.
 
-Derive Signature for SIRTT.scoping.
-Derive NoConfusion NoConfusionHom EqDec for Level.level.
-Derive NoConfusion NoConfusionHom EqDec for SIRTT.term.
-(* Derive NoConfusionHom for SIRTT.scoping. *)
-
 Set Equations With UIP.
 
 Lemma erase_scoping :

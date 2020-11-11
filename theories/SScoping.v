@@ -1,6 +1,9 @@
 (* Scoping in SIRTT *)
 
 From Coq Require Import Utf8 List.
+Require Import Equations.Prop.DepElim.
+Require Import Equations.Prop.Classes.
+From Equations Require Import Equations.
 Require Import Util Level SAst SSubst SReduction.
 
 Import ListNotations.
@@ -113,3 +116,28 @@ Inductive scoping (Γ : scope) : level → term → Type :=
       ℓ ⊑ ℓ' → (* Could also be ⊏ *)
       scoping Γ ℓ' t
 .
+
+(* Inversion lemmata for scoping *)
+
+Set Equations With UIP.
+
+Derive Signature for scoping.
+Derive NoConfusion NoConfusionHom EqDec for level.
+Derive NoConfusion NoConfusionHom EqDec for term.
+(* Derive NoConfusionHom for scoping. *)
+
+Lemma inversion_scope_var :
+  ∀ Γ ℓ n,
+    scoping Γ ℓ (var n) →
+    ∑ ℓ', ℓ' ⊑ ℓ × nth_error Γ n = Some ℓ'.
+Proof.
+  intros Γ ℓ n h.
+  dependent induction h.
+  - eexists. split.
+    + right.
+    + auto.
+  - destruct IHh as [ℓ₀ [? ?]].
+    exists ℓ₀. split.
+    + (* Need transitivity *) admit.
+    + auto.
+Admitted.
