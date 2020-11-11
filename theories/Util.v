@@ -1,7 +1,9 @@
 (* Global utility *)
 
-From Coq Require Import Utf8 List Lia.
+From Coq Require Import Utf8 List Lia CRelationClasses.
 Import ListNotations.
+
+Set Default Goal Selector "!".
 
 Set Primitive Projections.
 
@@ -19,6 +21,18 @@ Inductive clos_refl_trans {A} (R : A → A → Type) (x : A) : A → Type :=
     clos_refl_trans R x z.
 
 
+Instance clos_refl_preserve_trans :
+  ∀ A R,
+    @Transitive A R →
+    Transitive (clos_refl R).
+Proof.
+  intros A R h x y z h1 h2.
+  destruct h1.
+  - destruct h2.
+    + left. etransitivity. all: eauto.
+    + left. auto.
+  - assumption.
+Qed.
 
 Record prod A B := pair {
   π₁ : A ;

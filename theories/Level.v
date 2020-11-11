@@ -1,7 +1,9 @@
 (* Relevance levels *)
 
-From Coq Require Import Utf8.
+From Coq Require Import Utf8 CRelationClasses.
 Require Import Util.
+
+Set Default Goal Selector "!".
 
 Inductive level :=
 | R (* Relevant *)
@@ -24,8 +26,26 @@ Inductive more_relevant : level → level → Type :=
 
 where "u ⊏ v" := (more_relevant u v).
 
+Instance more_relevant_trans :
+  Transitive more_relevant.
+Proof.
+  intros u v w h1 h2.
+  destruct h1.
+  - inversion h2. constructor.
+  - inversion h2.
+  - inversion h2.
+Qed.
+
 Definition potentially_more_relevant := clos_refl more_relevant.
 Notation "u ⊑ v" := (potentially_more_relevant u v) (at level 20).
+
+Instance potentially_more_relevant_trans :
+  Transitive potentially_more_relevant.
+Proof.
+  eapply clos_refl_preserve_trans.
+  (* Why doesn't it get inferred? *)
+  exact more_relevant_trans.
+Qed.
 
 Definition max u v :=
   match u, v with
