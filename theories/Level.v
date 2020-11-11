@@ -47,6 +47,21 @@ Proof.
   exact more_relevant_trans.
 Qed.
 
+(* The idea is that when binding an irrelevant term, the binder can appear
+  in the type in shape-irrelevant positions.
+  It doesn't work for going from shape-irrelevant to relevant however.
+  As such it doesn't really deserve to be called a predecessor but it's not
+  clear what the right notion is.
+*)
+Definition pred ℓ :=
+  match ℓ with
+  | R => R
+  | S => S
+  | I => S
+  end.
+
+Notation "▪ l" := (pred l) (at level 0).
+
 Definition max u v :=
   match u, v with
   | R, v => v

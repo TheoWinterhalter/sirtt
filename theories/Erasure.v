@@ -26,7 +26,7 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   | SIRTT.app Level.R u v => MLTT.app (trans Γ u) (trans Γ v)
   | SIRTT.app l u v => trans Γ u
   | SIRTT.Prod Level.R A B => MLTT.Prod (trans Γ A) (trans (Level.R :: Γ) B)
-  | SIRTT.Prod l A B =>trans (l :: Γ) B
+  | SIRTT.Prod l A B =>trans (Level.pred l :: Γ) B
   | SIRTT.ex u p => trans Γ u
   | SIRTT.wit t => trans Γ t
   | SIRTT.prf t => dummy
@@ -188,7 +188,7 @@ Proof.
       { cbn. f_equal. auto. }
       cbn in IHh2. rewrite IHh2.
       reflexivity.
-    + cbn. specialize (IHh2 Θ Δ (Level.I :: Ξ)).
+    + cbn. specialize (IHh2 Θ Δ (Level.S :: Ξ)).
       forward IHh2.
       { cbn. f_equal. auto. }
       cbn in IHh2. rewrite IHh2.

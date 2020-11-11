@@ -31,7 +31,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_Prod :
     ∀ ℓ ℓ' A B,
       scoping Γ ℓ A → (* Right level? *)
-      scoping (ℓ' :: Γ) ℓ B →
+      scoping (▪ℓ' :: Γ) ℓ B →
       scoping Γ ℓ (Prod ℓ' A B)
 
 | scope_ex :
