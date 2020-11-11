@@ -165,13 +165,13 @@ Inductive red : term → term → Type :=
       ])
 
 (* Congruence rules *)
-| lam_ty : ∀ l A t A', A ↦ A' → (lam l A t) ↦ (lam l A' t)
+| lam_ty : ∀ A t A', A ↦ A' → (lam R A t) ↦ (lam R A' t)
 | lam_tm : ∀ l A t t', t ↦ t' → (lam l A t) ↦ (lam l A t')
 
 | app_l : ∀ l u v u', u ↦ u' → (app l u v) ↦ (app l u' v)
-| app_r : ∀ l u v v', v ↦ v' → (app l u v) ↦ (app l u v')
+| app_r : ∀ u v v', v ↦ v' → (app R u v) ↦ (app R u v')
 
-| Prod_l : ∀ l A B A', A ↦ A' → (Prod l A B) ↦ (Prod l A' B)
+| Prod_l : ∀ A B A', A ↦ A' → (Prod R A B) ↦ (Prod R A' B)
 | Prod_r : ∀ l A B B', B ↦ B' → (Prod l A B) ↦ (Prod l A B')
 
 | ex_wit : ∀ u p u', u ↦ u' → (ex u p) ↦ (ex u' p)
