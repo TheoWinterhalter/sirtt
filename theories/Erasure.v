@@ -248,3 +248,22 @@ Proof.
   induction h.
   all: reflexivity.
 Qed.
+
+Lemma erase_red :
+  ∀ Γ u v,
+    SIRTT.scoping Γ Level.R u →
+    (u ↦ v)%s →
+    ((trans Γ u) ↦ (trans Γ v))%t.
+Proof.
+  intros Γ u v hs h.
+  induction h in Γ, hs |- *.
+  - cbn. admit.
+  - cbn. admit.
+  - cbn. admit.
+  - cbn. admit.
+  - cbn. admit.
+  - cbn. constructor. apply IHh.
+    (* Either we need a proper inversion lemma/tactic for scoping
+      or we first do induction on it.
+    *)
+Abort.
