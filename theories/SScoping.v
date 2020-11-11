@@ -126,6 +126,25 @@ Derive NoConfusion NoConfusionHom EqDec for level.
 Derive NoConfusion NoConfusionHom EqDec for term.
 (* Derive NoConfusionHom for scoping. *)
 
+Ltac outsum :=
+  match goal with
+  | ih : ∑ x : _, _ |- _ =>
+    destruct ih as [? ?]
+  end.
+
+Local Ltac invtac h :=
+  dependent induction h ; [
+    eexists ; split ; [
+      right
+    | intuition eauto
+    ]
+  | outsum ;
+    eexists ; split ; [
+      etransitivity ; eauto
+    | intuition eauto
+    ]
+  ].
+
 Lemma inversion_scope_var :
   ∀ Γ ℓ n,
     scoping Γ ℓ (var n) →
@@ -138,6 +157,6 @@ Proof.
     + auto.
   - destruct IHh as [ℓ₀ [? ?]].
     exists ℓ₀. split.
-    + (* Need transitivity *) admit.
+    + etransitivity. all: eauto.
     + auto.
-Admitted.
+Qed.
