@@ -116,8 +116,14 @@ Lemma erase_lift :
     MLTT.lift #|scope_trans Δ| #|scope_trans Ξ| (trans (Ξ ++ Γ) t).
 Proof.
   intros Γ Δ Ξ t h.
+  remember (Ξ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ eΘ.
   dependent induction h.
-  - cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+  all: intros Θ Δ Ξ eΘ.
+  all: try solve [
+    cbn ; rewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by auto ;
+    reflexivity
+  ].
+  - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
     + rewrite firstn_app. rewrite firstn_all2 by lia.
       rewrite firstn_app. rewrite firstn_all2 by lia.
       replace (#| Δ | + n - #| Ξ | - #| Δ |) with (n - #|Ξ|) by lia.
@@ -149,7 +155,56 @@ Proof.
         rewrite app_length in el. cbn - [skipn] in el. lia.
       }
       reflexivity.
-Abort.
+  - destruct ℓ'.
+    + cbn. rewrite IHh1. 2: auto.
+      specialize (IHh2 Θ Δ (Level.R :: Ξ)).
+      forward IHh2.
+      { cbn. f_equal. auto. }
+      cbn in IHh2. rewrite IHh2.
+      reflexivity.
+    + cbn. specialize (IHh2 Θ Δ (Level.S :: Ξ)).
+      forward IHh2.
+      { cbn. f_equal. auto. }
+      cbn in IHh2. rewrite IHh2.
+      reflexivity.
+    + cbn. specialize (IHh2 Θ Δ (Level.I :: Ξ)).
+      forward IHh2.
+      { cbn. f_equal. auto. }
+      cbn in IHh2. rewrite IHh2.
+      reflexivity.
+  - destruct ℓ'.
+    + cbn. rewrite IHh1. 2: auto.
+      cbn in IHh2. specialize IHh2 with (1 := eq_refl).
+      rewrite IHh2. 2: auto.
+      reflexivity.
+    + cbn. rewrite IHh1. 2: auto.
+      reflexivity.
+    + cbn. rewrite IHh1. 2: auto.
+      reflexivity.
+  - destruct ℓ'.
+    + cbn. rewrite IHh1. 2: auto.
+      specialize (IHh2 Θ Δ (Level.R :: Ξ)).
+      forward IHh2.
+      { cbn. f_equal. auto. }
+      cbn in IHh2. rewrite IHh2.
+      reflexivity.
+    + cbn. specialize (IHh2 Θ Δ (Level.S :: Ξ)).
+      forward IHh2.
+      { cbn. f_equal. auto. }
+      cbn in IHh2. rewrite IHh2.
+      reflexivity.
+    + cbn. specialize (IHh2 Θ Δ (Level.I :: Ξ)).
+      forward IHh2.
+      { cbn. f_equal. auto. }
+      cbn in IHh2. rewrite IHh2.
+      reflexivity.
+  - destruct ℓ.
+    2:{ inversion p. subst. inversion H. }
+    2:{ inversion p. subst. inversion H. }
+    eapply IHh.
+    + reflexivity.
+    + auto.
+Qed.
 
 (* Need to figure out how to translate substitutions properly *)
 (* Lemma erase_subst :
