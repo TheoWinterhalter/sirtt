@@ -170,3 +170,18 @@ Proof.
   - intuition auto.
     all: eapply scope_sub ; eauto.
 Qed.
+
+Lemma inversion_scope_app :
+  ∀ Γ ℓ ℓ' u v,
+    scoping Γ ℓ (app ℓ' u v) →
+    scoping Γ ℓ u ×
+    scoping Γ (ℓ ⊔ ℓ') v.
+Proof.
+  intros Γ ℓ ℓ' u v h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    + eapply scope_sub. all: eauto.
+    + eapply scope_sub. 1: eauto.
+      eapply max_le_cong_l. auto.
+Qed.

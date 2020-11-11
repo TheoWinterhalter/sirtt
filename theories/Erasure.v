@@ -258,7 +258,5 @@ Proof.
   - cbn. admit.
   - cbn. admit.
   - cbn. constructor. apply IHh.
-    (* Either we need a proper inversion lemma/tactic for scoping
-      or we first do induction on it.
-    *)
+    (* Should make an inversion tactic from inversion lemmata *)
 Abort.

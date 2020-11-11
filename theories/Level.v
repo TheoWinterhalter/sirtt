@@ -99,3 +99,16 @@ Proof.
   all: try (left ; constructor).
   all: try (right ; constructor).
 Qed.
+
+Lemma max_le_cong_l :
+  ∀ ℓ₀ ℓ₁ ℓ₂,
+    ℓ₀ ⊑ ℓ₁ →
+    ℓ₀ ⊔ ℓ₂ ⊑ ℓ₁ ⊔ ℓ₂.
+Proof.
+  intros u v w h.
+  destruct h as [v h |].
+  - destruct h, w. all: cbn.
+    all: try right.
+    all: left ; constructor.
+  - right.
+Qed.
