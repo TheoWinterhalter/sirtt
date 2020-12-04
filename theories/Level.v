@@ -47,6 +47,17 @@ Proof.
   exact more_relevant_trans.
 Qed.
 
+Lemma I_sub :
+  ∀ ℓ,
+    I ⊑ ℓ →
+    ℓ = I.
+Proof.
+  intros ℓ h.
+  destruct h as [ℓ h|].
+  - inversion h.
+  - reflexivity.
+Qed.
+
 (* The idea is that when binding an irrelevant term, the binder can appear
   in the type in shape-irrelevant positions.
   It doesn't work for going from shape-irrelevant to relevant however.

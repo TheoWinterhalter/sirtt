@@ -224,18 +224,6 @@ Proof.
   - eapply scope_sub. all: eauto.
 Qed.
 
-(* TODO MOVE *)
-Lemma I_sub :
-  ∀ ℓ,
-    I ⊑ ℓ →
-    ℓ = I.
-Proof.
-  intros ℓ h.
-  destruct h as [ℓ h|].
-  - inversion h.
-  - reflexivity.
-Qed.
-
 Lemma inversion_scope_prf :
     ∀ Γ ℓ t,
       scoping Γ ℓ (prf t) →
