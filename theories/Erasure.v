@@ -244,6 +244,20 @@ Proof.
   all: reflexivity.
 Qed.
 
+Lemma erase_topreds_term :
+  ∀ Γ u v σ,
+    u ▹* v | σ →
+    trans Γ u = trans (erase_toplevel_scope u ++ Γ) v.
+Proof.
+  intros Γ u v σ h.
+  induction h.
+  - (* What should be the scope? *) admit.
+  - eapply erase_topred_term. eauto.
+  - (** Probably even worse here? Might be worth it to first prove
+        a stronger lemma above.
+     *)
+Abort.
+
 Lemma erase_red :
   ∀ Γ u v,
     SIRTT.scoping Γ Level.R u →
@@ -262,7 +276,9 @@ Proof.
     scope_inv hs hs' ; intuition auto
   ].
   - cbn. admit.
-  - cbn. admit.
+  - cbn.
+    (* eapply erase_topred_term in t0 as h. *)
+    admit.
   - cbn. admit.
   - cbn. admit.
   - cbn. admit.
