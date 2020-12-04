@@ -185,3 +185,161 @@ Proof.
     + eapply scope_sub. 1: eauto.
       eapply max_le_cong_l. auto.
 Qed.
+
+Lemma inversion_scope_Prod :
+  ∀ Γ ℓ ℓ' A B,
+    scoping Γ ℓ (Prod ℓ' A B) →
+    scoping Γ ℓ A ×
+    scoping (▪ℓ' :: Γ) ℓ B.
+Proof.
+  intros Γ ℓ ℓ' A B h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    + eapply scope_sub. all: eauto.
+    + eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_ex :
+  ∀ Γ ℓ u p,
+    scoping Γ ℓ (ex u p) →
+    scoping Γ ℓ u ×
+    scoping Γ I p.
+Proof.
+  intros Γ ℓ u p h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_wit :
+  ∀ Γ ℓ t,
+    scoping Γ ℓ (wit t) →
+    scoping Γ ℓ t.
+Proof.
+  intros Γ ℓ t h.
+  dependent induction h.
+  - intuition auto.
+  - eapply scope_sub. all: eauto.
+Qed.
+
+(* TODO MOVE *)
+Lemma I_sub :
+  ∀ ℓ,
+    I ⊑ ℓ →
+    ℓ = I.
+Proof.
+  intros ℓ h.
+  destruct h as [ℓ h|].
+  - inversion h.
+  - reflexivity.
+Qed.
+
+Lemma inversion_scope_prf :
+    ∀ Γ ℓ t,
+      scoping Γ ℓ (prf t) →
+      ℓ = I ×
+      scoping Γ I t.
+Proof.
+  intros Γ ℓ t h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    subst. eapply I_sub. assumption.
+Qed.
+
+Lemma inversion_scope_Sum :
+  ∀ Γ ℓ A P,
+    scoping Γ ℓ (Sum A P) →
+    scoping Γ ℓ A ×
+    scoping (R :: Γ) I P.
+Proof.
+  intros Γ ℓ A P h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_succ :
+  ∀ Γ ℓ t,
+    scoping Γ ℓ (succ t) →
+    scoping Γ ℓ t.
+Proof.
+  intros Γ ℓ t h.
+  dependent induction h.
+  - intuition auto.
+  - eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_elim_nat :
+  ∀ Γ ℓ P z s n,
+    scoping Γ ℓ (elim_nat P z s n) →
+    scoping Γ ℓ P ×
+    scoping Γ ℓ z ×
+    scoping Γ ℓ s ×
+    scoping Γ ℓ n.
+Proof.
+  intros Γ ℓ P z s n h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    all: eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_vnil :
+  ∀ Γ ℓ A,
+    scoping Γ ℓ (vnil A) →
+    scoping Γ ℓ A.
+Proof.
+  intros Γ ℓ A h.
+  dependent induction h.
+  - intuition auto.
+  - eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_vcons :
+  ∀ Γ ℓ A a n v,
+    scoping Γ ℓ (vcons A a n v) →
+    scoping Γ ℓ A ×
+    scoping Γ ℓ a ×
+    scoping Γ I n ×
+    scoping Γ ℓ v.
+Proof.
+  intros Γ ℓ A a n v h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    all: eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_elim_vec :
+  ∀ Γ ℓ A P e c n v,
+    scoping Γ ℓ (elim_vec A P e c n v) →
+    scoping Γ ℓ A ×
+    scoping Γ ℓ P ×
+    scoping Γ ℓ e ×
+    scoping Γ ℓ c ×
+    scoping Γ I n ×
+    scoping Γ ℓ v.
+Proof.
+  intros Γ ℓ A P e c n v h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    all: eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_Vec :
+  ∀ Γ ℓ A n,
+    scoping Γ ℓ (Vec A n) →
+    scoping Γ ℓ A ×
+    scoping Γ S n.
+Proof.
+  intros Γ ℓ A n h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    eapply scope_sub. all: eauto.
+Qed.
