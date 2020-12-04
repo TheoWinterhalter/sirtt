@@ -331,3 +331,26 @@ Proof.
   - intuition auto.
     eapply scope_sub. all: eauto.
 Qed.
+
+Ltac scope_inv h h' :=
+  lazymatch type of h with
+  | scoping ?Γ ?ℓ ?t =>
+    lazymatch t with
+    | var ?n => apply inversion_scope_var in h as h'
+    | lam ?ℓ' ?A ?t => apply inversion_scope_lam in h as h'
+    | app ?ℓ' ?u ?v => apply inversion_scope_app in h as h'
+    | Prod ?ℓ' ?A ?B => apply inversion_scope_Prod in h as h'
+    | ex ?u ?p => apply inversion_scope_ex in h as h'
+    | wit ?t => apply inversion_scope_wit in h as h'
+    | prf ?t => apply inversion_scope_prf in h as h'
+    | Sum ?A ?P => apply inversion_scope_Sum in h as h'
+    | succ ?t => apply inversion_scope_succ in h as h'
+    | elim_nat ?P ?z ?s ?n => apply inversion_scope_elim_nat in h as h'
+    | vnil ?A => apply inversion_scope_vnil in h as h'
+    | vcons ?A ?a ?n ?v => apply inversion_scope_vcons in h as h'
+    | elim_vec ?A ?P ?e ?c ?n ?v => apply inversion_scope_elim_vec in h as h'
+    | Vec ?A ?n => apply inversion_scope_Vec in h as h'
+    | _ => fail "scope_inv: case not handled"
+    end
+  | _ => fail "scope_inv only applies to scoping assumptions"
+  end.
