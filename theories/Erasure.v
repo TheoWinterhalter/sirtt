@@ -252,11 +252,19 @@ Lemma erase_red :
 Proof.
   intros Γ u v hs h.
   induction h in Γ, hs |- *.
+  all: try solve [
+    cbn ; try constructor ; apply IHh ;
+    scope_inv hs hs' ; intuition auto
+  ].
+  all: try solve [
+    destruct l ;
+    cbn ; try constructor ; apply IHh ;
+    scope_inv hs hs' ; intuition auto
+  ].
   - cbn. admit.
   - cbn. admit.
   - cbn. admit.
   - cbn. admit.
   - cbn. admit.
-  - cbn. constructor. apply IHh.
-    (* Should make an inversion tactic from inversion lemmata *)
+  - (* This rule is WRONG *) (* cbn. constructor. apply IHh. *)
 Abort.
