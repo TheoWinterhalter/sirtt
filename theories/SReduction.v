@@ -191,7 +191,6 @@ Inductive red : term → term → Type :=
 
 | vcons_ty : ∀ A a n v A', A ↦ A' → (vcons A a n v) ↦ (vcons A' a n v)
 | vcons_arg : ∀ A a n v a', a ↦ a' → (vcons A a n v) ↦ (vcons A a' n v)
-| vcons_nat : ∀ A a n v n', n ↦ n' → (vcons A a n v) ↦ (vcons A a n' v)
 | vcons_vec : ∀ A a n v v', v ↦ v' → (vcons A a n v) ↦ (vcons A a n v')
 
 | elim_vec_ty :
@@ -210,16 +209,11 @@ Inductive red : term → term → Type :=
     ∀ A P e c m v c',
       c ↦ c' →
       (elim_vec A P e c m v) ↦ (elim_vec A P e c' m v)
-| elim_vec_nat :
-    ∀ A P e c m v m',
-      m ↦ m' →
-      (elim_vec A P e c m v) ↦ (elim_vec A P e c m' v)
 | elim_vec_vec :
     ∀ A P e c m v v',
       v ↦ v' →
       (elim_vec A P e c m v) ↦ (elim_vec A P e c m v')
 
 | Vec_ty : ∀ A n A', A ↦ A' → (Vec A n) ↦ (Vec A' n)
-| Vec_nat : ∀ A n n', n ↦ n' → (Vec A n) ↦ (Vec A n')
 
 where "u ↦ v" := (red u v) : s_scope.

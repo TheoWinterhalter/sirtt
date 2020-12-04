@@ -266,5 +266,4 @@ Proof.
   - cbn. admit.
   - cbn. admit.
   - cbn. admit.
-  - (* This rule is WRONG *) (* cbn. constructor. apply IHh. *)
-Abort.
+Admitted.
