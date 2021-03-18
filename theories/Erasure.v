@@ -227,35 +227,103 @@ Proof.
     *)
 Abort. *)
 
-Fixpoint erase_toplevel_scope t :=
+(* USED TO BE *)
+(* It might still be better if we instead have a reveal function
+  rather than this relation.
+*)
+(* Fixpoint erase_toplevel_scope t :=
   match t with
   | SIRTT.lam l A t => [ l ]
   | SIRTT.app l u v => erase_toplevel_scope u
+  | _ => []
+  end. *)
+
+Fixpoint erase_toplevel_scope t :=
+  match t with
+  | SIRTT.lam l A t => l :: erase_toplevel_scope t
+  | SIRTT.app l u v => erase_toplevel_scope u
+  | SIRTT.wit t => erase_toplevel_scope t
+  | SIRTT.ex t h => erase_toplevel_scope t
   | _ => []
   end.
 
 Lemma erase_topred_term :
   ∀ Γ u v σ,
     u ▹ v | σ →
-    trans Γ u = trans (erase_toplevel_scope u ++ Γ) v.
+    trans Γ u = trans (firstn #|σ| (erase_toplevel_scope u) ++ Γ) v.
 Proof.
   intros Γ u v σ h.
   induction h.
   all: reflexivity.
 Qed.
 
+Lemma topred_erase_toplevel_scope :
+  ∀ u v σ,
+    u ▹ v | σ →
+    skipn #|σ| (erase_toplevel_scope u) = erase_toplevel_scope v.
+Proof.
+  intros u v σ h.
+  induction h.
+  all: reflexivity.
+Qed.
+
+(* TODO MOVE *)
+Lemma skipn_skipn :
+  ∀ A (l : list A) n m,
+    skipn (m + n) l = skipn n (skipn m l).
+Proof.
+  intros A l n m.
+  induction m in n, l |- *.
+  - reflexivity.
+  - simpl. destruct l.
+    + destruct n. all: reflexivity.
+    + apply IHm.
+Qed.
+
+(* TODO MOVE *)
+Lemma firstn_add :
+  ∀ A (l : list A) n m,
+    firstn (n + m) l = firstn n l ++ firstn m (skipn n l).
+Proof.
+  intros A l n m.
+  induction n in m, l |- *. 1: reflexivity.
+  simpl. destruct l.
+  - rewrite firstn_nil. reflexivity.
+  - simpl. f_equal. apply IHn.
+Qed.
+
+Lemma topreds_erase_toplevel_scope :
+  ∀ u v σ,
+    u ▹* v | σ →
+    skipn #|σ| (erase_toplevel_scope u) = erase_toplevel_scope v.
+Proof.
+  intros u v σ h.
+  induction h.
+  - simpl. reflexivity.
+  - apply topred_erase_toplevel_scope. auto.
+  - rewrite <- IHh2. rewrite <- IHh1.
+    rewrite app_length. rewrite PeanoNat.Nat.add_comm. apply skipn_skipn.
+Qed.
+
 Lemma erase_topreds_term :
   ∀ Γ u v σ,
     u ▹* v | σ →
-    trans Γ u = trans (erase_toplevel_scope u ++ Γ) v.
+    trans Γ u = trans (firstn #|σ| (erase_toplevel_scope u) ++ Γ) v.
 Proof.
   intros Γ u v σ h.
-  induction h.
-  - (* What should be the scope? *) admit.
-  - eapply erase_topred_term. eauto.
-  - (** Probably even worse here? Might be worth it to first prove
-        a stronger lemma above.
-     *)
+  induction h in Γ |- *.
+  - cbn. reflexivity.
+  - eapply erase_topred_term. auto.
+  - rewrite IHh1. rewrite IHh2. f_equal.
+    eapply topreds_erase_toplevel_scope in h1 as e.
+    rewrite app_assoc. f_equal.
+    rewrite <- e. clear.
+    rewrite app_length.
+    rewrite PeanoNat.Nat.add_comm.
+    rewrite firstn_add.
+    (* Almost, but not equal?? *)
+    (* Still possible I lead the proof wrong. *)
+    (* Might be better to have reveal as a function. *)
 Abort.
 
 Lemma erase_red :
