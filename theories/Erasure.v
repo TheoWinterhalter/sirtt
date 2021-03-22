@@ -301,31 +301,6 @@ Proof.
   all: reflexivity.
 Qed. *)
 
-(* TODO MOVE *)
-Lemma skipn_skipn :
-  ∀ A (l : list A) n m,
-    skipn (m + n) l = skipn n (skipn m l).
-Proof.
-  intros A l n m.
-  induction m in n, l |- *.
-  - reflexivity.
-  - simpl. destruct l.
-    + destruct n. all: reflexivity.
-    + apply IHm.
-Qed.
-
-(* TODO MOVE *)
-Lemma firstn_add :
-  ∀ A (l : list A) n m,
-    firstn (n + m) l = firstn n l ++ firstn m (skipn n l).
-Proof.
-  intros A l n m.
-  induction n in m, l |- *. 1: reflexivity.
-  simpl. destruct l.
-  - rewrite firstn_nil. reflexivity.
-  - simpl. f_equal. apply IHn.
-Qed.
-
 (* Lemma topreds_reveal_scope :
   ∀ u v σ,
     u ▹* v | σ →
