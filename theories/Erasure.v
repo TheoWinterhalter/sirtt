@@ -250,26 +250,35 @@ Fixpoint reveal_scope t :=
 Lemma erase_reveal_acc :
   ∀ Γ u v σ θ,
     reveal_acc u σ = (v, θ) →
-    trans Γ u = trans (reveal_scope u ++ Γ) v.
+    trans Γ (SIRTT.subst0 σ u) = trans Γ (SIRTT.subst0 θ v).
 Proof.
   intros Γ u v σ θ e.
   induction u in Γ, v, σ, θ, e |- *.
   all: try solve [ cbn in e ; inversion e ; reflexivity ].
   - destruct l.
-    + cbn. cbn in e. inversion e. subst. clear e. cbn.
-    (* + cbn in e. destruct u1.
+    + cbn. cbn in e. inversion e. subst. clear e. cbn. reflexivity.
+    + cbn in e. destruct u1.
       all: try solve [ inversion e ; reflexivity ].
       destruct l.
       all: try solve [ inversion e ; reflexivity ].
-      cbn in IHu1.
-      cbn.
-    + *)
+      (* Wrong induction hyp! *)
+      (* cbn in IHu1. cbn. eapply IHu1. *)
+      admit.
+    + cbn in e. destruct u1.
+      all: try solve [ inversion e ; reflexivity ].
+      destruct l.
+      all: try solve [ inversion e ; reflexivity ].
+      admit.
+  - cbn in e. destruct u.
+    all: try solve [ inversion e ; reflexivity ].
+    cbn.
+    (* Again wrong induction hyp. *)
 Abort.
 
 Lemma erase_reveal :
   ∀ Γ u v σ,
     reveal u = (v, σ) →
-    trans Γ u = trans (reveal_scope u ++ Γ) v.
+    trans Γ u = trans Γ (SIRTT.subst0 σ v).
 Admitted.
 
 (* Lemma erase_topred_term :
@@ -368,17 +377,20 @@ Proof.
     cbn ; try constructor ; apply IHh ;
     scope_inv hs hs' ; intuition auto
   ].
-  - cbn. admit.
+  - cbn. eapply erase_reveal in e as h.
+    erewrite h. cbn.
+    (* Some commutation is needed. *)
+    admit.
   - cbn. eapply erase_reveal in e as h.
     erewrite h. cbn.
     constructor.
   - cbn. eapply erase_reveal in e as h.
     erewrite h. cbn.
-    (* Maybe should conclude on substituted term directly. *)
-    (* constructor. *)
-
-
-  admit.
-  - cbn. admit.
-  - cbn. admit.
+    constructor.
+  - cbn. eapply erase_reveal in e0 as h.
+    erewrite h. cbn.
+    constructor.
+  - cbn. eapply erase_reveal in e0 as h.
+    erewrite h. cbn.
+    constructor.
 Admitted.
