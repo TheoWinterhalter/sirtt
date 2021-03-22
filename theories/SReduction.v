@@ -18,7 +18,18 @@ Open Scope s_scope.
   It's an important trick to have this operation trivially terminating.
 *)
 
-Reserved Notation "u ▹ v | σ" (at level 10).
+Fixpoint reveal_acc (u : term) (σ : list term) : term × list term :=
+  match u with
+  | app I (lam I A t) u => reveal_acc t (u :: σ)
+  | app S (lam S A t) u => reveal_acc t (u :: σ)
+  | wit (ex t p) => reveal_acc t σ
+  | _ => (u, σ)
+  end.
+
+Definition reveal u :=
+  reveal_acc u [].
+
+(* Reserved Notation "u ▹ v | σ" (at level 10).
 
 Inductive topred : term → term → list term → Type :=
 | ibeta A t u : app I (lam I A t) u ▹ t | [ u ]
@@ -121,7 +132,7 @@ Proof.
   destruct e as [τ [h e]].
   rewrite app_nil_r in e. subst.
   assumption.
-Qed.
+Qed. *)
 
 (* We can now define proper reduction ↦ *)
 (* Note that we do not reduce in irrelevant positions when it can be safely
@@ -134,28 +145,33 @@ Inductive red : term → term → Type :=
 (* Computation rules *)
 | beta :
     ∀ v u A t σ,
-      v ▹* lam R A t | σ →
+      (* v ▹* lam R A t | σ → *)
+      reveal v = (lam R A t, σ) →
       (app R v u) ↦ ((subst σ 0 t){ 0 := u })
 
 | elim_nat_zero :
     ∀ P z s t σ,
-      t ▹* zero | σ →
+      (* t ▹* zero | σ → *)
+      reveal t = (zero, σ) →
       (elim_nat P z s t) ↦ z
 
 | elim_nat_succ :
     ∀ P z s t n σ,
-      t ▹* succ n | σ →
+      (* t ▹* succ n | σ → *)
+      reveal t = (succ n, σ) →
       (elim_nat P z s t) ↦
       (appsR s [ subst σ 0 n ; elim_nat P z s (subst σ 0 n) ])
 
 | elim_vec_vnil :
     ∀ A P e c n t B σ,
-      t ▹* vnil B | σ →
+      (* t ▹* vnil B | σ → *)
+      reveal t = (vnil B, σ) →
       (elim_vec A P e c n t) ↦ e
 
 | elim_vec_vcons :
     ∀ A P e c n t B a m v σ,
-      t ▹* vcons B a m v | σ →
+      (* t ▹* vcons B a m v | σ → *)
+      reveal t = (vcons B a m v, σ) →
       (elim_vec A P e c n t) ↦
       (apps c [
         (R, subst σ 0 a) ;

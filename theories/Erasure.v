@@ -231,41 +231,66 @@ Abort. *)
 (* It might still be better if we instead have a reveal function
   rather than this relation.
 *)
-(* Fixpoint erase_toplevel_scope t :=
+(* Fixpoint reveal_scope t :=
   match t with
   | SIRTT.lam l A t => [ l ]
-  | SIRTT.app l u v => erase_toplevel_scope u
+  | SIRTT.app l u v => reveal_scope u
   | _ => []
   end. *)
 
-Fixpoint erase_toplevel_scope t :=
+Fixpoint reveal_scope t :=
   match t with
-  | SIRTT.lam l A t => l :: erase_toplevel_scope t
-  | SIRTT.app l u v => erase_toplevel_scope u
-  | SIRTT.wit t => erase_toplevel_scope t
-  | SIRTT.ex t h => erase_toplevel_scope t
+  | SIRTT.lam l A t => l :: reveal_scope t
+  | SIRTT.app l u v => reveal_scope u
+  | SIRTT.wit t => reveal_scope t
+  | SIRTT.ex t h => reveal_scope t
   | _ => []
   end.
 
-Lemma erase_topred_term :
+Lemma erase_reveal_acc :
+  ∀ Γ u v σ θ,
+    reveal_acc u σ = (v, θ) →
+    trans Γ u = trans (reveal_scope u ++ Γ) v.
+Proof.
+  intros Γ u v σ θ e.
+  induction u in Γ, v, σ, θ, e |- *.
+  all: try solve [ cbn in e ; inversion e ; reflexivity ].
+  - destruct l.
+    + cbn. cbn in e. inversion e. subst. clear e. cbn.
+    (* + cbn in e. destruct u1.
+      all: try solve [ inversion e ; reflexivity ].
+      destruct l.
+      all: try solve [ inversion e ; reflexivity ].
+      cbn in IHu1.
+      cbn.
+    + *)
+Abort.
+
+Lemma erase_reveal :
+  ∀ Γ u v σ,
+    reveal u = (v, σ) →
+    trans Γ u = trans (reveal_scope u ++ Γ) v.
+Admitted.
+
+(* Lemma erase_topred_term :
   ∀ Γ u v σ,
     u ▹ v | σ →
-    trans Γ u = trans (firstn #|σ| (erase_toplevel_scope u) ++ Γ) v.
+    trans Γ u = trans (firstn #|σ| (reveal_scope u) ++ Γ) v.
 Proof.
   intros Γ u v σ h.
   induction h.
   all: reflexivity.
-Qed.
+Qed. *)
 
-Lemma topred_erase_toplevel_scope :
+(* Lemma topred_reveal_scope :
   ∀ u v σ,
     u ▹ v | σ →
-    skipn #|σ| (erase_toplevel_scope u) = erase_toplevel_scope v.
+    skipn #|σ| (reveal_scope u) = reveal_scope v.
 Proof.
   intros u v σ h.
   induction h.
   all: reflexivity.
-Qed.
+Qed. *)
 
 (* TODO MOVE *)
 Lemma skipn_skipn :
@@ -292,30 +317,30 @@ Proof.
   - simpl. f_equal. apply IHn.
 Qed.
 
-Lemma topreds_erase_toplevel_scope :
+(* Lemma topreds_reveal_scope :
   ∀ u v σ,
     u ▹* v | σ →
-    skipn #|σ| (erase_toplevel_scope u) = erase_toplevel_scope v.
+    skipn #|σ| (reveal_scope u) = reveal_scope v.
 Proof.
   intros u v σ h.
   induction h.
   - simpl. reflexivity.
-  - apply topred_erase_toplevel_scope. auto.
+  - apply topred_reveal_scope. auto.
   - rewrite <- IHh2. rewrite <- IHh1.
     rewrite app_length. rewrite PeanoNat.Nat.add_comm. apply skipn_skipn.
-Qed.
+Qed. *)
 
-Lemma erase_topreds_term :
+(* Lemma erase_topreds_term :
   ∀ Γ u v σ,
     u ▹* v | σ →
-    trans Γ u = trans (firstn #|σ| (erase_toplevel_scope u) ++ Γ) v.
+    trans Γ u = trans (firstn #|σ| (reveal_scope u) ++ Γ) v.
 Proof.
   intros Γ u v σ h.
   induction h in Γ |- *.
   - cbn. reflexivity.
   - eapply erase_topred_term. auto.
   - rewrite IHh1. rewrite IHh2. f_equal.
-    eapply topreds_erase_toplevel_scope in h1 as e.
+    eapply topreds_reveal_scope in h1 as e.
     rewrite app_assoc. f_equal.
     rewrite <- e. clear.
     rewrite app_length.
@@ -324,7 +349,7 @@ Proof.
     (* Almost, but not equal?? *)
     (* Still possible I lead the proof wrong. *)
     (* Might be better to have reveal as a function. *)
-Abort.
+Abort. *)
 
 Lemma erase_red :
   ∀ Γ u v,
@@ -344,10 +369,16 @@ Proof.
     scope_inv hs hs' ; intuition auto
   ].
   - cbn. admit.
-  - cbn.
-    (* eapply erase_topred_term in t0 as h. *)
-    admit.
-  - cbn. admit.
+  - cbn. eapply erase_reveal in e as h.
+    erewrite h. cbn.
+    constructor.
+  - cbn. eapply erase_reveal in e as h.
+    erewrite h. cbn.
+    (* Maybe should conclude on substituted term directly. *)
+    (* constructor. *)
+
+
+  admit.
   - cbn. admit.
   - cbn. admit.
 Admitted.
