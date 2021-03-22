@@ -252,8 +252,9 @@ Lemma erase_reveal_acc :
     reveal_acc u σ = (v, θ) →
     trans Γ (SIRTT.subst0 σ u) = trans Γ (SIRTT.subst0 θ v).
 Proof.
+  fix aux 2.
   intros Γ u v σ θ e.
-  induction u in Γ, v, σ, θ, e |- *.
+  destruct u.
   all: try solve [ cbn in e ; inversion e ; reflexivity ].
   - destruct l.
     + cbn. cbn in e. inversion e. subst. clear e. cbn. reflexivity.
@@ -261,9 +262,11 @@ Proof.
       all: try solve [ inversion e ; reflexivity ].
       destruct l.
       all: try solve [ inversion e ; reflexivity ].
-      (* Wrong induction hyp! *)
-      (* cbn in IHu1. cbn. eapply IHu1. *)
-      admit.
+      cbn.
+      (* The index should not always be 0... Maybe we have to extend Γ
+        somehow? Or use #|σ| or something? *)
+      eapply aux in e.
+      give_up.
     + cbn in e. destruct u1.
       all: try solve [ inversion e ; reflexivity ].
       destruct l.
@@ -271,8 +274,7 @@ Proof.
       admit.
   - cbn in e. destruct u.
     all: try solve [ inversion e ; reflexivity ].
-    cbn.
-    (* Again wrong induction hyp. *)
+    cbn. eapply aux. auto.
 Abort.
 
 Lemma erase_reveal :
