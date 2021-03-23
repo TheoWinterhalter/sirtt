@@ -238,12 +238,20 @@ Abort. *)
   | _ => []
   end. *)
 
-Fixpoint reveal_scope t :=
+(* Fixpoint reveal_scope t :=
   match t with
   | SIRTT.lam l A t => l :: reveal_scope t
   | SIRTT.app l u v => reveal_scope u
   | SIRTT.wit t => reveal_scope t
   | SIRTT.ex t h => reveal_scope t
+  | _ => []
+  end. *)
+
+Fixpoint reveal_scope t :=
+  match t with
+  | SIRTT.app Level.I (SIRTT.lam Level.I A t) u => Level.I :: reveal_scope t
+  | SIRTT.app Level.S (SIRTT.lam Level.S A t) u => Level.S :: reveal_scope t
+  | SIRTT.wit (ex t p) => reveal_scope t
   | _ => []
   end.
 
@@ -255,12 +263,23 @@ Lemma reveal_scope_sound :
     SIRTT.scoping (reveal_scope t ++ Γ) ℓ u.
 Proof.
   intros Γ ℓ t u σ h er.
-  dependent induction h.
+  induction h in u, σ, er |- *.
   all: try solve [
     cbn in * ; inversion er ; subst ; econstructor ; eauto
   ].
-  - cbn in *. inversion er. subst. constructor.
-    (* It would seem that reveal_scope is off *)
+  - cbn in *. destruct ℓ'.
+    + inversion er. subst. cbn. econstructor. all: eauto.
+    + destruct u0.
+      all: try solve [
+        cbn in * ; inversion er ; subst ; econstructor ; eauto
+      ].
+      destruct l.
+      all: try solve [
+        cbn in * ; inversion er ; subst ; econstructor ; eauto
+      ].
+      cbn in *.
+      (* Lemma needs to be more general, maybe not worth the effort *)
+      give_up.
 Abort.
 
 (* TODO MOVE *)
