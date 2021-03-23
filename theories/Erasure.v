@@ -288,6 +288,32 @@ Lemma subst_empty :
     SIRTT.subst [] k u = u.
 Admitted.
 
+Lemma erase_reveal_acc' :
+  ∀ Γ u v σ θ,
+    reveal_acc u σ = (v, θ) →
+    trans Γ u = trans (reveal_scope u ++ Γ) v.
+Proof.
+  fix aux 2.
+  intros Γ u v σ θ e.
+  destruct u.
+  all: try solve [ cbn in e ; inversion e ; reflexivity ].
+  - cbn in *. destruct l.
+    + cbn. inversion e. subst. reflexivity.
+    + destruct u1.
+      all: try solve [ cbn in e ; inversion e ; reflexivity ].
+      destruct l.
+      all: try solve [ cbn in e ; inversion e ; reflexivity ].
+      cbn.
+      eapply aux in e as h. erewrite h.
+      (* reveal_scope is again wrong
+        In fact I don't any of these guys to be fast, so I should not have
+        accumulators and stuff.
+      *)
+      give_up.
+    (* +
+  - *)
+Abort.
+
 Lemma erase_reveal_acc :
   ∀ Γ u v σ θ,
     reveal_acc u σ = (v, θ) →
