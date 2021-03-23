@@ -247,41 +247,89 @@ Fixpoint reveal_scope t :=
   | _ => []
   end.
 
+(* TODO MOVE *)
+Lemma subst_empty :
+  ∀ k u,
+    SIRTT.subst [] k u = u.
+Admitted.
+
 Lemma erase_reveal_acc :
   ∀ Γ u v σ θ,
     reveal_acc u σ = (v, θ) →
-    trans Γ (SIRTT.subst0 σ u) = trans Γ (SIRTT.subst0 θ v).
+    ∑ τ,
+      trans Γ u = trans Γ (SIRTT.subst0 τ v) ×
+      θ = τ ++ σ.
 Proof.
   fix aux 2.
   intros Γ u v σ θ e.
   destruct u.
-  all: try solve [ cbn in e ; inversion e ; reflexivity ].
+  all: try solve [
+    cbn in e ; inversion e ;
+    exists [] ; rewrite ?subst_empty ; intuition reflexivity
+  ].
   - destruct l.
-    + cbn. cbn in e. inversion e. subst. clear e. cbn. reflexivity.
+    + cbn. cbn in e. inversion e. subst. clear e. cbn.
+      exists []. rewrite ?subst_empty. intuition reflexivity.
     + cbn in e. destruct u1.
-      all: try solve [ inversion e ; reflexivity ].
+      all: try solve [
+        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
+      ].
       destruct l.
-      all: try solve [ inversion e ; reflexivity ].
+      all: try solve [
+        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
+      ].
       cbn.
-      (* The index should not always be 0... Maybe we have to extend Γ
-        somehow? Or use #|σ| or something? *)
-      eapply aux in e.
+      eapply aux in e as h. destruct h as [τ [e1 e2]].
+      eexists (τ ++ [ _ ]). split.
+      2:{ rewrite <- app_assoc. exact e2. }
+      erewrite e1.
+
+      (* Maybe reveal returns rev of the subst, so we need to rev again. *)
+
+      (* Don't know how to deal with the changing scope... *)
+      (*
+From MetaCoq that could apply
+
+Lemma subst_app_decomp l l' k t :
+  subst (l ++ l') k t = subst l' k (subst (List.map (lift0 (length l')) l) k t).
+
+Lemma subst_app_simpl l l' k t :
+  subst (l ++ l') k t = subst l k (subst l' (k + length l) t).
+
+
+
+      *)
+
+
+
       give_up.
     + cbn in e. destruct u1.
-      all: try solve [ inversion e ; reflexivity ].
+      all: try solve [
+        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
+      ].
       destruct l.
-      all: try solve [ inversion e ; reflexivity ].
+      all: try solve [
+        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
+      ].
       admit.
   - cbn in e. destruct u.
-    all: try solve [ inversion e ; reflexivity ].
+    all: try solve [
+      inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
+    ].
     cbn. eapply aux. auto.
-Abort.
+Admitted.
 
 Lemma erase_reveal :
   ∀ Γ u v σ,
     reveal u = (v, σ) →
     trans Γ u = trans Γ (SIRTT.subst0 σ v).
-Admitted.
+Proof.
+  intros Γ u v σ e.
+  unfold reveal in e. eapply erase_reveal_acc in e.
+  destruct e as [τ [e1 e2]].
+  rewrite app_nil_r in e2. rewrite e2.
+  eapply e1.
+Qed.
 
 (* Lemma erase_topred_term :
   ∀ Γ u v σ,
