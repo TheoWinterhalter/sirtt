@@ -247,6 +247,22 @@ Fixpoint reveal_scope t :=
   | _ => []
   end.
 
+(* Not sure it's useful, but might be a sanity check *)
+Lemma reveal_scope_sound :
+  ∀ Γ ℓ t u σ,
+    SIRTT.scoping Γ ℓ t →
+    reveal t = (u, σ) →
+    SIRTT.scoping (reveal_scope t ++ Γ) ℓ u.
+Proof.
+  intros Γ ℓ t u σ h er.
+  dependent induction h.
+  all: try solve [
+    cbn in * ; inversion er ; subst ; econstructor ; eauto
+  ].
+  - cbn in *. inversion er. subst. constructor.
+    (* It would seem that reveal_scope is off *)
+Abort.
+
 (* TODO MOVE *)
 Lemma subst_empty :
   ∀ k u,
