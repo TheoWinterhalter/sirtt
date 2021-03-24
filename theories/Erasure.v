@@ -288,20 +288,44 @@ Proof.
     eexists. intuition eauto.
 Qed.
 
-(* Probably need to know the original scope and to also filter with a mask
-  the substitution.
-*)
+Inductive scoping_subst Γ : SIRTT.scope → list SIRTT.term → Type :=
+| scoping_subst_cons :
+    ∀ ℓ Δ u σ,
+      SIRTT.scoping Γ ℓ u →
+      scoping_subst Γ Δ σ →
+      scoping_subst Γ (ℓ :: Δ) (u :: σ)
+
+| scoping_subst_nil :
+    scoping_subst Γ [] [].
+
+Lemma scoping_subst_nth_error :
+  ∀ Γ Δ σ n ℓ u,
+    scoping_subst Γ Δ σ →
+    nth_error Δ n = Some ℓ →
+    nth_error σ n = Some u →
+    SIRTT.scoping Γ ℓ u.
+Proof.
+  intros Γ Δ σ n ℓ u h eΔ eσ.
+  induction h in n, ℓ, u, eΔ, eσ |- *.
+  2:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in eΔ, eσ. inversion eΔ. inversion eσ. subst. clear eΔ eσ.
+    auto.
+  - cbn in eΔ, eσ. eapply IHh. all: eauto.
+Qed.
+
 Lemma erase_subst :
   ∀ Γ Δ Ξ σ t θ,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
+    scoping_subst Γ Δ σ →
     trans_subst Γ Δ σ = Some θ →
     trans (Ξ ++ Γ) (SIRTT.subst σ #|Ξ| t) =
     MLTT.subst θ #|scope_trans Ξ| (trans (Ξ ++ Δ ++ Γ) t).
 Proof.
-  intros Γ Δ Ξ σ t θ h hσ.
-  remember (Ξ ++ Δ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ σ θ hσ eΘ.
+  intros Γ Δ Ξ σ t θ h sσ hσ.
+  remember (Ξ ++ Δ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ σ θ sσ hσ eΘ.
   dependent induction h.
-  all: intros Θ Δ Ξ σ θ hσ eΘ.
+  all: intros Θ Δ Ξ σ θ sσ hσ eΘ.
   - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
     + rewrite firstn_app. rewrite firstn_all2 by lia.
       rewrite scope_trans_app. rewrite app_length.
@@ -325,8 +349,7 @@ Proof.
         rewrite firstn_O. rewrite app_nil_r.
         rewrite h2.
         apply erase_lift0.
-        (* Is there any way of knowing u is well-scoped? *)
-        admit.
+        eapply scoping_subst_nth_error in sσ. all: eauto.
       * rewrite nth_error_app2 in e. 2: auto.
         destruct (nth_error σ _) eqn:e1.
         1:{
