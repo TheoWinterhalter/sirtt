@@ -521,6 +521,34 @@ Proof.
     eapply aux. auto.
 Qed.
 
+Lemma scoping_subst_nth_error_reveal :
+  ∀ Γ t n ℓ u,
+    SIRTT.scoping Γ Level.R t →
+    let Δ := reveal_scope t in
+    let σ := π₂ (reveal t) in
+    nth_error Δ n = Some ℓ →
+    nth_error σ n = Some u →
+    SIRTT.scoping Γ ℓ u.
+Proof.
+  cbn.
+  fix aux 2.
+  intros Γ t n ℓ u h eΔ eσ.
+  destruct t.
+  all: try solve [ destruct n ; discriminate ].
+  - cbn in *. destruct l.
+    + destruct n. all: discriminate.
+    + destruct t1. all: try solve [ destruct n ; discriminate ].
+      destruct l. all: try solve [ destruct n ; discriminate ].
+      cbn in *.
+      (* Somehow this is wrong, this would suggest that
+        even when applied scoping_subst_nth_error is not the right thing.
+        Like we shouldn't have n in both cases, one of the lists should
+        be reversed.
+      *)
+    (* +
+  - *)
+Abort.
+
 Lemma scoping_subst_reveal :
   ∀ Γ t,
     SIRTT.scoping Γ Level.R t →
