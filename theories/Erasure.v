@@ -441,32 +441,33 @@ Proof.
 Qed.
 
 (* Not sure it's useful, but might be a sanity check *)
-(* Lemma reveal_scope_sound :
-  ∀ Γ ℓ t u σ,
+Lemma reveal_scope_sound :
+  ∀ Γ ℓ t,
     SIRTT.scoping Γ ℓ t →
-    reveal t = (u, σ) →
+    let '(u, σ) := reveal t in
     SIRTT.scoping (reveal_scope t ++ Γ) ℓ u.
 Proof.
-  intros Γ ℓ t u σ h er.
-  induction h in u, σ, er |- *.
-  all: try solve [
-    cbn in * ; inversion er ; subst ; econstructor ; eauto
-  ].
-  - cbn in *. destruct ℓ'.
-    + inversion er. subst. cbn. econstructor. all: eauto.
-    + destruct u0.
-      all: try solve [
-        cbn in * ; inversion er ; subst ; econstructor ; eauto
-      ].
-      destruct l.
-      all: try solve [
-        cbn in * ; inversion er ; subst ; econstructor ; eauto
-      ].
-      cbn in *. inversion er. subst. clear er.
-      specialize IHh1 with (1 := eq_refl).
-      (* Probably need to do a fixpoint again *)
-      give_up.
-Abort. *)
+  fix aux 3.
+  intros Γ ℓ t h.
+  destruct t. all: try assumption.
+  - cbn. destruct l.
+    + cbn. assumption.
+    + destruct t1. all: try assumption.
+      destruct l. all: try assumption.
+      scope_inv h hs. destruct hs as [hs _].
+      scope_inv hs hs'. destruct hs' as [_ hs'].
+      eapply aux in hs'.
+      rewrite <- app_assoc. auto.
+    + destruct t1. all: try assumption.
+      destruct l. all: try assumption.
+      scope_inv h hs. destruct hs as [hs _].
+      scope_inv hs hs'. destruct hs' as [_ hs'].
+      eapply aux in hs'.
+      rewrite <- app_assoc. auto.
+  - cbn. destruct t. all: try assumption.
+    scope_inv h hs. scope_inv hs h'. destruct h' as [h' _].
+    eapply aux. auto.
+Qed.
 
 Lemma erase_reveal :
   ∀ Γ u,
