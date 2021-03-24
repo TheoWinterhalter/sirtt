@@ -328,9 +328,52 @@ Proof.
         (* Is there any way of knowing u is well-scoped? *)
         admit.
       * rewrite nth_error_app2 in e. 2: auto.
-        (* Similar *)
-        admit.
-    + admit.
+        destruct (nth_error σ _) eqn:e1.
+        1:{
+          eapply nth_error_Some_length in e1.
+          eapply trans_subst_length_left in hσ.
+          lia.
+        }
+        destruct (nth_error θ _) eqn:e2.
+        1:{
+          eapply nth_error_Some_length in e2.
+          eapply trans_subst_length_right in hσ.
+          rewrite firstn_app in e2.
+          rewrite firstn_all2 in e2. 2: lia.
+          rewrite scope_trans_app in e2. rewrite app_length in e2.
+          lia.
+        }
+        cbn. f_equal.
+        rewrite firstn_app.
+        rewrite firstn_all2.
+        2:{ eapply trans_subst_length_left in hσ. lia. }
+        rewrite scope_trans_app. rewrite app_length.
+        rewrite firstn_app. rewrite scope_trans_app. rewrite app_length.
+        rewrite (firstn_all2 Δ). 2: lia.
+        replace (n - #|σ| - #|Ξ|) with (n - #|Ξ| - #|Δ|).
+        2:{ eapply trans_subst_length_left in hσ. lia. }
+        eapply trans_subst_length_right in hσ. lia.
+    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      lazymatch goal with
+      | |- context [ if ?u <=? ?v then _ else _ ] =>
+        destruct (PeanoNat.Nat.leb_spec u v)
+      end.
+      1:{
+        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
+        { pose proof (scope_trans_firstn_length Ξ n). lia. }
+        clear H0.
+        rewrite nth_error_app1 in e. 2: lia.
+        apply nth_error_Some_split in e as h.
+        apply (f_equal scope_trans) in h.
+        rewrite scope_trans_app in h. cbn - [skipn] in h.
+        rewrite h in el.
+        rewrite app_length in el. cbn - [skipn] in el. lia.
+      }
+      cbn. f_equal.
+      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      reflexivity.
 Admitted.
 
 (* Need to figure out how to translate substitutions properly *)
