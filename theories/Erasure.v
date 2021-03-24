@@ -557,6 +557,28 @@ Proof.
     eapply aux. auto.
 Abort.
 
+Lemma trans_subst_reveal :
+  ∀ Γ t,
+    trans_subst Γ (reveal_scope t) (π₂ (reveal t)) = Some [].
+Proof.
+  fix aux 2.
+  intros Γ t.
+  destruct t.
+  all: try reflexivity.
+  - cbn. destruct l.
+    + reflexivity.
+    + destruct t1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      (* Seems to be a similar problem to the above.
+        Why did it let me prove substitution?
+      *)
+      give_up.
+    + give_up.
+  - cbn. destruct t. all: try reflexivity.
+    eapply aux.
+Abort.
+
 Lemma erase_reveal_subst :
   ∀ Γ u,
     SIRTT.scoping Γ Level.R u →
