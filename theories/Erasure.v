@@ -428,8 +428,20 @@ Proof.
     subst. reflexivity.
 Qed.
 
+Corollary erase_subst0 :
+  ∀ Γ Δ σ t θ,
+    SIRTT.scoping (Δ ++ Γ) Level.R t →
+    scoping_subst Γ Δ σ →
+    trans_subst Γ Δ σ = Some θ →
+    trans Γ (SIRTT.subst0 σ t) =
+    MLTT.subst0 θ (trans (Δ ++ Γ) t).
+Proof.
+  intros Γ Δ σ t θ h sσ hσ.
+  eapply erase_subst with (Ξ := []). all: eauto.
+Qed.
+
 (* Not sure it's useful, but might be a sanity check *)
-Lemma reveal_scope_sound :
+(* Lemma reveal_scope_sound :
   ∀ Γ ℓ t u σ,
     SIRTT.scoping Γ ℓ t →
     reveal t = (u, σ) →
@@ -454,12 +466,53 @@ Proof.
       specialize IHh1 with (1 := eq_refl).
       (* Probably need to do a fixpoint again *)
       give_up.
-Abort.
+Abort. *)
+
+(* TODO MOVE *)
+(* Lemma subst_empty :
+  ∀ k u,
+    SIRTT.subst [] k u = u.
+Admitted. *)
 
 (* TODO MOVE *)
 Lemma subst_empty :
   ∀ k u,
-    SIRTT.subst [] k u = u.
+    MLTT.subst [] k u = u.
+Admitted.
+
+Lemma erase_reveal :
+  ∀ Γ u,
+    let '(v, σ) := reveal u in
+    trans Γ u = trans (reveal_scope u ++ Γ) v.
+Proof.
+  fix aux 2.
+  intros Γ u.
+  destruct u.
+  all: try reflexivity.
+  - cbn. destruct l.
+    + reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
+  - cbn. destruct u. all: try reflexivity.
+    cbn. apply aux.
+Qed.
+
+Lemma erase_reveal_subst :
+  ∀ Γ u,
+    let '(v, σ) := reveal u in
+    trans Γ u = trans Γ (SIRTT.subst0 σ v).
+Proof.
+  intros Γ u. cbn.
+  rewrite erase_reveal.
+  (* Maybe a special case where θ will be empty? *)
+  erewrite erase_subst0. 1: rewrite subst_empty. 1: reflexivity.
+  - admit.
+  - admit.
+  - admit.
 Admitted.
 
 (* TODO: Can we prove it from erase_reveal, combined with the info
@@ -467,7 +520,7 @@ Admitted.
   Might be proven at the same time as the substitution lemma,
   so maybe focus on that first.
 *)
-Lemma erase_reveal_subst :
+(* Lemma erase_reveal_subst :
   ∀ Γ u,
     let '(v, σ) := reveal u in
     trans Γ u = trans Γ (SIRTT.subst0 σ v).
@@ -497,28 +550,7 @@ Proof.
     all: try solve [ rewrite ?subst_empty ; reflexivity ].
     cbn. apply aux.
     Guarded.
-Admitted.
-
-Lemma erase_reveal :
-  ∀ Γ u,
-    let '(v, σ) := reveal u in
-    trans Γ u = trans (reveal_scope u ++ Γ) v.
-Proof.
-  fix aux 2.
-  intros Γ u.
-  destruct u.
-  all: try reflexivity.
-  - cbn. destruct l.
-    + reflexivity.
-    + destruct u1. all: try reflexivity.
-      destruct l. all: try reflexivity.
-      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
-    + destruct u1. all: try reflexivity.
-      destruct l. all: try reflexivity.
-      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
-  - cbn. destruct u. all: try reflexivity.
-    cbn. apply aux.
-Qed.
+Admitted. *)
 
 Lemma erase_red :
   ∀ Γ u v,
