@@ -326,6 +326,11 @@ Proof.
   remember (Ξ ++ Δ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ σ θ sσ hσ eΘ.
   dependent induction h.
   all: intros Θ Δ Ξ σ θ sσ hσ eΘ.
+  all: try solve [
+    subst ;
+    cbn ; erewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by eauto ;
+    reflexivity
+  ].
   - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
     + rewrite firstn_app. rewrite firstn_all2 by lia.
       rewrite scope_trans_app. rewrite app_length.
@@ -397,33 +402,31 @@ Proof.
       rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
       rewrite firstn_O. rewrite app_nil_r.
       reflexivity.
-Admitted.
-
-(* Need to figure out how to translate substitutions properly *)
-(* Lemma erase_subst :
-  ∀ σ k t,
-    trans Γ (SIRTT.subst σ k t) = MLTT.subst (map trans σ) k (trans Γ t).
-Proof.
-  intros σ k t.
-  induction t in σ, k |- *.
-  - cbn. destruct (PeanoNat.Nat.leb_spec k n).
-    + rewrite nth_error_map. destruct nth_error eqn:e.
-      * cbn. admit.
-      * cbn. rewrite map_length. reflexivity.
-    + reflexivity.
-  - destruct l.
-    + cbn. rewrite ?IHt1, ?IHt2. reflexivity.
-    (* + cbn. rewrite ?IHt1, ?IHt2. reflexivity.
-    + *)
-    (* The translation of variables is most likely wrong.
-      It is much more complicated because we remove binders.
-      The translation operation should probably take (at least) an integer
-      to offset things. But it basically has to do strengthening which is not
-      that easy… It feels like it should take a list of the forgotten variables.
-      This is not so great, an alternative would be welcome.
-      It could also just be the scope (R,I,S,...)
-    *)
-Abort. *)
+  - subst. cbn. destruct ℓ'.
+    + cbn. erewrite ?IHh1, ?IHh2 by eauto.
+      f_equal. specialize IHh2 with (Ξ0 := Level.R :: Ξ). cbn in IHh2.
+      erewrite IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.I :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+  - subst. cbn. destruct ℓ'.
+    all: try solve [
+      cbn ; erewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by eauto ;
+      reflexivity
+    ].
+  - subst. cbn. destruct ℓ'.
+    + erewrite IHh1 by eauto. cbn. f_equal.
+      specialize IHh2 with (Ξ0 := Level.R :: Ξ). cbn in IHh2.
+      erewrite IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+  - subst. eapply IHh. all: eauto.
+    inversion p. 1:{ subst. inversion H. }
+    subst. reflexivity.
+Qed.
 
 (* Not sure it's useful, but might be a sanity check *)
 Lemma reveal_scope_sound :
