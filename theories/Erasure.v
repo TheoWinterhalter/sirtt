@@ -501,56 +501,51 @@ Proof.
     cbn. apply aux.
 Qed.
 
+Lemma scoping_reveal :
+  ∀ Γ t,
+    SIRTT.scoping Γ Level.R t →
+    SIRTT.scoping (reveal_scope t ++ Γ) Level.R (π₁ (reveal t)).
+Proof.
+  fix aux 2.
+  intros Γ t h.
+  destruct t.
+  all: try solve [ assumption ].
+  - cbn. destruct l.
+    + assumption.
+    + destruct t1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn.
+      scope_inv h h'. destruct h' as [h1 h2].
+      scope_inv h1 h'. destruct h' as [? hh].
+      eapply aux in hh.
+      rewrite <- app_assoc. auto.
+    + destruct t1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn.
+      scope_inv h h'. destruct h' as [h1 h2].
+      scope_inv h1 h'. destruct h' as [? hh].
+      eapply aux in hh.
+      rewrite <- app_assoc. auto.
+  - cbn. destruct t. all: try assumption.
+    scope_inv h h'. scope_inv h' h''.
+    destruct h'' as [? ?].
+    eapply aux. auto.
+Qed.
+
 Lemma erase_reveal_subst :
   ∀ Γ u,
+    SIRTT.scoping Γ Level.R u →
     let '(v, σ) := reveal u in
     trans Γ u = trans Γ (SIRTT.subst0 σ v).
 Proof.
-  intros Γ u. cbn.
+  intros Γ u h. cbn.
   rewrite erase_reveal.
   (* Maybe a special case where θ will be empty? *)
   erewrite erase_subst0. 1: rewrite subst_empty. 1: reflexivity.
-  - admit.
+  - eapply scoping_reveal. auto.
   - admit.
   - admit.
 Admitted.
-
-(* TODO: Can we prove it from erase_reveal, combined with the info
-  that the reveal_scope is never R so the substitution goes away with trans.
-  Might be proven at the same time as the substitution lemma,
-  so maybe focus on that first.
-*)
-(* Lemma erase_reveal_subst :
-  ∀ Γ u,
-    let '(v, σ) := reveal u in
-    trans Γ u = trans Γ (SIRTT.subst0 σ v).
-Proof.
-  fix aux 2.
-  intros Γ u.
-  destruct u.
-  all: try solve [
-    cbn - [SIRTT.subst0] ; rewrite ?subst_empty ; reflexivity
-  ].
-  - cbn - [SIRTT.subst0]. destruct l.
-    + cbn. rewrite !subst_empty. reflexivity.
-    + destruct u1.
-      all: try solve [ rewrite ?subst_empty ; reflexivity ].
-      destruct l.
-      all: try solve [ rewrite ?subst_empty ; reflexivity ].
-      cbn. cbn in aux. rewrite aux.
-      (* Still a mismatch between scopes. *)
-      (* Now I think it's really just a matter of trans + subst
-        so we probably will have to let go of this proof and have
-        erase_reveal_subst as a corollary of erase_reveal and the trans_subst
-        theorem.
-      *)
-      give_up.
-    + give_up.
-  - cbn - [SIRTT.subst0]. destruct u.
-    all: try solve [ rewrite ?subst_empty ; reflexivity ].
-    cbn. apply aux.
-    Guarded.
-Admitted. *)
 
 Lemma erase_red :
   ∀ Γ u v,
@@ -576,10 +571,16 @@ Proof.
     admit.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
-  - cbn. rewrite (erase_reveal_subst _ t). rewrite e. cbn.
+  - cbn. rewrite (erase_reveal_subst _ t).
+    2:{ scope_inv hs hs'. intuition auto. }
+    rewrite e. cbn.
     constructor.
-  - cbn. rewrite (erase_reveal_subst _ t). rewrite e0. cbn.
+  - cbn. rewrite (erase_reveal_subst _ t).
+    2:{ scope_inv hs hs'. intuition auto. }
+    rewrite e0. cbn.
     constructor.
-  - cbn. rewrite (erase_reveal_subst _ t). rewrite e0. cbn.
+  - cbn. rewrite (erase_reveal_subst _ t).
+    2:{ scope_inv hs hs'. intuition auto. }
+    rewrite e0. cbn.
     constructor.
 Admitted.
