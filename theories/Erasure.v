@@ -201,6 +201,16 @@ Proof.
     + auto.
 Qed.
 
+Corollary erase_lift0 :
+  ∀ Γ Δ t,
+    SIRTT.scoping Γ Level.R t →
+    trans (Δ ++ Γ) (SIRTT.lift0 #|Δ| t) =
+    MLTT.lift0 #|scope_trans Δ| (trans Γ t).
+Proof.
+  intros Γ Δ t h.
+  eapply erase_lift with (Ξ := []). auto.
+Qed.
+
 Fixpoint trans_subst Γ (Δ : SIRTT.scope) σ :=
   match Δ, σ with
   | Level.R :: Δ, u :: σ =>
@@ -245,6 +255,39 @@ Proof.
   - cbn in e. cbn. f_equal. eapply ih. eauto.
 Qed.
 
+Lemma trans_subst_nth_error_R :
+  ∀ Γ Δ σ θ n,
+    trans_subst Γ Δ σ = Some θ →
+    nth_error Δ n = Some Level.R →
+    ∑ u,
+      nth_error σ n = Some u ×
+      nth_error θ #| scope_trans (firstn n Δ) | = Some (trans Γ u).
+Proof.
+  intros Γ Δ σ θ n hσ hn.
+  induction Δ as [| [] Δ ih] in σ, θ, n, hσ, hn |- *.
+  all: destruct σ ; try discriminate.
+  - destruct n. all: discriminate.
+  - cbn in hσ. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion hσ. subst. clear hσ.
+    destruct n.
+    + clear hn. cbn.
+      eexists. intuition auto.
+    + cbn in hn.
+      eapply ih in hn. 2: eauto.
+      destruct hn as [u [h1 h2]].
+      cbn. eexists. intuition eauto.
+  - cbn in hσ. destruct n. 1: discriminate.
+    cbn in hn. cbn.
+    eapply ih in hn. 2: eauto.
+    destruct hn as [u [h1 h2]].
+    eexists. intuition eauto.
+  - cbn in hσ. destruct n. 1: discriminate.
+    cbn in hn. cbn.
+    eapply ih in hn. 2: eauto.
+    destruct hn as [u [h1 h2]].
+    eexists. intuition eauto.
+Qed.
+
 (* Probably need to know the original scope and to also filter with a mask
   the substitution.
 *)
@@ -274,9 +317,15 @@ Proof.
       rewrite nth_error_app2 in e. 2: auto.
       destruct (PeanoNat.Nat.ltb_spec (n - #|Ξ|) #|Δ|) as [h|h].
       * rewrite nth_error_app1 in e. 2: auto.
-        (* Now need some lemma to turn nth_error in the context
-          to someting in σ and θ using hσ.
-        *)
+        eapply trans_subst_nth_error_R in hσ as hh. 2: eauto.
+        destruct hh as [u [h1 h2]].
+        rewrite h1.
+        eapply nth_error_Some_length in e as el.
+        rewrite firstn_app. replace (n - #|Ξ| - #|Δ|) with 0 by lia.
+        rewrite firstn_O. rewrite app_nil_r.
+        rewrite h2.
+        apply erase_lift0.
+        (* Is there any way of knowing u is well-scoped? *)
         admit.
       * rewrite nth_error_app2 in e. 2: auto.
         (* Similar *)
