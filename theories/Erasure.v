@@ -201,130 +201,386 @@ Proof.
     + auto.
 Qed.
 
-(* Need to figure out how to translate substitutions properly *)
-(* Lemma erase_subst :
-  ∀ σ k t,
-    trans Γ (SIRTT.subst σ k t) = MLTT.subst (map trans σ) k (trans Γ t).
+Corollary erase_lift0 :
+  ∀ Γ Δ t,
+    SIRTT.scoping Γ Level.R t →
+    trans (Δ ++ Γ) (SIRTT.lift0 #|Δ| t) =
+    MLTT.lift0 #|scope_trans Δ| (trans Γ t).
 Proof.
-  intros σ k t.
-  induction t in σ, k |- *.
-  - cbn. destruct (PeanoNat.Nat.leb_spec k n).
-    + rewrite nth_error_map. destruct nth_error eqn:e.
-      * cbn. admit.
-      * cbn. rewrite map_length. reflexivity.
-    + reflexivity.
-  - destruct l.
-    + cbn. rewrite ?IHt1, ?IHt2. reflexivity.
-    (* + cbn. rewrite ?IHt1, ?IHt2. reflexivity.
-    + *)
-    (* The translation of variables is most likely wrong.
-      It is much more complicated because we remove binders.
-      The translation operation should probably take (at least) an integer
-      to offset things. But it basically has to do strengthening which is not
-      that easy… It feels like it should take a list of the forgotten variables.
-      This is not so great, an alternative would be welcome.
-      It could also just be the scope (R,I,S,...)
-    *)
-Abort. *)
+  intros Γ Δ t h.
+  eapply erase_lift with (Ξ := []). auto.
+Qed.
 
-(* USED TO BE *)
-(* It might still be better if we instead have a reveal function
-  rather than this relation.
-*)
-(* Fixpoint erase_toplevel_scope t :=
-  match t with
-  | SIRTT.lam l A t => [ l ]
-  | SIRTT.app l u v => erase_toplevel_scope u
-  | _ => []
-  end. *)
-
-Fixpoint erase_toplevel_scope t :=
-  match t with
-  | SIRTT.lam l A t => l :: erase_toplevel_scope t
-  | SIRTT.app l u v => erase_toplevel_scope u
-  | SIRTT.wit t => erase_toplevel_scope t
-  | SIRTT.ex t h => erase_toplevel_scope t
-  | _ => []
+Fixpoint trans_subst Γ (Δ : SIRTT.scope) σ :=
+  match Δ, σ with
+  | Level.R :: Δ, u :: σ =>
+    match trans_subst Γ Δ σ with
+    | Some θ => Some (trans Γ u :: θ)
+    | None => None
+    end
+  | ℓ :: Δ, u :: σ => trans_subst Γ Δ σ
+  | [], [] => Some []
+  | _, _ => None
   end.
 
-Lemma erase_topred_term :
-  ∀ Γ u v σ,
-    u ▹ v | σ →
-    trans Γ u = trans (firstn #|σ| (erase_toplevel_scope u) ++ Γ) v.
+Lemma trans_subst_length_left :
+  ∀ Γ Δ σ θ,
+    trans_subst Γ Δ σ = Some θ →
+    #|Δ| = #|σ|.
 Proof.
-  intros Γ u v σ h.
-  induction h.
-  all: reflexivity.
-Qed.
-
-Lemma topred_erase_toplevel_scope :
-  ∀ u v σ,
-    u ▹ v | σ →
-    skipn #|σ| (erase_toplevel_scope u) = erase_toplevel_scope v.
-Proof.
-  intros u v σ h.
-  induction h.
-  all: reflexivity.
-Qed.
-
-(* TODO MOVE *)
-Lemma skipn_skipn :
-  ∀ A (l : list A) n m,
-    skipn (m + n) l = skipn n (skipn m l).
-Proof.
-  intros A l n m.
-  induction m in n, l |- *.
+  intros Γ Δ σ θ e.
+  induction Δ as [| [] Δ ih] in σ, θ, e |- *.
+  all: destruct σ ; try discriminate.
   - reflexivity.
-  - simpl. destruct l.
-    + destruct n. all: reflexivity.
-    + apply IHm.
+  - cbn in e. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion e.
+    cbn. f_equal. eapply ih. eassumption.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
 Qed.
 
-(* TODO MOVE *)
-Lemma firstn_add :
-  ∀ A (l : list A) n m,
-    firstn (n + m) l = firstn n l ++ firstn m (skipn n l).
+Lemma trans_subst_length_right :
+  ∀ Γ Δ σ θ,
+    trans_subst Γ Δ σ = Some θ →
+    #|scope_trans Δ| = #|θ|.
 Proof.
-  intros A l n m.
-  induction n in m, l |- *. 1: reflexivity.
-  simpl. destruct l.
-  - rewrite firstn_nil. reflexivity.
-  - simpl. f_equal. apply IHn.
+  intros Γ Δ σ θ e.
+  induction Δ as [| [] Δ ih] in σ, θ, e |- *.
+  all: destruct σ ; try discriminate.
+  - cbn in e. inversion e. reflexivity.
+  - cbn in e. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion e.
+    cbn. f_equal. eapply ih. eassumption.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
 Qed.
 
-Lemma topreds_erase_toplevel_scope :
-  ∀ u v σ,
-    u ▹* v | σ →
-    skipn #|σ| (erase_toplevel_scope u) = erase_toplevel_scope v.
+Lemma trans_subst_nth_error_R :
+  ∀ Γ Δ σ θ n,
+    trans_subst Γ Δ σ = Some θ →
+    nth_error Δ n = Some Level.R →
+    ∑ u,
+      nth_error σ n = Some u ×
+      nth_error θ #| scope_trans (firstn n Δ) | = Some (trans Γ u).
 Proof.
-  intros u v σ h.
-  induction h.
-  - simpl. reflexivity.
-  - apply topred_erase_toplevel_scope. auto.
-  - rewrite <- IHh2. rewrite <- IHh1.
-    rewrite app_length. rewrite PeanoNat.Nat.add_comm. apply skipn_skipn.
+  intros Γ Δ σ θ n hσ hn.
+  induction Δ as [| [] Δ ih] in σ, θ, n, hσ, hn |- *.
+  all: destruct σ ; try discriminate.
+  - destruct n. all: discriminate.
+  - cbn in hσ. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion hσ. subst. clear hσ.
+    destruct n.
+    + clear hn. cbn.
+      eexists. intuition auto.
+    + cbn in hn.
+      eapply ih in hn. 2: eauto.
+      destruct hn as [u [h1 h2]].
+      cbn. eexists. intuition eauto.
+  - cbn in hσ. destruct n. 1: discriminate.
+    cbn in hn. cbn.
+    eapply ih in hn. 2: eauto.
+    destruct hn as [u [h1 h2]].
+    eexists. intuition eauto.
+  - cbn in hσ. destruct n. 1: discriminate.
+    cbn in hn. cbn.
+    eapply ih in hn. 2: eauto.
+    destruct hn as [u [h1 h2]].
+    eexists. intuition eauto.
 Qed.
 
-Lemma erase_topreds_term :
-  ∀ Γ u v σ,
-    u ▹* v | σ →
-    trans Γ u = trans (firstn #|σ| (erase_toplevel_scope u) ++ Γ) v.
+Inductive scoping_subst Γ : SIRTT.scope → list SIRTT.term → Type :=
+| scoping_subst_cons :
+    ∀ ℓ Δ u σ,
+      SIRTT.scoping Γ ℓ u →
+      scoping_subst Γ Δ σ →
+      scoping_subst Γ (ℓ :: Δ) (u :: σ)
+
+| scoping_subst_nil :
+    scoping_subst Γ [] [].
+
+Lemma scoping_subst_nth_error :
+  ∀ Γ Δ σ n ℓ u,
+    scoping_subst Γ Δ σ →
+    nth_error Δ n = Some ℓ →
+    nth_error σ n = Some u →
+    SIRTT.scoping Γ ℓ u.
 Proof.
-  intros Γ u v σ h.
-  induction h in Γ |- *.
-  - cbn. reflexivity.
-  - eapply erase_topred_term. auto.
-  - rewrite IHh1. rewrite IHh2. f_equal.
-    eapply topreds_erase_toplevel_scope in h1 as e.
-    rewrite app_assoc. f_equal.
-    rewrite <- e. clear.
-    rewrite app_length.
-    rewrite PeanoNat.Nat.add_comm.
-    rewrite firstn_add.
-    (* Almost, but not equal?? *)
-    (* Still possible I lead the proof wrong. *)
-    (* Might be better to have reveal as a function. *)
+  intros Γ Δ σ n ℓ u h eΔ eσ.
+  induction h in n, ℓ, u, eΔ, eσ |- *.
+  2:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in eΔ, eσ. inversion eΔ. inversion eσ. subst. clear eΔ eσ.
+    auto.
+  - cbn in eΔ, eσ. eapply IHh. all: eauto.
+Qed.
+
+Lemma erase_subst :
+  ∀ Γ Δ Ξ σ t θ,
+    SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
+    scoping_subst Γ Δ σ →
+    trans_subst Γ Δ σ = Some θ →
+    trans (Ξ ++ Γ) (SIRTT.subst σ #|Ξ| t) =
+    MLTT.subst θ #|scope_trans Ξ| (trans (Ξ ++ Δ ++ Γ) t).
+Proof.
+  intros Γ Δ Ξ σ t θ h sσ hσ.
+  remember (Ξ ++ Δ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ σ θ sσ hσ eΘ.
+  dependent induction h.
+  all: intros Θ Δ Ξ σ θ sσ hσ eΘ.
+  all: try solve [
+    subst ;
+    cbn ; erewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by eauto ;
+    reflexivity
+  ].
+  - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+    + rewrite firstn_app. rewrite firstn_all2 by lia.
+      rewrite scope_trans_app. rewrite app_length.
+      lazymatch goal with
+      | |- context [ ?x <=? ?y ] =>
+        destruct (PeanoNat.Nat.leb_spec x y)
+      end.
+      2: lia.
+      lazymatch goal with
+      | |- context [ ?x + ?y - ?x ] =>
+        replace (x + y - x) with y by lia
+      end.
+      rewrite nth_error_app2 in e. 2: auto.
+      destruct (PeanoNat.Nat.ltb_spec (n - #|Ξ|) #|Δ|) as [h|h].
+      * rewrite nth_error_app1 in e. 2: auto.
+        eapply trans_subst_nth_error_R in hσ as hh. 2: eauto.
+        destruct hh as [u [h1 h2]].
+        rewrite h1.
+        eapply nth_error_Some_length in e as el.
+        rewrite firstn_app. replace (n - #|Ξ| - #|Δ|) with 0 by lia.
+        rewrite firstn_O. rewrite app_nil_r.
+        rewrite h2.
+        apply erase_lift0.
+        eapply scoping_subst_nth_error in sσ. all: eauto.
+      * rewrite nth_error_app2 in e. 2: auto.
+        destruct (nth_error σ _) eqn:e1.
+        1:{
+          eapply nth_error_Some_length in e1.
+          eapply trans_subst_length_left in hσ.
+          lia.
+        }
+        destruct (nth_error θ _) eqn:e2.
+        1:{
+          eapply nth_error_Some_length in e2.
+          eapply trans_subst_length_right in hσ.
+          rewrite firstn_app in e2.
+          rewrite firstn_all2 in e2. 2: lia.
+          rewrite scope_trans_app in e2. rewrite app_length in e2.
+          lia.
+        }
+        cbn. f_equal.
+        rewrite firstn_app.
+        rewrite firstn_all2.
+        2:{ eapply trans_subst_length_left in hσ. lia. }
+        rewrite scope_trans_app. rewrite app_length.
+        rewrite firstn_app. rewrite scope_trans_app. rewrite app_length.
+        rewrite (firstn_all2 Δ). 2: lia.
+        replace (n - #|σ| - #|Ξ|) with (n - #|Ξ| - #|Δ|).
+        2:{ eapply trans_subst_length_left in hσ. lia. }
+        eapply trans_subst_length_right in hσ. lia.
+    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      lazymatch goal with
+      | |- context [ if ?u <=? ?v then _ else _ ] =>
+        destruct (PeanoNat.Nat.leb_spec u v)
+      end.
+      1:{
+        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
+        { pose proof (scope_trans_firstn_length Ξ n). lia. }
+        clear H0.
+        rewrite nth_error_app1 in e. 2: lia.
+        apply nth_error_Some_split in e as h.
+        apply (f_equal scope_trans) in h.
+        rewrite scope_trans_app in h. cbn - [skipn] in h.
+        rewrite h in el.
+        rewrite app_length in el. cbn - [skipn] in el. lia.
+      }
+      cbn. f_equal.
+      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      reflexivity.
+  - subst. cbn. destruct ℓ'.
+    + cbn. erewrite ?IHh1, ?IHh2 by eauto.
+      f_equal. specialize IHh2 with (Ξ0 := Level.R :: Ξ). cbn in IHh2.
+      erewrite IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.I :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+  - subst. cbn. destruct ℓ'.
+    all: try solve [
+      cbn ; erewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by eauto ;
+      reflexivity
+    ].
+  - subst. cbn. destruct ℓ'.
+    + erewrite IHh1 by eauto. cbn. f_equal.
+      specialize IHh2 with (Ξ0 := Level.R :: Ξ). cbn in IHh2.
+      erewrite IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
+      eapply IHh2. all: eauto.
+  - subst. eapply IHh. all: eauto.
+    inversion p. 1:{ subst. inversion H. }
+    subst. reflexivity.
+Qed.
+
+Corollary erase_subst0 :
+  ∀ Γ Δ σ t θ,
+    SIRTT.scoping (Δ ++ Γ) Level.R t →
+    scoping_subst Γ Δ σ →
+    trans_subst Γ Δ σ = Some θ →
+    trans Γ (SIRTT.subst0 σ t) =
+    MLTT.subst0 θ (trans (Δ ++ Γ) t).
+Proof.
+  intros Γ Δ σ t θ h sσ hσ.
+  eapply erase_subst with (Ξ := []). all: eauto.
+Qed.
+
+(* Not sure it's useful, but might be a sanity check *)
+(* Lemma reveal_scope_sound :
+  ∀ Γ ℓ t u σ,
+    SIRTT.scoping Γ ℓ t →
+    reveal t = (u, σ) →
+    SIRTT.scoping (reveal_scope t ++ Γ) ℓ u.
+Proof.
+  intros Γ ℓ t u σ h er.
+  induction h in u, σ, er |- *.
+  all: try solve [
+    cbn in * ; inversion er ; subst ; econstructor ; eauto
+  ].
+  - cbn in *. destruct ℓ'.
+    + inversion er. subst. cbn. econstructor. all: eauto.
+    + destruct u0.
+      all: try solve [
+        cbn in * ; inversion er ; subst ; econstructor ; eauto
+      ].
+      destruct l.
+      all: try solve [
+        cbn in * ; inversion er ; subst ; econstructor ; eauto
+      ].
+      cbn in *. inversion er. subst. clear er.
+      specialize IHh1 with (1 := eq_refl).
+      (* Probably need to do a fixpoint again *)
+      give_up.
+Abort. *)
+
+Lemma erase_reveal :
+  ∀ Γ u,
+    let '(v, σ) := reveal u in
+    trans Γ u = trans (reveal_scope u ++ Γ) v.
+Proof.
+  fix aux 2.
+  intros Γ u.
+  destruct u.
+  all: try reflexivity.
+  - cbn. destruct l.
+    + reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
+  - cbn. destruct u. all: try reflexivity.
+    cbn. apply aux.
+Qed.
+
+Lemma scoping_reveal :
+  ∀ Γ t,
+    SIRTT.scoping Γ Level.R t →
+    SIRTT.scoping (reveal_scope t ++ Γ) Level.R (π₁ (reveal t)).
+Proof.
+  fix aux 2.
+  intros Γ t h.
+  destruct t.
+  all: try solve [ assumption ].
+  - cbn. destruct l.
+    + assumption.
+    + destruct t1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn.
+      scope_inv h h'. destruct h' as [h1 h2].
+      scope_inv h1 h'. destruct h' as [? hh].
+      eapply aux in hh.
+      rewrite <- app_assoc. auto.
+    + destruct t1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn.
+      scope_inv h h'. destruct h' as [h1 h2].
+      scope_inv h1 h'. destruct h' as [? hh].
+      eapply aux in hh.
+      rewrite <- app_assoc. auto.
+  - cbn. destruct t. all: try assumption.
+    scope_inv h h'. scope_inv h' h''.
+    destruct h'' as [? ?].
+    eapply aux. auto.
+Qed.
+
+Lemma scoping_subst_reveal :
+  ∀ Γ t,
+    SIRTT.scoping Γ Level.R t →
+    scoping_subst Γ (reveal_scope t) (π₂ (reveal t)).
+Proof.
+  fix aux 2.
+  intros Γ t h.
+  destruct t.
+  all: try solve [ constructor ].
+  - cbn. destruct l.
+    + constructor.
+    + destruct t1. all: try solve [ constructor ].
+      destruct l. all: try solve [ constructor ].
+      cbn.
+      scope_inv h h'. destruct h' as [h' ?].
+      scope_inv h' h''. destruct h'' as [? h''].
+      eapply aux in h''.
+      (* Is scoping_subst wrong? *)
+      give_up.
+    + give_up.
+  - cbn. destruct t. all: try solve [ constructor ].
+    scope_inv h h'. scope_inv h' h''. destruct h''.
+    eapply aux. auto.
 Abort.
+
+Lemma trans_subst_reveal :
+  ∀ Γ t,
+    trans_subst Γ (reveal_scope t) (π₂ (reveal t)) = Some [].
+Proof.
+  fix aux 2.
+  intros Γ t.
+  destruct t.
+  all: try reflexivity.
+  - cbn. destruct l.
+    + reflexivity.
+    + destruct t1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      (* Seems to be a similar problem to the above.
+        Why did it let me prove substitution?
+      *)
+      give_up.
+    + give_up.
+  - cbn. destruct t. all: try reflexivity.
+    eapply aux.
+Abort.
+
+Lemma erase_reveal_subst :
+  ∀ Γ u,
+    SIRTT.scoping Γ Level.R u →
+    let '(v, σ) := reveal u in
+    trans Γ u = trans Γ (SIRTT.subst0 σ v).
+Proof.
+  intros Γ u h. cbn.
+  rewrite erase_reveal.
+  (* Maybe a special case where θ will be empty? *)
+  erewrite erase_subst0. 1: rewrite subst_empty. 1: reflexivity.
+  - eapply scoping_reveal. auto.
+  - admit.
+  - admit.
+Admitted.
 
 Lemma erase_red :
   ∀ Γ u v,
@@ -343,11 +599,23 @@ Proof.
     cbn ; try constructor ; apply IHh ;
     scope_inv hs hs' ; intuition auto
   ].
-  - cbn. admit.
-  - cbn.
-    (* eapply erase_topred_term in t0 as h. *)
+  - cbn. rewrite erase_reveal.
+    (* Should we use erase_reval or erase_reveal_subst here? *)
+    rewrite e. cbn.
+    (* Some commutation of trans and subst needed. *)
     admit.
-  - cbn. admit.
-  - cbn. admit.
-  - cbn. admit.
+  - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
+    constructor.
+  - cbn. rewrite (erase_reveal_subst _ t).
+    2:{ scope_inv hs hs'. intuition auto. }
+    rewrite e. cbn.
+    constructor.
+  - cbn. rewrite (erase_reveal_subst _ t).
+    2:{ scope_inv hs hs'. intuition auto. }
+    rewrite e0. cbn.
+    constructor.
+  - cbn. rewrite (erase_reveal_subst _ t).
+    2:{ scope_inv hs hs'. intuition auto. }
+    rewrite e0. cbn.
+    constructor.
 Admitted.

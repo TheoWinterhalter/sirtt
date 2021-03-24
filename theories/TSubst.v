@@ -1,6 +1,6 @@
 (* MLTT Lifting and substitution *)
 
-From Coq Require Import Utf8 List Nat.
+From Coq Require Import Utf8 List Nat Lia.
 Require Import Util TAst.
 
 Import ListNotations.
@@ -62,3 +62,19 @@ Definition subst1 t k u := subst [t] k u.
 Notation subst10 t := (subst1 t 0).
 Notation "M { j := N }" :=
   (subst1 N j M) (at level 10, right associativity) : t_scope.
+
+Lemma subst_empty :
+  ∀ k u,
+    subst [] k u = u.
+Proof.
+  intros k u.
+  induction u in k |- *.
+  all: try solve [
+    cbn ;
+    rewrite ?IHu, ?IHu1, ?IHu2, ?IHu3, ?IHu4, ?IHu5 ;
+    reflexivity
+  ].
+  cbn. destruct (k <=? n).
+  - rewrite nth_error_nil. f_equal. lia.
+  - reflexivity.
+Qed.
