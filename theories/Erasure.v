@@ -201,6 +201,89 @@ Proof.
     + auto.
 Qed.
 
+Fixpoint trans_subst Γ (Δ : SIRTT.scope) σ :=
+  match Δ, σ with
+  | Level.R :: Δ, u :: σ =>
+    match trans_subst Γ Δ σ with
+    | Some θ => Some (trans Γ u :: θ)
+    | None => None
+    end
+  | ℓ :: Δ, u :: σ => trans_subst Γ Δ σ
+  | [], [] => Some []
+  | _, _ => None
+  end.
+
+Lemma trans_subst_length_left :
+  ∀ Γ Δ σ θ,
+    trans_subst Γ Δ σ = Some θ →
+    #|Δ| = #|σ|.
+Proof.
+  intros Γ Δ σ θ e.
+  induction Δ as [| [] Δ ih] in σ, θ, e |- *.
+  all: destruct σ ; try discriminate.
+  - reflexivity.
+  - cbn in e. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion e.
+    cbn. f_equal. eapply ih. eassumption.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
+Qed.
+
+Lemma trans_subst_length_right :
+  ∀ Γ Δ σ θ,
+    trans_subst Γ Δ σ = Some θ →
+    #|scope_trans Δ| = #|θ|.
+Proof.
+  intros Γ Δ σ θ e.
+  induction Δ as [| [] Δ ih] in σ, θ, e |- *.
+  all: destruct σ ; try discriminate.
+  - cbn in e. inversion e. reflexivity.
+  - cbn in e. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion e.
+    cbn. f_equal. eapply ih. eassumption.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
+  - cbn in e. cbn. f_equal. eapply ih. eauto.
+Qed.
+
+(* Probably need to know the original scope and to also filter with a mask
+  the substitution.
+*)
+Lemma erase_subst :
+  ∀ Γ Δ Ξ σ t θ,
+    SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
+    trans_subst Γ Δ σ = Some θ →
+    trans (Ξ ++ Γ) (SIRTT.subst σ #|Ξ| t) =
+    MLTT.subst θ #|scope_trans Ξ| (trans (Ξ ++ Δ ++ Γ) t).
+Proof.
+  intros Γ Δ Ξ σ t θ h hσ.
+  remember (Ξ ++ Δ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ σ θ hσ eΘ.
+  dependent induction h.
+  all: intros Θ Δ Ξ σ θ hσ eΘ.
+  - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+    + rewrite firstn_app. rewrite firstn_all2 by lia.
+      rewrite scope_trans_app. rewrite app_length.
+      lazymatch goal with
+      | |- context [ ?x <=? ?y ] =>
+        destruct (PeanoNat.Nat.leb_spec x y)
+      end.
+      2: lia.
+      lazymatch goal with
+      | |- context [ ?x + ?y - ?x ] =>
+        replace (x + y - x) with y by lia
+      end.
+      rewrite nth_error_app2 in e. 2: auto.
+      destruct (PeanoNat.Nat.ltb_spec (n - #|Ξ|) #|Δ|) as [h|h].
+      * rewrite nth_error_app1 in e. 2: auto.
+        (* Now need some lemma to turn nth_error in the context
+          to someting in σ and θ using hσ.
+        *)
+        admit.
+      * rewrite nth_error_app2 in e. 2: auto.
+        (* Similar *)
+        admit.
+    + admit.
+Admitted.
+
 (* Need to figure out how to translate substitutions properly *)
 (* Lemma erase_subst :
   ∀ σ k t,
@@ -285,6 +368,11 @@ Proof.
       all: try solve [ rewrite ?subst_empty ; reflexivity ].
       cbn. cbn in aux. rewrite aux.
       (* Still a mismatch between scopes. *)
+      (* Now I think it's really just a matter of trans + subst
+        so we probably will have to let go of this proof and have
+        erase_reveal_subst as a corollary of erase_reveal and the trans_subst
+        theorem.
+      *)
       give_up.
     + give_up.
   - cbn - [SIRTT.subst0]. destruct u.
