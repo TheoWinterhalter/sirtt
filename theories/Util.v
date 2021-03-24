@@ -150,3 +150,10 @@ Proof.
   - rewrite firstn_nil. reflexivity.
   - simpl. f_equal. apply IHn.
 Qed.
+
+Lemma nth_error_nil :
+  ∀ A n, @nth_error A [] n = None.
+Proof.
+  intros A n.
+  destruct n. all: reflexivity.
+Qed.

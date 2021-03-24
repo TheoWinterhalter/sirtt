@@ -474,12 +474,6 @@ Abort. *)
     SIRTT.subst [] k u = u.
 Admitted. *)
 
-(* TODO MOVE *)
-Lemma subst_empty :
-  ∀ k u,
-    MLTT.subst [] k u = u.
-Admitted.
-
 Lemma erase_reveal :
   ∀ Γ u,
     let '(v, σ) := reveal u in
