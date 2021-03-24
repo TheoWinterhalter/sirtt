@@ -18,16 +18,36 @@ Open Scope s_scope.
   It's an important trick to have this operation trivially terminating.
 *)
 
-Fixpoint reveal_acc (u : term) (σ : list term) : term × list term :=
+(* Fixpoint reveal_acc (u : term) (σ : list term) : term × list term :=
   match u with
   | app I (lam I A t) u => reveal_acc t (u :: σ)
   | app S (lam S A t) u => reveal_acc t (u :: σ)
   | wit (ex t p) => reveal_acc t σ
   | _ => (u, σ)
+  end. *)
+
+(* Definition reveal u :=
+  reveal_acc u []. *)
+
+Fixpoint reveal u :=
+  match u with
+  | app I (lam I A t) u =>
+    let '(r, σ) := reveal t in
+    (r, u :: σ)
+  | app S (lam S A t) u =>
+    let '(r, σ) := reveal t in
+    (r, u :: σ)
+  | wit (ex t p) => reveal t
+  | _ => (u, [])
   end.
 
-Definition reveal u :=
-  reveal_acc u [].
+Fixpoint reveal_scope t :=
+  match t with
+  | app Level.I (lam Level.I A t) u => reveal_scope t ++ [ Level.I ]
+  | app Level.S (lam Level.S A t) u => reveal_scope t ++ [ Level.S ]
+  | wit (ex t p) => reveal_scope t
+  | _ => []
+  end.
 
 (* Reserved Notation "u ▹ v | σ" (at level 10).
 

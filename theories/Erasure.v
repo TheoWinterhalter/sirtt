@@ -227,34 +227,6 @@ Proof.
     *)
 Abort. *)
 
-(* USED TO BE *)
-(* It might still be better if we instead have a reveal function
-  rather than this relation.
-*)
-(* Fixpoint reveal_scope t :=
-  match t with
-  | SIRTT.lam l A t => [ l ]
-  | SIRTT.app l u v => reveal_scope u
-  | _ => []
-  end. *)
-
-(* Fixpoint reveal_scope t :=
-  match t with
-  | SIRTT.lam l A t => l :: reveal_scope t
-  | SIRTT.app l u v => reveal_scope u
-  | SIRTT.wit t => reveal_scope t
-  | SIRTT.ex t h => reveal_scope t
-  | _ => []
-  end. *)
-
-Fixpoint reveal_scope t :=
-  match t with
-  | SIRTT.app Level.I (SIRTT.lam Level.I A t) u => Level.I :: reveal_scope t
-  | SIRTT.app Level.S (SIRTT.lam Level.S A t) u => Level.S :: reveal_scope t
-  | SIRTT.wit (ex t p) => reveal_scope t
-  | _ => []
-  end.
-
 (* Not sure it's useful, but might be a sanity check *)
 Lemma reveal_scope_sound :
   ∀ Γ ℓ t u σ,
@@ -277,8 +249,9 @@ Proof.
       all: try solve [
         cbn in * ; inversion er ; subst ; econstructor ; eauto
       ].
-      cbn in *.
-      (* Lemma needs to be more general, maybe not worth the effort *)
+      cbn in *. inversion er. subst. clear er.
+      specialize IHh1 with (1 := eq_refl).
+      (* Probably need to do a fixpoint again *)
       give_up.
 Abort.
 
@@ -288,163 +261,58 @@ Lemma subst_empty :
     SIRTT.subst [] k u = u.
 Admitted.
 
-Lemma erase_reveal_acc' :
-  ∀ Γ u v σ θ,
-    reveal_acc u σ = (v, θ) →
-    trans Γ u = trans (reveal_scope u ++ Γ) v.
+(* TODO: Can we prove it from erase_reveal, combined with the info
+  that the reveal_scope is never R so the substitution goes away with trans.
+  Might be proven at the same time as the substitution lemma,
+  so maybe focus on that first.
+*)
+Lemma erase_reveal_subst :
+  ∀ Γ u,
+    let '(v, σ) := reveal u in
+    trans Γ u = trans Γ (SIRTT.subst0 σ v).
 Proof.
   fix aux 2.
-  intros Γ u v σ θ e.
-  destruct u.
-  all: try solve [ cbn in e ; inversion e ; reflexivity ].
-  - cbn in *. destruct l.
-    + cbn. inversion e. subst. reflexivity.
-    + destruct u1.
-      all: try solve [ cbn in e ; inversion e ; reflexivity ].
-      destruct l.
-      all: try solve [ cbn in e ; inversion e ; reflexivity ].
-      cbn.
-      eapply aux in e as h. erewrite h.
-      (* reveal_scope is again wrong
-        In fact I don't any of these guys to be fast, so I should not have
-        accumulators and stuff.
-      *)
-      give_up.
-    (* +
-  - *)
-Abort.
-
-Lemma erase_reveal_acc :
-  ∀ Γ u v σ θ,
-    reveal_acc u σ = (v, θ) →
-    ∑ τ,
-      trans Γ u = trans Γ (SIRTT.subst0 τ v) ×
-      θ = τ ++ σ.
-Proof.
-  fix aux 2.
-  intros Γ u v σ θ e.
+  intros Γ u.
   destruct u.
   all: try solve [
-    cbn in e ; inversion e ;
-    exists [] ; rewrite ?subst_empty ; intuition reflexivity
+    cbn - [SIRTT.subst0] ; rewrite ?subst_empty ; reflexivity
   ].
-  - destruct l.
-    + cbn. cbn in e. inversion e. subst. clear e. cbn.
-      exists []. rewrite ?subst_empty. intuition reflexivity.
-    + cbn in e. destruct u1.
-      all: try solve [
-        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
-      ].
+  - cbn - [SIRTT.subst0]. destruct l.
+    + cbn. rewrite !subst_empty. reflexivity.
+    + destruct u1.
+      all: try solve [ rewrite ?subst_empty ; reflexivity ].
       destruct l.
-      all: try solve [
-        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
-      ].
-      cbn.
-      eapply aux in e as h. destruct h as [τ [e1 e2]].
-      eexists (τ ++ [ _ ]). split.
-      2:{ rewrite <- app_assoc. exact e2. }
-      erewrite e1.
-
-      (* Maybe reveal returns rev of the subst, so we need to rev again. *)
-
-      (* Don't know how to deal with the changing scope... *)
-      (*
-From MetaCoq that could apply
-
-Lemma subst_app_decomp l l' k t :
-  subst (l ++ l') k t = subst l' k (subst (List.map (lift0 (length l')) l) k t).
-
-Lemma subst_app_simpl l l' k t :
-  subst (l ++ l') k t = subst l k (subst l' (k + length l) t).
-
-
-
-      *)
-
-
-
+      all: try solve [ rewrite ?subst_empty ; reflexivity ].
+      cbn. cbn in aux. rewrite aux.
+      (* Still a mismatch between scopes. *)
       give_up.
-    + cbn in e. destruct u1.
-      all: try solve [
-        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
-      ].
-      destruct l.
-      all: try solve [
-        inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
-      ].
-      admit.
-  - cbn in e. destruct u.
-    all: try solve [
-      inversion e ; exists [] ; rewrite ?subst_empty ; intuition reflexivity
-    ].
-    cbn. eapply aux. auto.
+    + give_up.
+  - cbn - [SIRTT.subst0]. destruct u.
+    all: try solve [ rewrite ?subst_empty ; reflexivity ].
+    cbn. apply aux.
+    Guarded.
 Admitted.
 
 Lemma erase_reveal :
-  ∀ Γ u v σ,
-    reveal u = (v, σ) →
-    trans Γ u = trans Γ (SIRTT.subst0 σ v).
+  ∀ Γ u,
+    let '(v, σ) := reveal u in
+    trans Γ u = trans (reveal_scope u ++ Γ) v.
 Proof.
-  intros Γ u v σ e.
-  unfold reveal in e. eapply erase_reveal_acc in e.
-  destruct e as [τ [e1 e2]].
-  rewrite app_nil_r in e2. rewrite e2.
-  eapply e1.
+  fix aux 2.
+  intros Γ u.
+  destruct u.
+  all: try reflexivity.
+  - cbn. destruct l.
+    + reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
+  - cbn. destruct u. all: try reflexivity.
+    cbn. apply aux.
 Qed.
-
-(* Lemma erase_topred_term :
-  ∀ Γ u v σ,
-    u ▹ v | σ →
-    trans Γ u = trans (firstn #|σ| (reveal_scope u) ++ Γ) v.
-Proof.
-  intros Γ u v σ h.
-  induction h.
-  all: reflexivity.
-Qed. *)
-
-(* Lemma topred_reveal_scope :
-  ∀ u v σ,
-    u ▹ v | σ →
-    skipn #|σ| (reveal_scope u) = reveal_scope v.
-Proof.
-  intros u v σ h.
-  induction h.
-  all: reflexivity.
-Qed. *)
-
-(* Lemma topreds_reveal_scope :
-  ∀ u v σ,
-    u ▹* v | σ →
-    skipn #|σ| (reveal_scope u) = reveal_scope v.
-Proof.
-  intros u v σ h.
-  induction h.
-  - simpl. reflexivity.
-  - apply topred_reveal_scope. auto.
-  - rewrite <- IHh2. rewrite <- IHh1.
-    rewrite app_length. rewrite PeanoNat.Nat.add_comm. apply skipn_skipn.
-Qed. *)
-
-(* Lemma erase_topreds_term :
-  ∀ Γ u v σ,
-    u ▹* v | σ →
-    trans Γ u = trans (firstn #|σ| (reveal_scope u) ++ Γ) v.
-Proof.
-  intros Γ u v σ h.
-  induction h in Γ |- *.
-  - cbn. reflexivity.
-  - eapply erase_topred_term. auto.
-  - rewrite IHh1. rewrite IHh2. f_equal.
-    eapply topreds_reveal_scope in h1 as e.
-    rewrite app_assoc. f_equal.
-    rewrite <- e. clear.
-    rewrite app_length.
-    rewrite PeanoNat.Nat.add_comm.
-    rewrite firstn_add.
-    (* Almost, but not equal?? *)
-    (* Still possible I lead the proof wrong. *)
-    (* Might be better to have reveal as a function. *)
-Abort. *)
 
 Lemma erase_red :
   ∀ Γ u v,
@@ -463,20 +331,17 @@ Proof.
     cbn ; try constructor ; apply IHh ;
     scope_inv hs hs' ; intuition auto
   ].
-  - cbn. eapply erase_reveal in e as h.
-    erewrite h. cbn.
-    (* Some commutation is needed. *)
+  - cbn. rewrite erase_reveal.
+    (* Should we use erase_reval or erase_reveal_subst here? *)
+    rewrite e. cbn.
+    (* Some commutation of trans and subst needed. *)
     admit.
-  - cbn. eapply erase_reveal in e as h.
-    erewrite h. cbn.
+  - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
-  - cbn. eapply erase_reveal in e as h.
-    erewrite h. cbn.
+  - cbn. rewrite (erase_reveal_subst _ t). rewrite e. cbn.
     constructor.
-  - cbn. eapply erase_reveal in e0 as h.
-    erewrite h. cbn.
+  - cbn. rewrite (erase_reveal_subst _ t). rewrite e0. cbn.
     constructor.
-  - cbn. eapply erase_reveal in e0 as h.
-    erewrite h. cbn.
+  - cbn. rewrite (erase_reveal_subst _ t). rewrite e0. cbn.
     constructor.
 Admitted.
