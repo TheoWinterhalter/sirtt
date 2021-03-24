@@ -532,6 +532,31 @@ Proof.
     eapply aux. auto.
 Qed.
 
+Lemma scoping_subst_reveal :
+  ∀ Γ t,
+    SIRTT.scoping Γ Level.R t →
+    scoping_subst Γ (reveal_scope t) (π₂ (reveal t)).
+Proof.
+  fix aux 2.
+  intros Γ t h.
+  destruct t.
+  all: try solve [ constructor ].
+  - cbn. destruct l.
+    + constructor.
+    + destruct t1. all: try solve [ constructor ].
+      destruct l. all: try solve [ constructor ].
+      cbn.
+      scope_inv h h'. destruct h' as [h' ?].
+      scope_inv h' h''. destruct h'' as [? h''].
+      eapply aux in h''.
+      (* Is scoping_subst wrong? *)
+      give_up.
+    + give_up.
+  - cbn. destruct t. all: try solve [ constructor ].
+    scope_inv h h'. scope_inv h' h''. destruct h''.
+    eapply aux. auto.
+Abort.
+
 Lemma erase_reveal_subst :
   ∀ Γ u,
     SIRTT.scoping Γ Level.R u →
