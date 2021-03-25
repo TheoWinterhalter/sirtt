@@ -521,33 +521,17 @@ Proof.
     eapply aux. auto.
 Qed.
 
-Lemma scoping_subst_nth_error_reveal :
-  ∀ Γ t n ℓ u,
-    SIRTT.scoping Γ Level.R t →
-    let Δ := reveal_scope t in
-    let σ := π₂ (reveal t) in
-    nth_error Δ n = Some ℓ →
-    nth_error σ n = Some u →
-    SIRTT.scoping Γ ℓ u.
+Lemma scoping_subst_app :
+  ∀ Γ Δ Ξ σ θ,
+    scoping_subst Γ Δ σ →
+    scoping_subst Γ Ξ θ →
+    scoping_subst Γ (Δ ++ Ξ) (σ ++ θ).
 Proof.
-  cbn.
-  fix aux 2.
-  intros Γ t n ℓ u h eΔ eσ.
-  destruct t.
-  all: try solve [ destruct n ; discriminate ].
-  - cbn in *. destruct l.
-    + destruct n. all: discriminate.
-    + destruct t1. all: try solve [ destruct n ; discriminate ].
-      destruct l. all: try solve [ destruct n ; discriminate ].
-      cbn in *.
-      (* Somehow this is wrong, this would suggest that
-        even when applied scoping_subst_nth_error is not the right thing.
-        Like we shouldn't have n in both cases, one of the lists should
-        be reversed.
-      *)
-    (* +
-  - *)
-Abort.
+  intros Γ Δ Ξ σ θ h1 h2.
+  induction h1 in Ξ, θ, h2 |- *.
+  - cbn. constructor. all: eauto.
+  - cbn. auto.
+Qed.
 
 Lemma scoping_subst_reveal :
   ∀ Γ t,
@@ -565,9 +549,12 @@ Proof.
       cbn.
       scope_inv h h'. destruct h' as [h' ?].
       scope_inv h' h''. destruct h'' as [? h''].
-      eapply aux in h''.
-      (* Is scoping_subst wrong? *)
-      give_up.
+      apply scoping_subst_app.
+      * eapply aux.
+        (* Wrong scope? How can this be? *)
+        give_up.
+      * constructor. 2: constructor.
+        assumption.
     + give_up.
   - cbn. destruct t. all: try solve [ constructor ].
     scope_inv h h'. scope_inv h' h''. destruct h''.

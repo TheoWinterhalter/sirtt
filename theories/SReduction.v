@@ -22,10 +22,10 @@ Fixpoint reveal u :=
   match u with
   | app I (lam I A t) u =>
     let '(r, σ) := reveal t in
-    (r, u :: σ)
+    (r, σ ++ [u])
   | app S (lam S A t) u =>
     let '(r, σ) := reveal t in
-    (r, u :: σ)
+    (r, σ ++ [u])
   | wit (ex t p) => reveal t
   | _ => (u, [])
   end.
