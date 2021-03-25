@@ -316,8 +316,8 @@ Qed.
 
 Lemma erase_subst :
   ∀ Γ Δ Ξ σ t θ,
-    SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
-    scoping_subst Γ Δ σ →
+    SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t → (* Unclear it's needed *)
+    scoping_subst Γ Δ σ → (* Could be weakened to only talk about relevant bits *)
     trans_subst Γ Δ σ = Some θ →
     trans (Ξ ++ Γ) (SIRTT.subst σ #|Ξ| t) =
     MLTT.subst θ #|scope_trans Ξ| (trans (Ξ ++ Δ ++ Γ) t).
@@ -533,6 +533,15 @@ Proof.
   - cbn. auto.
 Qed.
 
+(* BIG PROBLEM
+  The reveal substitution is not really a substitution. In a parallel
+  substitution, all terms should live in the same context/scope, but here
+  they are telescoped.
+  We can still keep data as is, as a list of term, but it should be substituted
+  differently, namely using repeated one-term substitutions:
+
+  (λ x, (λ y, f x y) a) b ≈ (f x y){0 := a}{0 := b}
+*)
 Lemma scoping_subst_reveal :
   ∀ Γ t,
     SIRTT.scoping Γ Level.R t →
