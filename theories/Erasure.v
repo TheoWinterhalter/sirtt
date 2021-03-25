@@ -561,6 +561,24 @@ Proof.
     eapply aux. auto.
 Abort.
 
+Lemma trans_subst_app :
+  ∀ Γ Δ₀ Δ₁ σ₀ σ₁ θ₀ θ₁,
+    trans_subst Γ Δ₀ σ₀ = Some θ₀ →
+    trans_subst Γ Δ₁ σ₁ = Some θ₁ →
+    trans_subst Γ (Δ₀ ++ Δ₁) (σ₀ ++ σ₁) = Some (θ₀ ++ θ₁).
+Proof.
+  intros Γ Δ₀ Δ₁ σ₀ σ₁ θ₀ θ₁ h₀ h₁.
+  induction Δ₀ as [| [] Δ₀ ih ] in Δ₁, σ₀, σ₁, θ₀, θ₁, h₀, h₁ |- *.
+  all: destruct σ₀ ; try discriminate.
+  - cbn in h₀. inversion h₀. assumption.
+  - cbn in h₀. destruct trans_subst eqn:e. 2: discriminate.
+    inversion h₀. subst. clear h₀.
+    cbn. erewrite ih. 2,3: eauto.
+    reflexivity.
+  - cbn in h₀. cbn. eapply ih. all: eauto.
+  - cbn in h₀. cbn. eapply ih. all: eauto.
+Qed.
+
 Lemma trans_subst_reveal :
   ∀ Γ t,
     trans_subst Γ (reveal_scope t) (π₂ (reveal t)) = Some [].
@@ -574,14 +592,16 @@ Proof.
     + destruct t1. all: try reflexivity.
       destruct l. all: try reflexivity.
       cbn.
-      (* Seems to be a similar problem to the above.
-        Why did it let me prove substitution?
-      *)
-      give_up.
-    + give_up.
+      erewrite trans_subst_app. 3: reflexivity. 2: eapply aux.
+      reflexivity.
+    + destruct t1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      erewrite trans_subst_app. 3: reflexivity. 2: eapply aux.
+      reflexivity.
   - cbn. destruct t. all: try reflexivity.
     eapply aux.
-Abort.
+Qed.
 
 Lemma erase_reveal_subst :
   ∀ Γ u,
@@ -595,7 +615,7 @@ Proof.
   erewrite erase_subst0. 1: rewrite subst_empty. 1: reflexivity.
   - eapply scoping_reveal. auto.
   - admit.
-  - admit.
+  - eapply trans_subst_reveal.
 Admitted.
 
 Lemma erase_red :
