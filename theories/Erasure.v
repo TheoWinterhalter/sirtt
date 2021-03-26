@@ -797,9 +797,17 @@ Proof.
     eapply (f_equal π₂) in e0 as e'. cbn in e'. rewrite <- e'.
     rewrite erase_reveal_subst.
     3:{ scope_inv hs hs'. intuition auto. }
-    2: admit.
+    2:{
+      scope_inv hs hs'. destruct hs' as [_ [_ [_ [_ [_ h']]]]].
+      eapply scoping_reveal in h'. rewrite e0 in h'.
+      cbn in h'. scope_inv h' h''. intuition auto.
+    }
     rewrite erase_reveal_subst.
     3:{ scope_inv hs hs'. intuition auto. }
-    2: admit.
+    2:{
+      scope_inv hs hs'. destruct hs' as [_ [_ [_ [_ [_ h']]]]].
+      eapply scoping_reveal in h'. rewrite e0 in h'.
+      cbn in h'. scope_inv h' h''. intuition auto.
+    }
     constructor.
 Admitted.
