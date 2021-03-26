@@ -650,6 +650,43 @@ Proof.
     constructor. intuition eauto.
 Qed.
 
+Lemma scoping_reveal_subst_k :
+  ∀ Γ Δ u t,
+    let '(v, σ) := reveal u in
+    SIRTT.scoping Γ Level.R u →
+    SIRTT.scoping (Δ ++ reveal_scope u ++ Γ) Level.R t →
+    SIRTT.scoping (Δ ++ Γ) Level.R (reveal_subst_k σ #|Δ| t).
+Proof.
+  cbn. fix aux 3. intros Γ Δ u t hu ht.
+  destruct u. all: try assumption.
+  - cbn. destruct l.
+    + assumption.
+    + destruct u1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn. cbn in ht.
+      change (?t{?i := ?u})%s with (SIRTT.subst [u] i t).
+      scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
+      scope_inv hs1 hs1'.
+      eapply subst_scoping.
+      2: constructor. 3: constructor. 2: eauto.
+      cbn. eapply aux. 1: intuition eauto.
+      rewrite <- app_assoc in ht. exact ht.
+    + destruct u1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn. cbn in ht.
+      change (?t{?i := ?u})%s with (SIRTT.subst [u] i t).
+      scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
+      scope_inv hs1 hs1'.
+      eapply subst_scoping.
+      2: constructor. 3: constructor. 2: eauto.
+      cbn. eapply aux. 1: intuition eauto.
+      rewrite <- app_assoc in ht. exact ht.
+  - cbn. destruct u. all: try assumption.
+    scope_inv hu hs. scope_inv hs hs'.
+    eapply aux. 1: intuition eauto.
+    cbn in ht. auto.
+Qed.
+
 Lemma scoping_reveal_subst :
   ∀ Γ u t,
     let '(v, σ) := reveal u in
