@@ -440,6 +440,23 @@ Proof.
   eapply erase_subst with (Ξ := []). all: eauto.
 Qed.
 
+Corollary erase_subst10_relevant :
+  ∀ Γ t u,
+    SIRTT.scoping (Level.R :: Γ) Level.R t →
+    SIRTT.scoping Γ Level.R u →
+    trans Γ (t{ 0 := u })%s =
+    (trans (Level.R :: Γ) t){ 0 := trans Γ u }.
+Proof.
+  intros Γ t u ht hu.
+  change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+  change (?t{0 := ?u}) with (MLTT.subst0 [u] t).
+  erewrite erase_subst0 with (Δ := [ _ ]).
+  - reflexivity.
+  - cbn. auto.
+  - constructor. 2: constructor. auto.
+  - cbn. reflexivity.
+Qed.
+
 (* TODO scoping_reveal is a copy? *)
 Lemma reveal_scope_sound :
   ∀ Γ ℓ t,
