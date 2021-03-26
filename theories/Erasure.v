@@ -885,13 +885,11 @@ Proof.
     erewrite erase_subst10_relevant.
     3: auto.
     2:{
-      eapply scoping_reveal_subst in h1 as h'.
-      2: eapply reveal_scope_sound. 2: auto.
-      rewrite e in h'.
-      (* Now, we would need a lemma on reveal_subst_k instead
-        or something to relate the two.
-      *)
-      admit.
+      eapply scoping_reveal_subst_k with (Δ := [ Level.R ]) in h1 as h'.
+      - cbn in h'. rewrite e in h'. eapply h'.
+      - cbn. eapply scoping_reveal in h1 as hh.
+        rewrite e in hh. cbn in hh.
+        scope_inv hh hs'. intuition auto.
     }
     f_equal.
     eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
@@ -933,4 +931,4 @@ Proof.
       cbn in h'. scope_inv h' h''. intuition auto.
     }
     constructor.
-Admitted.
+Qed.
