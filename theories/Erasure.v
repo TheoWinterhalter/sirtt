@@ -687,6 +687,7 @@ Proof.
     cbn in ht. auto.
 Qed.
 
+(* TODO Prove as a corollary? *)
 Lemma scoping_reveal_subst :
   ∀ Γ u t,
     let '(v, σ) := reveal u in
@@ -746,20 +747,34 @@ Proof.
         1: reflexivity.
         -- cbn in ht. rewrite <- app_assoc in ht. auto.
         -- cbn. intuition auto.
-      * cbn. (* eapply scoping_reveal_subst_k. 1: intuition eauto.
-        cbn in ht. rewrite <- app_assoc in ht. auto. *)
-        admit.
+      * cbn. eapply scoping_reveal_subst_k. 1: intuition eauto.
+        cbn in ht. rewrite <- app_assoc in ht. auto.
       * constructor. 2: constructor.
         auto.
       * reflexivity.
-    + admit.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      scope_inv h hs. cbn in hs. destruct hs as [hs ?]. scope_inv hs h'.
+      change (?t{?i := ?u})%s with (SIRTT.subst [u] i t).
+      erewrite erase_subst.
+      * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
+        1: reflexivity.
+        -- cbn in ht. rewrite <- app_assoc in ht. auto.
+        -- cbn. intuition auto.
+      * cbn. eapply scoping_reveal_subst_k. 1: intuition eauto.
+        cbn in ht. rewrite <- app_assoc in ht. auto.
+      * constructor. 2: constructor.
+        auto.
+      * reflexivity.
   - cbn. destruct u. all: try reflexivity.
     scope_inv h hs. scope_inv hs h'.
     apply aux.
     + cbn in ht. auto.
     + intuition auto.
-Admitted.
+Qed.
 
+(* TODO Prove as a corollary? *)
 Lemma erase_reveal_subst :
   ∀ Γ u t,
     SIRTT.scoping (reveal_scope u ++ Γ) Level.R t →
