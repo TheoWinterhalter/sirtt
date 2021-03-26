@@ -551,6 +551,88 @@ Proof.
   - cbn in h₀. cbn. eapply ih. all: eauto.
 Qed.
 
+Lemma scoping_subst_length :
+  ∀ Γ Δ σ,
+    scoping_subst Γ Δ σ →
+    #|σ| = #|Δ|.
+Proof.
+  intros Γ Δ σ h.
+  induction h. all: cbn ; auto.
+Qed.
+
+Lemma subst_scoping :
+  ∀ Γ Δ Ξ ℓ σ t,
+    SIRTT.scoping (Ξ ++ Δ ++ Γ) ℓ t →
+    scoping_subst Γ Δ σ →
+    SIRTT.scoping (Ξ ++ Γ) ℓ (SIRTT.subst σ #|Ξ| t).
+Proof.
+  intros Γ Δ Ξ ℓ σ t ht hσ.
+  induction t in Γ, Δ, Ξ, ℓ, σ, ht, hσ |- *.
+  all: try solve [ simpl ; constructor ].
+  all: try solve [
+    simpl ; scope_inv ht hs ; constructor ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
+    eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
+  ].
+  - cbn. scope_inv ht hs. destruct hs as [ℓ' [hℓ e]].
+    destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
+    + rewrite nth_error_app2 in e. 2: auto.
+      destruct (nth_error σ _) eqn:e1.
+      * admit.
+      * eapply nth_error_None in e1.
+        eapply scoping_subst_length in hσ as eσ.
+        rewrite nth_error_app2 in e. 2: lia.
+        eapply scope_sub. 2: eauto.
+        constructor. rewrite nth_error_app2. 2: lia.
+        rewrite <- e. f_equal. lia.
+    + apply PeanoNat.Nat.nle_gt in h1.
+      rewrite nth_error_app1 in e. 2: auto.
+      eapply scope_sub. 2: eauto.
+      constructor. rewrite nth_error_app1. 2: auto.
+      auto.
+  - simpl. scope_inv ht hs. destruct hs as [e ?]. subst.
+    constructor. intuition eauto.
+Admitted.
+
+Lemma scoping_reveal_subst :
+  ∀ Γ u t,
+    let '(v, σ) := reveal u in
+    SIRTT.scoping Γ Level.R u →
+    SIRTT.scoping (reveal_scope u ++ Γ) Level.R t →
+    SIRTT.scoping Γ Level.R (reveal_subst σ t).
+Proof.
+  cbn. fix aux 2. intros Γ u t hu ht.
+  destruct u. all: try assumption.
+  - cbn. destruct l.
+    + assumption.
+    + destruct u1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn. cbn in ht.
+      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
+      scope_inv hs1 hs1'.
+      eapply subst_scoping with (Ξ := []).
+      2: constructor. 3: constructor. 2: eauto.
+      cbn. eapply aux. 1: intuition eauto.
+      rewrite <- app_assoc in ht. exact ht.
+    + destruct u1. all: try assumption.
+      destruct l. all: try assumption.
+      cbn. cbn in ht.
+      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
+      scope_inv hs1 hs1'.
+      eapply subst_scoping with (Ξ := []).
+      2: constructor. 3: constructor. 2: eauto.
+      cbn. eapply aux. 1: intuition eauto.
+      rewrite <- app_assoc in ht. exact ht.
+  - cbn. destruct u. all: try assumption.
+    scope_inv hu hs. scope_inv hs hs'.
+    eapply aux. 1: intuition eauto.
+    cbn in ht. auto.
+Qed.
+
 Lemma erase_reveal_subst :
   ∀ Γ u t,
     SIRTT.scoping Γ Level.R u →
