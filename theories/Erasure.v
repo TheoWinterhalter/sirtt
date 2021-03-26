@@ -898,7 +898,9 @@ Proof.
     pose proof (erase_reveal_subst_k) as h.
     specialize (h Γ [ Level.R ]). cbn in h.
     symmetry. apply h.
-    + admit.
+    + eapply scoping_reveal in h1 as hh.
+      rewrite e in hh. cbn in hh.
+      scope_inv hh hs'. intuition auto.
     + auto.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
