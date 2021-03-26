@@ -440,7 +440,7 @@ Proof.
   eapply erase_subst with (Ξ := []). all: eauto.
 Qed.
 
-(* Not sure it's useful, but might be a sanity check *)
+(* TODO scoping_reveal is a copy? *)
 Lemma reveal_scope_sound :
   ∀ Γ ℓ t,
     SIRTT.scoping Γ ℓ t →
@@ -490,6 +490,7 @@ Proof.
     cbn. apply aux.
 Qed.
 
+(* TODO Copy of reveal_scope_sound? *)
 Lemma scoping_reveal :
   ∀ Γ t,
     SIRTT.scoping Γ Level.R t →
@@ -767,18 +768,35 @@ Proof.
   ].
   - cbn. rewrite erase_reveal.
     rewrite e. cbn.
-    scope_inv hs h'. destruct h' as [h1 h2].
+    match goal with
+    | |- _ ↦ ?rr =>
+      let T := type of rr in
+      evar (rhs : T) ;
+      replace rr with rhs ; subst rhs
+    end.
+    1: constructor.
+    scope_inv hs h'. cbn in h'. destruct h' as [h1 h2].
     change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+    change (?t{0 := ?u}) with (MLTT.subst0 [u] t).
     erewrite erase_subst0.
     3:{ constructor. 2: constructor. eauto. }
     3:{ cbn. reflexivity. }
-    2: admit.
-    cbn.
+    2:{
+      cbn. eapply scoping_reveal_subst in h1 as h'.
+      2: eapply reveal_scope_sound. 2: auto.
+      rewrite e in h'.
+      (* Sounds very odd! *)
+      admit.
+    }
+    cbn. f_equal.
     eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
-    (* Wrong??? *)
-    (* rewrite erase_reveal_subst. 2: auto. *)
-    (* Some commutation of trans and subst needed. *)
-    admit.
+    rewrite erase_reveal_subst.
+    (* Wrong!! *)
+    (* Even the above is wrong, so it would suggest something unexpected
+      happened, and I should not use erase_subst0 or maybe with different
+      arguments?
+    *)
+    all: give_up.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
