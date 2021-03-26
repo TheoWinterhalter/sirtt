@@ -533,34 +533,6 @@ Proof.
   - cbn. auto.
 Qed.
 
-(* Lemma scoping_subst_reveal :
-  ∀ Γ t,
-    SIRTT.scoping Γ Level.R t →
-    scoping_subst Γ (reveal_scope t) (π₂ (reveal t)).
-Proof.
-  fix aux 2.
-  intros Γ t h.
-  destruct t.
-  all: try solve [ constructor ].
-  - cbn. destruct l.
-    + constructor.
-    + destruct t1. all: try solve [ constructor ].
-      destruct l. all: try solve [ constructor ].
-      cbn.
-      scope_inv h h'. destruct h' as [h' ?].
-      scope_inv h' h''. destruct h'' as [? h''].
-      apply scoping_subst_app.
-      * eapply aux.
-        (* Wrong scope? How can this be? *)
-        give_up.
-      * constructor. 2: constructor.
-        assumption.
-    + give_up.
-  - cbn. destruct t. all: try solve [ constructor ].
-    scope_inv h h'. scope_inv h' h''. destruct h''.
-    eapply aux. auto.
-Abort. *)
-
 Lemma trans_subst_app :
   ∀ Γ Δ₀ Δ₁ σ₀ σ₁ θ₀ θ₁,
     trans_subst Γ Δ₀ σ₀ = Some θ₀ →
@@ -579,31 +551,36 @@ Proof.
   - cbn in h₀. cbn. eapply ih. all: eauto.
 Qed.
 
-(* Lemma trans_subst_reveal :
-  ∀ Γ t,
-    trans_subst Γ (reveal_scope t) (π₂ (reveal t)) = Some [].
+Lemma erase_reveal_subst :
+  ∀ Γ u t,
+    SIRTT.scoping Γ Level.R u →
+    let '(v, σ) := reveal u in
+    trans Γ (reveal_subst σ t) = trans (reveal_scope u ++ Γ) t.
 Proof.
-  fix aux 2.
-  intros Γ t.
-  destruct t.
-  all: try reflexivity.
+  cbn. fix aux 2. intros Γ u t h.
+  destruct u. all: try reflexivity.
   - cbn. destruct l.
     + reflexivity.
-    + destruct t1. all: try reflexivity.
+    + destruct u1. all: try reflexivity.
       destruct l. all: try reflexivity.
       cbn.
-      erewrite trans_subst_app. 3: reflexivity. 2: eapply aux.
-      reflexivity.
-    + destruct t1. all: try reflexivity.
-      destruct l. all: try reflexivity.
-      cbn.
-      erewrite trans_subst_app. 3: reflexivity. 2: eapply aux.
-      reflexivity.
-  - cbn. destruct t. all: try reflexivity.
-    eapply aux.
-Qed. *)
+      scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
+      change (?t{0 := u2})%s with (SIRTT.subst0 [u2] t).
+      erewrite erase_subst0.
+      * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
+        1: reflexivity.
+        cbn. intuition auto.
+      * cbn. (* eapply scoping_reveal. *) admit.
+      * constructor. 2: constructor.
+        auto.
+      * reflexivity.
+    + admit.
+  - cbn. destruct u. all: try reflexivity.
+    scope_inv h hs. scope_inv hs h'.
+    apply aux. intuition auto.
+Admitted.
 
-Lemma erase_reveal_subst :
+(* Lemma erase_reveal_subst :
   ∀ Γ u,
     SIRTT.scoping Γ Level.R u →
     let '(v, σ) := reveal u in
@@ -632,7 +609,7 @@ Proof.
   - simpl. destruct u. all: try reflexivity.
     scope_inv h hs. scope_inv hs h'.
     apply aux. intuition auto.
-Admitted.
+Admitted. *)
 
 Lemma erase_red :
   ∀ Γ u v,
@@ -652,29 +629,23 @@ Proof.
     scope_inv hs hs' ; intuition auto
   ].
   - cbn. rewrite erase_reveal.
-    (* Should we use erase_reval or erase_reveal_subst here? *)
     rewrite e. cbn.
     (* Some commutation of trans and subst needed. *)
     admit.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
-    (* erewrite <- erase_reveal_subst. *)
-    admit.
-
-
-    (* rewrite (erase_reveal_subst _ t).
+    eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
+    rewrite erase_reveal_subst.
     2:{ scope_inv hs hs'. intuition auto. }
-    rewrite e. cbn.
-    constructor. *)
-  - (* cbn. rewrite (erase_reveal_subst _ t).
+    constructor.
+  - cbn. rewrite (erase_reveal _ t). rewrite e0. cbn.
+    constructor.
+  - cbn. rewrite (erase_reveal _ t). rewrite e0. cbn.
+    eapply (f_equal π₂) in e0 as e'. cbn in e'. rewrite <- e'.
+    rewrite erase_reveal_subst.
     2:{ scope_inv hs hs'. intuition auto. }
-    rewrite e0. cbn.
-    constructor. *)
-    admit.
-  - (* cbn. rewrite (erase_reveal_subst _ t).
+    rewrite erase_reveal_subst.
     2:{ scope_inv hs hs'. intuition auto. }
-    rewrite e0. cbn.
-    constructor. *)
-    admit.
+    constructor.
 Admitted.
