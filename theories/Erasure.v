@@ -671,11 +671,12 @@ Qed.
 
 Lemma erase_reveal_subst :
   ∀ Γ u t,
+    SIRTT.scoping (reveal_scope u ++ Γ) Level.R t →
     SIRTT.scoping Γ Level.R u →
     let '(v, σ) := reveal u in
     trans Γ (reveal_subst σ t) = trans (reveal_scope u ++ Γ) t.
 Proof.
-  cbn. fix aux 2. intros Γ u t h.
+  cbn. fix aux 2. intros Γ u t ht h.
   destruct u. all: try reflexivity.
   - cbn. destruct l.
     + reflexivity.
@@ -687,16 +688,34 @@ Proof.
       erewrite erase_subst0.
       * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
         1: reflexivity.
-        cbn. intuition auto.
-      * cbn. (* eapply scoping_reveal. *) admit.
+        -- cbn in ht. rewrite app_assoc. auto.
+        -- cbn. intuition auto.
+      * cbn. eapply scoping_reveal_subst. 1: intuition eauto.
+        cbn in ht. rewrite <- app_assoc in ht. auto.
       * constructor. 2: constructor.
         auto.
       * reflexivity.
-    + admit.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
+      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      erewrite erase_subst0.
+      * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
+        1: reflexivity.
+        -- cbn in ht. rewrite app_assoc. auto.
+        -- cbn. intuition auto.
+      * cbn. eapply scoping_reveal_subst. 1: intuition eauto.
+        cbn in ht. rewrite <- app_assoc in ht. auto.
+      * constructor. 2: constructor.
+        auto.
+      * reflexivity.
   - cbn. destruct u. all: try reflexivity.
     scope_inv h hs. scope_inv hs h'.
-    apply aux. intuition auto.
-Admitted.
+    apply aux.
+    + cbn in ht. auto.
+    + intuition auto.
+Qed.
 
 (* Lemma erase_reveal_subst :
   ∀ Γ u,
@@ -765,15 +784,22 @@ Proof.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
     rewrite erase_reveal_subst.
-    2:{ scope_inv hs hs'. intuition auto. }
+    3:{ scope_inv hs hs'. intuition auto. }
+    2:{
+      scope_inv hs hs'. destruct hs' as [_ [_ [_ h']]].
+      eapply scoping_reveal in h'. rewrite e in h'.
+      cbn in h'. scope_inv h' h''. auto.
+    }
     constructor.
   - cbn. rewrite (erase_reveal _ t). rewrite e0. cbn.
     constructor.
   - cbn. rewrite (erase_reveal _ t). rewrite e0. cbn.
     eapply (f_equal π₂) in e0 as e'. cbn in e'. rewrite <- e'.
     rewrite erase_reveal_subst.
-    2:{ scope_inv hs hs'. intuition auto. }
+    3:{ scope_inv hs hs'. intuition auto. }
+    2: admit.
     rewrite erase_reveal_subst.
-    2:{ scope_inv hs hs'. intuition auto. }
+    3:{ scope_inv hs hs'. intuition auto. }
+    2: admit.
     constructor.
 Admitted.
