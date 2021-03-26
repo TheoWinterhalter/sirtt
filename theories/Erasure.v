@@ -533,16 +533,7 @@ Proof.
   - cbn. auto.
 Qed.
 
-(* BIG PROBLEM
-  The reveal substitution is not really a substitution. In a parallel
-  substitution, all terms should live in the same context/scope, but here
-  they are telescoped.
-  We can still keep data as is, as a list of term, but it should be substituted
-  differently, namely using repeated one-term substitutions:
-
-  (λ x, (λ y, f x y) a) b ≈ (f x y){0 := a}{0 := b}
-*)
-Lemma scoping_subst_reveal :
+(* Lemma scoping_subst_reveal :
   ∀ Γ t,
     SIRTT.scoping Γ Level.R t →
     scoping_subst Γ (reveal_scope t) (π₂ (reveal t)).
@@ -568,7 +559,7 @@ Proof.
   - cbn. destruct t. all: try solve [ constructor ].
     scope_inv h h'. scope_inv h' h''. destruct h''.
     eapply aux. auto.
-Abort.
+Abort. *)
 
 Lemma trans_subst_app :
   ∀ Γ Δ₀ Δ₁ σ₀ σ₁ θ₀ θ₁,
@@ -588,7 +579,7 @@ Proof.
   - cbn in h₀. cbn. eapply ih. all: eauto.
 Qed.
 
-Lemma trans_subst_reveal :
+(* Lemma trans_subst_reveal :
   ∀ Γ t,
     trans_subst Γ (reveal_scope t) (π₂ (reveal t)) = Some [].
 Proof.
@@ -610,21 +601,37 @@ Proof.
       reflexivity.
   - cbn. destruct t. all: try reflexivity.
     eapply aux.
-Qed.
+Qed. *)
 
 Lemma erase_reveal_subst :
   ∀ Γ u,
     SIRTT.scoping Γ Level.R u →
     let '(v, σ) := reveal u in
-    trans Γ u = trans Γ (SIRTT.subst0 σ v).
+    trans Γ u = trans Γ (reveal_subst σ v).
 Proof.
   intros Γ u h. cbn.
   rewrite erase_reveal.
-  (* Maybe a special case where θ will be empty? *)
-  erewrite erase_subst0. 1: rewrite subst_empty. 1: reflexivity.
-  - eapply scoping_reveal. auto.
-  - admit.
-  - eapply trans_subst_reveal.
+  revert Γ u h. fix aux 2. intros Γ u h.
+  destruct u. all: try reflexivity.
+  - simpl. destruct l.
+    + reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
+      change (?t{0 := u2})%s with (SIRTT.subst0 [u2] t).
+      erewrite erase_subst0.
+      * rewrite subst_empty. rewrite <- app_assoc. rewrite aux.
+        1: reflexivity.
+        cbn. intuition auto.
+      * cbn. (* eapply scoping_reveal. *) admit.
+      * constructor. 2: constructor.
+        auto.
+      * reflexivity.
+    + admit.
+  - simpl. destruct u. all: try reflexivity.
+    scope_inv h hs. scope_inv hs h'.
+    apply aux. intuition auto.
 Admitted.
 
 Lemma erase_red :
@@ -651,16 +658,23 @@ Proof.
     admit.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
-  - cbn. rewrite (erase_reveal_subst _ t).
+  - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
+    (* erewrite <- erase_reveal_subst. *)
+    admit.
+
+
+    (* rewrite (erase_reveal_subst _ t).
     2:{ scope_inv hs hs'. intuition auto. }
     rewrite e. cbn.
-    constructor.
-  - cbn. rewrite (erase_reveal_subst _ t).
+    constructor. *)
+  - (* cbn. rewrite (erase_reveal_subst _ t).
     2:{ scope_inv hs hs'. intuition auto. }
     rewrite e0. cbn.
-    constructor.
-  - cbn. rewrite (erase_reveal_subst _ t).
+    constructor. *)
+    admit.
+  - (* cbn. rewrite (erase_reveal_subst _ t).
     2:{ scope_inv hs hs'. intuition auto. }
     rewrite e0. cbn.
-    constructor.
+    constructor. *)
+    admit.
 Admitted.

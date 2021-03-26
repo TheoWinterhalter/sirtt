@@ -22,10 +22,10 @@ Fixpoint reveal u :=
   match u with
   | app I (lam I A t) u =>
     let '(r, σ) := reveal t in
-    (r, σ ++ [u])
+    (r, u :: σ)
   | app S (lam S A t) u =>
     let '(r, σ) := reveal t in
-    (r, σ ++ [u])
+    (r, u :: σ)
   | wit (ex t p) => reveal t
   | _ => (u, [])
   end.
@@ -36,6 +36,17 @@ Fixpoint reveal_scope t :=
   | app Level.S (lam Level.S A t) u => reveal_scope t ++ [ Level.S ]
   | wit (ex t p) => reveal_scope t
   | _ => []
+  end.
+
+(**
+  The substitution we define with reveal is not a substitution per se because
+  its components typically live in different scopes.
+  We thus define a special operation for it.
+*)
+Fixpoint reveal_subst σ t :=
+  match σ with
+  | u :: σ => (reveal_subst σ t){ 0 := u }
+  | [] => t
   end.
 
 (* We can now define proper reduction ↦ *)
@@ -49,9 +60,8 @@ Inductive red : term → term → Type :=
 (* Computation rules *)
 | beta :
     ∀ v u A t σ,
-      (* v ▹* lam R A t | σ → *)
       reveal v = (lam R A t, σ) →
-      (app R v u) ↦ ((subst σ 0 t){ 0 := u })
+      (app R v u) ↦ ((reveal_subst σ t){ 0 := u })
 
 | elim_nat_zero :
     ∀ P z s t σ,
@@ -61,27 +71,24 @@ Inductive red : term → term → Type :=
 
 | elim_nat_succ :
     ∀ P z s t n σ,
-      (* t ▹* succ n | σ → *)
       reveal t = (succ n, σ) →
       (elim_nat P z s t) ↦
-      (appsR s [ subst σ 0 n ; elim_nat P z s (subst σ 0 n) ])
+      (appsR s [ reveal_subst σ n ; elim_nat P z s (reveal_subst σ n) ])
 
 | elim_vec_vnil :
     ∀ A P e c n t B σ,
-      (* t ▹* vnil B | σ → *)
       reveal t = (vnil B, σ) →
       (elim_vec A P e c n t) ↦ e
 
 | elim_vec_vcons :
     ∀ A P e c n t B a m v σ,
-      (* t ▹* vcons B a m v | σ → *)
       reveal t = (vcons B a m v, σ) →
       (elim_vec A P e c n t) ↦
       (apps c [
-        (R, subst σ 0 a) ;
-        (I, subst σ 0 m) ;
-        (R, subst σ 0 v) ;
-        (R, elim_vec A P e c (subst σ 0 m) (subst σ 0 v))
+        (R, reveal_subst σ a) ;
+        (I, reveal_subst σ m) ;
+        (R, reveal_subst σ v) ;
+        (R, elim_vec A P e c (reveal_subst σ m) (reveal_subst σ v))
       ])
 
 (* Congruence rules *)
