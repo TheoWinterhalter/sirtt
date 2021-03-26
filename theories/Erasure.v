@@ -565,7 +565,7 @@ Proof.
       destruct l. all: try reflexivity.
       cbn.
       scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
-      change (?t{0 := u2})%s with (SIRTT.subst0 [u2] t).
+      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
       erewrite erase_subst0.
       * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
         1: reflexivity.
@@ -630,6 +630,16 @@ Proof.
   ].
   - cbn. rewrite erase_reveal.
     rewrite e. cbn.
+    scope_inv hs h'. destruct h' as [h1 h2].
+    change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+    erewrite erase_subst0.
+    3:{ constructor. 2: constructor. eauto. }
+    3:{ cbn. reflexivity. }
+    2: admit.
+    cbn.
+    eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
+    (* Wrong??? *)
+    (* rewrite erase_reveal_subst. 2: auto. *)
     (* Some commutation of trans and subst needed. *)
     admit.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
