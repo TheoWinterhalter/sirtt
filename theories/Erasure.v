@@ -687,8 +687,6 @@ Proof.
     cbn in ht. auto.
 Qed.
 
-(* TODO Prove as a corollary? *)
-(* Easy, as soon as I prove reveal_subst_k 0 =1 reveal_subst *)
 Lemma scoping_reveal_subst :
   ∀ Γ u t,
     let '(v, σ) := reveal u in
@@ -696,34 +694,9 @@ Lemma scoping_reveal_subst :
     SIRTT.scoping (reveal_scope u ++ Γ) Level.R t →
     SIRTT.scoping Γ Level.R (reveal_subst σ t).
 Proof.
-  cbn. fix aux 2. intros Γ u t hu ht.
-  destruct u. all: try assumption.
-  - cbn. destruct l.
-    + assumption.
-    + destruct u1. all: try assumption.
-      destruct l. all: try assumption.
-      cbn. cbn in ht.
-      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
-      scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
-      scope_inv hs1 hs1'.
-      eapply subst_scoping with (Ξ := []).
-      2: constructor. 3: constructor. 2: eauto.
-      cbn. eapply aux. 1: intuition eauto.
-      rewrite <- app_assoc in ht. exact ht.
-    + destruct u1. all: try assumption.
-      destruct l. all: try assumption.
-      cbn. cbn in ht.
-      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
-      scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
-      scope_inv hs1 hs1'.
-      eapply subst_scoping with (Ξ := []).
-      2: constructor. 3: constructor. 2: eauto.
-      cbn. eapply aux. 1: intuition eauto.
-      rewrite <- app_assoc in ht. exact ht.
-  - cbn. destruct u. all: try assumption.
-    scope_inv hu hs. scope_inv hs hs'.
-    eapply aux. 1: intuition eauto.
-    cbn in ht. auto.
+  cbn. intros Γ u t hu ht.
+  rewrite reveal_subst_0. eapply scoping_reveal_subst_k with (Δ := []).
+  all: auto.
 Qed.
 
 Lemma erase_reveal_subst_k :
@@ -775,53 +748,16 @@ Proof.
     + intuition auto.
 Qed.
 
-(* TODO Prove as a corollary? *)
-Lemma erase_reveal_subst :
+Corollary erase_reveal_subst :
   ∀ Γ u t,
     SIRTT.scoping (reveal_scope u ++ Γ) Level.R t →
     SIRTT.scoping Γ Level.R u →
     let '(v, σ) := reveal u in
     trans Γ (reveal_subst σ t) = trans (reveal_scope u ++ Γ) t.
 Proof.
-  cbn. fix aux 2. intros Γ u t ht h.
-  destruct u. all: try reflexivity.
-  - cbn. destruct l.
-    + reflexivity.
-    + destruct u1. all: try reflexivity.
-      destruct l. all: try reflexivity.
-      cbn.
-      scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
-      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
-      erewrite erase_subst0.
-      * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
-        1: reflexivity.
-        -- cbn in ht. rewrite app_assoc. auto.
-        -- cbn. intuition auto.
-      * cbn. eapply scoping_reveal_subst. 1: intuition eauto.
-        cbn in ht. rewrite <- app_assoc in ht. auto.
-      * constructor. 2: constructor.
-        auto.
-      * reflexivity.
-    + destruct u1. all: try reflexivity.
-      destruct l. all: try reflexivity.
-      cbn.
-      scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
-      change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
-      erewrite erase_subst0.
-      * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
-        1: reflexivity.
-        -- cbn in ht. rewrite app_assoc. auto.
-        -- cbn. intuition auto.
-      * cbn. eapply scoping_reveal_subst. 1: intuition eauto.
-        cbn in ht. rewrite <- app_assoc in ht. auto.
-      * constructor. 2: constructor.
-        auto.
-      * reflexivity.
-  - cbn. destruct u. all: try reflexivity.
-    scope_inv h hs. scope_inv hs h'.
-    apply aux.
-    + cbn in ht. auto.
-    + intuition auto.
+  cbn. intros Γ u t ht h.
+  rewrite reveal_subst_0. eapply erase_reveal_subst_k with (Δ := []).
+  all: auto.
 Qed.
 
 Lemma erase_red :

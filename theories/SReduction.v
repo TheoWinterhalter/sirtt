@@ -55,6 +55,16 @@ Fixpoint reveal_subst_k σ i t :=
   | [] => t
   end.
 
+Lemma reveal_subst_0 :
+  ∀ σ t,
+    reveal_subst σ t = reveal_subst_k σ 0 t.
+Proof.
+  intros σ t.
+  induction σ in t |- *.
+  - reflexivity.
+  - cbn. f_equal. eauto.
+Qed.
+
 (* We can now define proper reduction ↦ *)
 (* Note that we do not reduce in irrelevant positions when it can be safely
   determined.
