@@ -49,6 +49,12 @@ Fixpoint reveal_subst σ t :=
   | [] => t
   end.
 
+Fixpoint reveal_subst_k σ i t :=
+  match σ with
+  | u :: σ => (reveal_subst_k σ i t){ i := u }
+  | [] => t
+  end.
+
 (* We can now define proper reduction ↦ *)
 (* Note that we do not reduce in irrelevant positions when it can be safely
   determined.
@@ -61,11 +67,10 @@ Inductive red : term → term → Type :=
 | beta :
     ∀ v u A t σ,
       reveal v = (lam R A t, σ) →
-      (app R v u) ↦ ((reveal_subst σ t){ 0 := u })
+      (app R v u) ↦ ((reveal_subst_k σ 1 t){ 0 := u })
 
 | elim_nat_zero :
     ∀ P z s t σ,
-      (* t ▹* zero | σ → *)
       reveal t = (zero, σ) →
       (elim_nat P z s t) ↦ z
 
