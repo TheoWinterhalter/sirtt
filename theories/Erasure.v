@@ -687,6 +687,42 @@ Proof.
     cbn in ht. auto.
 Qed.
 
+Lemma erase_reveal_subst_k :
+  ∀ Γ Δ u t,
+    SIRTT.scoping (Δ ++ reveal_scope u ++ Γ) Level.R t →
+    SIRTT.scoping Γ Level.R u →
+    let '(v, σ) := reveal u in
+    trans (Δ ++ Γ) (reveal_subst_k σ #|Δ| t) =
+    trans (Δ ++ reveal_scope u ++ Γ) t.
+Proof.
+  cbn. fix aux 3. intros Γ Δ u t ht h.
+  destruct u. all: try reflexivity.
+  - cbn. destruct l.
+    + reflexivity.
+    + destruct u1. all: try reflexivity.
+      destruct l. all: try reflexivity.
+      cbn.
+      scope_inv h hs. cbn in hs. destruct hs as [hs ?]. scope_inv hs h'.
+      change (?t{?i := ?u})%s with (SIRTT.subst [u] i t).
+      erewrite erase_subst.
+      * rewrite subst_empty. symmetry. rewrite <- app_assoc. rewrite aux.
+        1: reflexivity.
+        -- cbn in ht. rewrite <- app_assoc in ht. auto.
+        -- cbn. intuition auto.
+      * cbn. (* eapply scoping_reveal_subst_k. 1: intuition eauto.
+        cbn in ht. rewrite <- app_assoc in ht. auto. *)
+        admit.
+      * constructor. 2: constructor.
+        auto.
+      * reflexivity.
+    + admit.
+  - cbn. destruct u. all: try reflexivity.
+    scope_inv h hs. scope_inv hs h'.
+    apply aux.
+    + cbn in ht. auto.
+    + intuition auto.
+Admitted.
+
 Lemma erase_reveal_subst :
   ∀ Γ u t,
     SIRTT.scoping (reveal_scope u ++ Γ) Level.R t →
