@@ -457,7 +457,6 @@ Proof.
   - cbn. reflexivity.
 Qed.
 
-(* TODO scoping_reveal is a copy? *)
 Lemma reveal_scope_sound :
   ∀ Γ ℓ t,
     SIRTT.scoping Γ ℓ t →
@@ -505,38 +504,6 @@ Proof.
       cbn. rewrite aux. rewrite <- app_assoc. reflexivity.
   - cbn. destruct u. all: try reflexivity.
     cbn. apply aux.
-Qed.
-
-(* TODO Copy of reveal_scope_sound? *)
-Lemma scoping_reveal :
-  ∀ Γ t,
-    SIRTT.scoping Γ Level.R t →
-    SIRTT.scoping (reveal_scope t ++ Γ) Level.R (π₁ (reveal t)).
-Proof.
-  fix aux 2.
-  intros Γ t h.
-  destruct t.
-  all: try solve [ assumption ].
-  - cbn. destruct l.
-    + assumption.
-    + destruct t1. all: try assumption.
-      destruct l. all: try assumption.
-      cbn.
-      scope_inv h h'. destruct h' as [h1 h2].
-      scope_inv h1 h'. destruct h' as [? hh].
-      eapply aux in hh.
-      rewrite <- app_assoc. auto.
-    + destruct t1. all: try assumption.
-      destruct l. all: try assumption.
-      cbn.
-      scope_inv h h'. destruct h' as [h1 h2].
-      scope_inv h1 h'. destruct h' as [? hh].
-      eapply aux in hh.
-      rewrite <- app_assoc. auto.
-  - cbn. destruct t. all: try assumption.
-    scope_inv h h'. scope_inv h' h''.
-    destruct h'' as [? ?].
-    eapply aux. auto.
 Qed.
 
 Lemma scoping_subst_app :
@@ -792,7 +759,7 @@ Proof.
     2:{
       eapply scoping_reveal_subst_k with (Δ := [ Level.R ]) in h1 as h'.
       - cbn in h'. rewrite e in h'. eapply h'.
-      - cbn. eapply scoping_reveal in h1 as hh.
+      - cbn. eapply reveal_scope_sound in h1 as hh.
         rewrite e in hh. cbn in hh.
         scope_inv hh hs'. intuition auto.
     }
@@ -801,7 +768,7 @@ Proof.
     pose proof (erase_reveal_subst_k) as h.
     specialize (h Γ [ Level.R ]). cbn in h.
     symmetry. apply h.
-    + eapply scoping_reveal in h1 as hh.
+    + eapply reveal_scope_sound in h1 as hh.
       rewrite e in hh. cbn in hh.
       scope_inv hh hs'. intuition auto.
     + auto.
@@ -813,7 +780,7 @@ Proof.
     3:{ scope_inv hs hs'. intuition auto. }
     2:{
       scope_inv hs hs'. destruct hs' as [_ [_ [_ h']]].
-      eapply scoping_reveal in h'. rewrite e in h'.
+      eapply reveal_scope_sound in h'. rewrite e in h'.
       cbn in h'. scope_inv h' h''. auto.
     }
     constructor.
@@ -825,14 +792,14 @@ Proof.
     3:{ scope_inv hs hs'. intuition auto. }
     2:{
       scope_inv hs hs'. destruct hs' as [_ [_ [_ [_ [_ h']]]]].
-      eapply scoping_reveal in h'. rewrite e0 in h'.
+      eapply reveal_scope_sound in h'. rewrite e0 in h'.
       cbn in h'. scope_inv h' h''. intuition auto.
     }
     rewrite erase_reveal_subst.
     3:{ scope_inv hs hs'. intuition auto. }
     2:{
       scope_inv hs hs'. destruct hs' as [_ [_ [_ [_ [_ h']]]]].
-      eapply scoping_reveal in h'. rewrite e0 in h'.
+      eapply reveal_scope_sound in h'. rewrite e0 in h'.
       cbn in h'. scope_inv h' h''. intuition auto.
     }
     constructor.
