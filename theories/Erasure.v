@@ -793,12 +793,9 @@ Proof.
     end.
     1: constructor.
     scope_inv hs h'. cbn in h'. destruct h' as [h1 h2].
-    change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
-    change (?t{0 := ?u}) with (MLTT.subst0 [u] t).
-    erewrite erase_subst0.
-    3:{ constructor. 2: constructor. eauto. }
-    3:{ cbn. reflexivity. }
-    2:{
+    erewrite erase_subst10_relevant.
+    3: auto.
+    (* 2:{
       cbn. eapply scoping_reveal_subst in h1 as h'.
       2: eapply reveal_scope_sound. 2: auto.
       rewrite e in h'.
@@ -807,7 +804,7 @@ Proof.
     }
     cbn. f_equal.
     eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
-    rewrite erase_reveal_subst.
+    rewrite erase_reveal_subst. *)
     (* Wrong!! *)
     (* Even the above is wrong, so it would suggest something unexpected
       happened, and I should not use erase_subst0 or maybe with different
