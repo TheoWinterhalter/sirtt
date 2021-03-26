@@ -824,37 +824,6 @@ Proof.
     + intuition auto.
 Qed.
 
-(* Lemma erase_reveal_subst :
-  ∀ Γ u,
-    SIRTT.scoping Γ Level.R u →
-    let '(v, σ) := reveal u in
-    trans Γ u = trans Γ (reveal_subst σ v).
-Proof.
-  intros Γ u h. cbn.
-  rewrite erase_reveal.
-  revert Γ u h. fix aux 2. intros Γ u h.
-  destruct u. all: try reflexivity.
-  - simpl. destruct l.
-    + reflexivity.
-    + destruct u1. all: try reflexivity.
-      destruct l. all: try reflexivity.
-      cbn.
-      scope_inv h hs. destruct hs as [hs ?]. scope_inv hs h'.
-      change (?t{0 := u2})%s with (SIRTT.subst0 [u2] t).
-      erewrite erase_subst0.
-      * rewrite subst_empty. rewrite <- app_assoc. rewrite aux.
-        1: reflexivity.
-        cbn. intuition auto.
-      * cbn. (* eapply scoping_reveal. *) admit.
-      * constructor. 2: constructor.
-        auto.
-      * reflexivity.
-    + admit.
-  - simpl. destruct u. all: try reflexivity.
-    scope_inv h hs. scope_inv hs h'.
-    apply aux. intuition auto.
-Admitted. *)
-
 Lemma erase_red :
   ∀ Γ u v,
     SIRTT.scoping Γ Level.R u →
