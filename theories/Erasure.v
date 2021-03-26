@@ -688,6 +688,7 @@ Proof.
 Qed.
 
 (* TODO Prove as a corollary? *)
+(* Easy, as soon as I prove reveal_subst_k 0 =1 reveal_subst *)
 Lemma scoping_reveal_subst :
   ∀ Γ u t,
     let '(v, σ) := reveal u in
@@ -893,10 +894,12 @@ Proof.
       admit.
     }
     f_equal.
-    (* Again, would need some lemma on reveal_subst_k *)
-    (* eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'. *)
-    (* rewrite erase_reveal_subst. *)
-    admit.
+    eapply (f_equal π₂) in e as e'. cbn in e'. rewrite <- e'.
+    pose proof (erase_reveal_subst_k) as h.
+    specialize (h Γ [ Level.R ]). cbn in h.
+    symmetry. apply h.
+    + admit.
+    + auto.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
     constructor.
   - cbn. rewrite (erase_reveal _ t). rewrite e. cbn.
