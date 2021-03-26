@@ -560,6 +560,37 @@ Proof.
   induction h. all: cbn ; auto.
 Qed.
 
+Lemma lift_scoping :
+  ∀ Γ Δ Ξ t ℓ,
+    SIRTT.scoping (Ξ ++ Γ) ℓ t →
+    SIRTT.scoping (Ξ ++ Δ ++ Γ) ℓ (SIRTT.lift #|Δ| #|Ξ| t).
+Proof.
+  intros Γ Δ Ξ t ℓ h.
+  induction t in Γ, Δ, Ξ, ℓ, h |- *.
+  all: try solve [ simpl ; constructor ].
+  all: try solve [
+    simpl ; scope_inv h hs ; constructor ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; scope_inv h hs ; constructor ; intuition eauto ;
+    eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
+  ].
+  - cbn. scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
+    destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
+    + eapply scope_sub. 2: eauto.
+      constructor.
+      rewrite nth_error_app2 in e. 2: auto.
+      rewrite nth_error_app2. 2: lia.
+      rewrite nth_error_app2. 2: lia.
+      rewrite <- e. f_equal. lia.
+    + eapply scope_sub. 2: eauto.
+      constructor. rewrite nth_error_app1 in e. 2: lia.
+      rewrite nth_error_app1. 2: lia.
+      auto.
+  - simpl. scope_inv h hs. destruct hs as [e ?]. subst.
+    constructor. intuition eauto.
+Qed.
+
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) ℓ t →
@@ -580,7 +611,12 @@ Proof.
     destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
     + rewrite nth_error_app2 in e. 2: auto.
       destruct (nth_error σ _) eqn:e1.
-      * admit.
+      * eapply lift_scoping with (Ξ := []). cbn.
+        eapply nth_error_Some_length in e1 as h2.
+        eapply scoping_subst_length in hσ as eσ.
+        rewrite nth_error_app1 in e. 2: lia.
+        eapply scope_sub. 2: eauto.
+        eapply scoping_subst_nth_error. all: eauto.
       * eapply nth_error_None in e1.
         eapply scoping_subst_length in hσ as eσ.
         rewrite nth_error_app2 in e. 2: lia.
@@ -594,7 +630,7 @@ Proof.
       auto.
   - simpl. scope_inv ht hs. destruct hs as [e ?]. subst.
     constructor. intuition eauto.
-Admitted.
+Qed.
 
 Lemma scoping_reveal_subst :
   ∀ Γ u t,
