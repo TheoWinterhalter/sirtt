@@ -1,4 +1,4 @@
-(* Scoping in SIRTT *)
+(* Scoping in MLTT *)
 
 From Coq Require Import Utf8 List.
 Require Import Util TAst TSubst TReduction.
