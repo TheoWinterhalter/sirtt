@@ -1,7 +1,7 @@
-(* Typing in SIRTT *)
+(* Conversion in SIRTT *)
 
 From Coq Require Import Utf8 List.
-Require Import Util TAst TSubst TReduction TScoping TConversion.
+Require Import Util TAst TSubst TReduction TScoping.
 
 Import ListNotations.
 

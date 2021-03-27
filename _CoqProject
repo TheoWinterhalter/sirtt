@@ -7,12 +7,14 @@ theories/SAst.v
 theories/SSubst.v
 theories/SReduction.v
 theories/SScoping.v
+theories/SConversion.v
 theories/STyping.v
 theories/SIRTT.v
 theories/TAst.v
 theories/TSubst.v
 theories/TReduction.v
 theories/TScoping.v
+theories/TConversion.v
 theories/TTyping.v
 theories/MLTT.v
 theories/Erasure.v
