@@ -1,4 +1,17 @@
-(* Conversion in SIRTT *)
+(** Conversion in SIRTT
+
+  Conversion is not defined from reduction because reduction only deals with
+  relevant terms. We should be able to show however that u ↦ v implies
+  that u and v are convertible as relevant terms.
+  In fact, because of shape-irrelevant reflection, we need to define conversion
+  mutually with typing.
+  As such, this file should go away.
+
+  I'm also missing exfalso in the AST, and thus axioms in the target to have
+  axiom False.
+  More crucially, I'm missing equality it seems.
+
+*)
 
 From Coq Require Import Utf8 List.
 Require Import Equations.Prop.DepElim.
