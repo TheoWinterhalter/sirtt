@@ -233,8 +233,8 @@ with conversion (Γ : context) : level → term → term → Type :=
         apps c [ (R, a) ; (I, n) ; (R, v) ; (R, elim_vec A P e c n v) ]
 
 | comp_coe_refl :
-  ∀ ℓ A P u t,
-    Γ ⊢[ ℓ ] coe A P u u (refl A u) t ≡ t
+    ∀ ℓ A P u t,
+      Γ ⊢[ ℓ ] coe A P u u (refl A u) t ≡ t
 
 (* Congruence rules *)
 
@@ -253,11 +253,29 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 (* Strucutral rules *)
 
-(* TODO refl, sym, trans? sub? *)
+| conv_refl :
+    ∀ ℓ u,
+      Γ ⊢[ ℓ ] u ≡ u
+
+| conv_sym :
+    ∀ ℓ u v,
+      Γ ⊢[ ℓ ] v ≡ u →
+      Γ ⊢[ ℓ ] u ≡ v
+
+| conv_trans :
+    ∀ ℓ u v w,
+      Γ ⊢[ ℓ ] u ≡ v →
+      Γ ⊢[ ℓ ] v ≡ w →
+      Γ ⊢[ ℓ ] u ≡ w
+
+| conv_sub :
+    ∀ ℓ ℓ' u v,
+      Γ ⊢[ ℓ ] u ≡ v →
+      ℓ ⊑ ℓ' →
+      Γ ⊢[ ℓ' ] u ≡ v
 
 where "Γ ⊢[ l ] u ≡ v" := (conversion Γ l u v) : s_scope.
 
-(* TODO Is this the right def?? *)
 Inductive wf_context : context → Type :=
 | wf_nil : wf_context []
 | wf_cons :
