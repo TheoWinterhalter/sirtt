@@ -238,7 +238,107 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 (* Congruence rules *)
 
-(* TODO *)
+| cong_lam :
+    ∀ ℓ ℓ' A A' t t',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      (ℓ', A) :: Γ ⊢[ ℓ ] t ≡ t' →
+      Γ ⊢[ ℓ ] lam ℓ' A t ≡ lam ℓ' A' t'
+
+| cong_app :
+    ∀ ℓ ℓ' u u' v v',
+      Γ ⊢[ ℓ ] u ≡ u' →
+      Γ ⊢[ ℓ ] v ≡ v' →
+      Γ ⊢[ ℓ ] app ℓ' u v ≡ app ℓ' u' v'
+
+| cong_Prod :
+    ∀ ℓ ℓ' A A' B B',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      (ℓ', A) :: Γ ⊢[ ℓ ] B ≡ B' →
+      Γ ⊢[ ℓ ] Prod ℓ' A B ≡ Prod ℓ' A' B'
+
+| cong_ex :
+    ∀ ℓ u u' p p',
+      Γ ⊢[ ℓ ] u ≡ u' →
+      Γ ⊢[ ℓ ] ex u p ≡ ex u' p'
+
+| cong_wit :
+    ∀ ℓ t t',
+      Γ ⊢[ ℓ ] t ≡ t' →
+      Γ ⊢[ ℓ ] wit t ≡ wit t'
+
+| cong_Sum :
+    ∀ ℓ A A' P P',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
+      Γ ⊢[ ℓ ] Sum A P ≡ Sum A' P'
+
+| cong_succ :
+    ∀ ℓ n n',
+      Γ ⊢[ ℓ ] n ≡ n' →
+      Γ ⊢[ ℓ ] succ n ≡ succ n'
+
+| cong_elim_nat :
+    ∀ ℓ P P' z z' s s' n n',
+      Γ ⊢[ ℓ ] P ≡ P' →
+      Γ ⊢[ ℓ ] z ≡ z' →
+      Γ ⊢[ ℓ ] s ≡ s' →
+      Γ ⊢[ ℓ ] n ≡ n' →
+      Γ ⊢[ ℓ ] elim_nat P z s n ≡ elim_nat P' z' s' n'
+
+| cong_vnil :
+    ∀ ℓ A A',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] vnil A ≡ vnil A'
+
+| cong_vcons :
+    ∀ ℓ A A' a a' n n' v v',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] a ≡ a' →
+      Γ ⊢[ ℓ ] v ≡ v' →
+      Γ ⊢[ ℓ ] vcons A a n v ≡ vcons A' a' n' v'
+
+| cong_elim_vec :
+    ∀ ℓ A A' P P' e e' c c' n n' v v',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] P ≡ P' →
+      Γ ⊢[ ℓ ] e ≡ e' →
+      Γ ⊢[ ℓ ] c ≡ c' →
+      Γ ⊢[ ℓ ] v ≡ v' →
+      Γ ⊢[ ℓ ] elim_vec A P e c n v ≡ elim_vec A' P' e' c' n' v'
+
+| cong_Vec :
+    ∀ ℓ A A' n n',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ S ⊔ ℓ ] n ≡ n' →
+      Γ ⊢[ ℓ ] Vec A n ≡ Vec A' n'
+
+| cong_refl :
+    ∀ ℓ A A' u u',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] u ≡ u' →
+      Γ ⊢[ ℓ ] refl A u ≡ refl A' u'
+
+| cong_coe :
+    ∀ ℓ A A' P P' u u' v v' e e' t t',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] P ≡ P' →
+      Γ ⊢[ ℓ ] u ≡ u' →
+      Γ ⊢[ ℓ ] v ≡ v' →
+      Γ ⊢[ ℓ ] e ≡ e' →
+      Γ ⊢[ ℓ ] t ≡ t' →
+      Γ ⊢[ ℓ ] coe A P u v e t ≡ coe A' P' u' v' e' t'
+
+| cong_Eq :
+    ∀ ℓ A A' u u' v v',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] u ≡ u' →
+      Γ ⊢[ ℓ ] v ≡ v' →
+      Γ ⊢[ ℓ ] Eq A u v ≡ Eq A' u' v'
+
+| cong_exfalso :
+    ∀ ℓ A A' p p',
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] exfalso A p ≡ exfalso A' p'
 
 (* Specific rules *)
 
