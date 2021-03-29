@@ -816,4 +816,5 @@ Proof.
       cbn in h'. scope_inv h' h''. intuition auto.
     }
     constructor.
+  - cbn. rewrite (erase_reveal _ e). rewrite e0. cbn. constructor.
 Qed.

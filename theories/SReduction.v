@@ -107,8 +107,9 @@ Inductive red : term → term → Type :=
       ])
 
 | coe_refl :
-    ∀ A P u t,
-      (coe A P u u (refl A u) t) ↦ t
+    ∀ A P u t e B v σ,
+      reveal e = (refl B v, σ) →
+      (coe A P u u e t) ↦ t
 
 (* Congruence rules *)
 | lam_ty : ∀ A t A', A ↦ A' → (lam R A t) ↦ (lam R A' t)

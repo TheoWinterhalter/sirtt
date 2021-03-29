@@ -37,8 +37,8 @@ Inductive red : term → term → Type :=
       (apps c [ a ; l ; elim_list A P e c l ])
 
 | coe_refl :
-    ∀ A P u t,
-      (coe A P u u (refl A u) t) ↦ t
+    ∀ A P u t B v,
+      (coe A P u u (refl B v) t) ↦ t
 
 (* Congruence rules *)
 | lam_ty : ∀ A t A', A ↦ A' → (lam A t) ↦ (lam A' t)
