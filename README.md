@@ -18,7 +18,6 @@ I use coq 8.12.0 and Equations 1.2.3
 | `TSubst.v` | MLTT Lifting and substitution |
 | `TReduction.v`| Reduction for MLTT |
 | `TScoping.v`| Scoping in MLTT |
-| `TConversion.v`| Conversion in MLTT |
-| `TTyping.v`| Typing in MLTT |
+| `TTyping.v`| Typing and conversion in MLTT |
 | `MLTT.v` | All of MLTT in one module for practicality |
 | `Erasure.v` | Erasure translation from SIRTT to MLTT |

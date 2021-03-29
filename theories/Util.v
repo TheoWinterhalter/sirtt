@@ -20,6 +20,15 @@ Inductive clos_refl_trans {A} (R : A → A → Type) (x : A) : A → Type :=
     clos_refl_trans R y z →
     clos_refl_trans R x z.
 
+Inductive clos_refl_sym_trans {A} (R : A → A → Type) (x : A) : A → Type :=
+| rst_step y : R x y → clos_refl_sym_trans R x y
+| rst_refl : clos_refl_sym_trans R x x
+| rst_sym y : clos_refl_sym_trans R y x → clos_refl_sym_trans R x y
+| rst_trans y z :
+    clos_refl_sym_trans R x y →
+    clos_refl_sym_trans R y z →
+    clos_refl_sym_trans R x z.
+
 
 Instance clos_refl_preserve_trans :
   ∀ A R,
@@ -32,6 +41,49 @@ Proof.
     + left. etransitivity. all: eauto.
     + left. auto.
   - assumption.
+Qed.
+
+Instance Reflexive_clos_refl :
+  ∀ A R,
+    @Reflexive A (clos_refl R).
+Proof.
+  intros A R x. apply r_refl.
+Qed.
+
+Instance Reflexive_clos_refl_trans :
+  ∀ A R,
+    @Reflexive A (clos_refl_trans R).
+Proof.
+  intros A R x. apply rt_refl.
+Qed.
+
+Instance Transitive_clos_refl_trans :
+  ∀ A R,
+    @Transitive A (clos_refl_trans R).
+Proof.
+  intros A R x y z h1 h2.
+  eapply rt_trans. all: eauto.
+Qed.
+
+Instance Reflexive_clos_refl_sym_trans :
+  ∀ A R,
+    @Reflexive A (clos_refl_sym_trans R).
+Proof.
+  intros A R x. apply rst_refl.
+Qed.
+
+Instance Symmetric_clos_refl_sym_trans :
+  ∀ A R,
+    @Symmetric A (clos_refl_sym_trans R).
+Proof.
+  intros A R x y h. apply rst_sym. auto.
+Qed.
+
+Instance Transitive_clos_refl_sym_trans :
+  ∀ A R,
+    @Transitive A (clos_refl_sym_trans R).
+Proof.
+  intros A R x y z h1 h2. eapply rst_trans. all: eauto.
 Qed.
 
 Record prod A B := pair {

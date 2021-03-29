@@ -33,6 +33,7 @@ Notation "A ⇒ B" := (arrow A B) (at level 70, right associativity).
 
 Reserved Notation "Γ ⊢[ l ] t : A"
   (at level 80, l, t, A at next level, format "Γ  ⊢[  l  ]  t  :  A").
+
 Reserved Notation "Γ ⊢[ l ] u ≡ v"
   (at level 80, l, u, v at next level, format "Γ  ⊢[  l  ]  u  ≡  v").
 
@@ -125,13 +126,13 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] e : app R (app I P zero) (vnil A) →
       Γ ⊢[ ℓ ] c :
         Prod R A
-          (Prod I Nat
-            (Prod R (Vec (lift0 2 A) (var 0)) (
+          (Prod I Nat (
+            Prod R (Vec (lift0 2 A) (var 0)) (
               app R (app I (lift0 3 P) (var 1)) (var 0) ⇒
               app R
                 (app I (lift0 3 P) (succ (var 1)))
-                (vcons (lift0 3 A) (var 2) (var 1) (var 0)
-            ))
+                (vcons (lift0 3 A) (var 2) (var 1) (var 0))
+            )
           )
         ) →
       Γ ⊢[ I ] n : Nat →

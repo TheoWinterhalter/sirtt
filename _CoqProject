@@ -13,7 +13,6 @@ theories/TAst.v
 theories/TSubst.v
 theories/TReduction.v
 theories/TScoping.v
-theories/TConversion.v
 theories/TTyping.v
 theories/MLTT.v
 theories/Erasure.v
