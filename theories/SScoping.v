@@ -53,7 +53,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_Sum :
     ∀ ℓ A P,
       scoping Γ ℓ A →
-      scoping (R :: Γ) I P →
+      scoping (R :: Γ) (S ⊔ ℓ) P →
       scoping Γ ℓ (Sum A P)
 
 | scope_zero :
@@ -274,13 +274,16 @@ Lemma inversion_scope_Sum :
   ∀ Γ ℓ A P,
     scoping Γ ℓ (Sum A P) →
     scoping Γ ℓ A ×
-    scoping (R :: Γ) I P.
+    scoping (R :: Γ) (S ⊔ ℓ) P.
 Proof.
   intros Γ ℓ A P h.
   dependent induction h.
   - intuition auto.
   - intuition auto.
-    eapply scope_sub. all: eauto.
+    + eapply scope_sub. all: eauto.
+    + eapply scope_sub. 1: eauto.
+      rewrite max_sym. etransitivity. 1: eapply max_le_cong_l. 1: eauto.
+      rewrite max_sym. reflexivity.
 Qed.
 
 Lemma inversion_scope_succ :
