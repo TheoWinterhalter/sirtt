@@ -106,6 +106,10 @@ Inductive red : term → term → Type :=
         (R, elim_vec A P e c (reveal_subst σ m) (reveal_subst σ v))
       ])
 
+| coe_refl :
+    ∀ A P u t,
+      (coe A P u u (refl A u) t) ↦ t
+
 (* Congruence rules *)
 | lam_ty : ∀ A t A', A ↦ A' → (lam R A t) ↦ (lam R A' t)
 | lam_tm : ∀ l A t t', t ↦ t' → (lam l A t) ↦ (lam l A t')
