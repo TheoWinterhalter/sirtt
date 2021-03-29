@@ -24,6 +24,9 @@ Inductive term :=
 | refl (A u : term)
 | coe (A P u v e t : term)
 | Eq (A u v : term)
+| exfalso (A p : term)
+| Empty
+| axiom (n : nat) (* Refer to an axiom in a global context *)
 | univ (s : sort)
 .
 

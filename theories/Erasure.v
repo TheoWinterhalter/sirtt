@@ -17,6 +17,12 @@ Definition scope_trans Γ :=
 (* Because the context of the translated term is not the same
   we need to track which variables are removed, hence the need for a scope
   for the term.
+
+  Important note: exfalso is not erased to exfalso because in SIRTT, exfalso
+  serves as way to build relevant terms out of an irrelevant proof of
+  contradiction, as such erasure will forget the proof information.
+  Instead we erase it to an axiom corresponding to Empty in the target.
+  Erasure is thus not a way of obtaining consistency.
 *)
 Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   match t with
@@ -46,6 +52,8 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
     MLTT.coe
       (trans Γ A) (trans Γ P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
   | SIRTT.Eq A u v => MLTT.Eq (trans Γ A) (trans Γ u) (trans Γ v)
+  | SIRTT.exfalso A p => MLTT.axiom 0
+  | SIRTT.Empty => MLTT.Empty
   | SIRTT.univ s => MLTT.univ s
   end.
 

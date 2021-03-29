@@ -129,6 +129,16 @@ Inductive scoping (Γ : scope) : level → term → Type :=
       scoping Γ ℓ v →
       scoping Γ ℓ (Eq A u v)
 
+| scope_exfalso :
+    ∀ ℓ A p,
+      scoping Γ ℓ A →
+      scoping Γ I p →
+      scoping Γ ℓ (exfalso A p)
+
+| scope_Empty :
+    ∀ ℓ,
+      scoping Γ ℓ Empty
+
 | scope_univ :
     ∀ ℓ s,
       scoping Γ ℓ (univ s)
@@ -402,6 +412,19 @@ Proof.
     all: eapply scope_sub. all: eauto.
 Qed.
 
+Lemma inversion_scope_exfalso :
+  ∀ Γ ℓ A p,
+    scoping Γ ℓ (exfalso A p) →
+    scoping Γ ℓ A ×
+    scoping Γ I p.
+Proof.
+  intros Γ ℓ A p h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    eapply scope_sub. all: eauto.
+Qed.
+
 Ltac scope_inv h h' :=
   lazymatch type of h with
   | scoping ?Γ ?ℓ ?t =>
@@ -423,6 +446,7 @@ Ltac scope_inv h h' :=
     | refl ?A ?u => apply inversion_scope_refl in h as h'
     | coe ?A ?P ?u ?v ?e ?t => apply inversion_scope_coe in h as h'
     | Eq ?A ?u ?v => apply inversion_scope_Eq in h as h'
+    | exfalso ?A ?p => apply inversion_scope_exfalso in h as h'
     | _ => fail "scope_inv: case not handled"
     end
   | _ => fail "scope_inv only applies to scoping assumptions"

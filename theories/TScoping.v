@@ -99,6 +99,19 @@ Inductive scoping (Γ : scope) : term → Type :=
       scoping Γ v →
       scoping Γ (Eq A u v)
 
+| scope_exfalso :
+    ∀ A p,
+      scoping Γ A →
+      scoping Γ p →
+      scoping Γ (exfalso A p)
+
+| scope_Empty :
+    scoping Γ Empty
+
+| scope_axiom :
+    ∀ n,
+      scoping Γ (axiom n)
+
 | scope_univ :
     ∀ s,
       scoping Γ (univ s)

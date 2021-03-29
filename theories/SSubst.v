@@ -37,6 +37,8 @@ Fixpoint lift n k t : term :=
       (lift n k u) (lift n k v) (lift n k e)
       (lift n k t)
   | Eq A u v => Eq (lift n k A) (lift n k u) (lift n k v)
+  | exfalso A p => exfalso (lift n k A) (lift n k p)
+  | Empty => Empty
   | univ s => univ s
   end.
 
@@ -76,6 +78,8 @@ Fixpoint subst s k u :=
       (subst s k u) (subst s k v) (subst s k e)
       (subst s k t)
   | Eq A u v => Eq (subst s k A) (subst s k u) (subst s k v)
+  | exfalso A p => exfalso (subst s k A) (subst s k p)
+  | Empty => Empty
   | univ s => univ s
   end.
 

@@ -28,6 +28,8 @@ Inductive term :=
 | refl (A u : term)
 | coe (A P u v e t : term)
 | Eq (A u v : term)
+| exfalso (A p : term)
+| Empty
 | univ (s : sort)
 .
 (* No equality yet, we'll try to have something abstract,
