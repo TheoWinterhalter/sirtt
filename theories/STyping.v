@@ -29,7 +29,7 @@ Import ListNotations.
 Set Default Goal Selector "!".
 
 Definition arrow A B := Prod R A (lift0 1 B).
-Notation "A ⇒ B" := (arrow A B) (at level 70, right associativity).
+Notation "A ⇒ B" := (arrow A B) (at level 70, right associativity) : s_scope.
 
 Reserved Notation "Γ ⊢[ l ] t : A"
   (at level 80, l, t, A at next level, format "Γ  ⊢[  l  ]  t  :  A").
