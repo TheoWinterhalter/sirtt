@@ -199,7 +199,49 @@ where "Γ ⊢[ l ] t : A" := (typing Γ l t A) : s_scope
 
 with conversion (Γ : context) : level → term → term → Type :=
 
+(* Computation rules *)
+
+| conv_beta :
+    ∀ ℓ ℓ' A t u,
+      Γ ⊢[ ℓ ] app ℓ' (lam ℓ' A t) u ≡ t{ 0 := u }
+
+| comp_wit :
+    ∀ ℓ u p,
+      Γ ⊢[ ℓ ] wit (ex u p) ≡ u
+
+| comp_prf :
+    ∀ ℓ u p,
+      Γ ⊢[ ℓ ] prf (ex u p) ≡ p
+
+| comp_elim_nat_zero :
+    ∀ ℓ P z s,
+      Γ ⊢[ ℓ ] elim_nat P z s zero ≡ z
+
+| comp_elim_nat_succ :
+    ∀ ℓ P z s n,
+      Γ ⊢[ ℓ ]
+        elim_nat P z s (succ n) ≡ apps s [ (I, n) ; (R, elim_nat P z s n) ]
+
+(* TODO elim_vec and coe *)
+
+(* Congruence rules *)
+
 (* TODO *)
+
+(* Specific rules *)
+
+| conv_I :
+    ∀ u v,
+      Γ ⊢[ I ] u ≡ v
+
+| conv_S :
+    ∀ A u v e,
+      Γ ⊢[ I ] e : Eq A u v →
+      Γ ⊢[ S ] u ≡ v
+
+(* Strucutral rules *)
+
+(* TODO refl, sym, trans? sub? *)
 
 where "Γ ⊢[ l ] u ≡ v" := (conversion Γ l u v) : s_scope.
 
