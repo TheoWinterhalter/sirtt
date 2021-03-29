@@ -25,6 +25,13 @@ Fixpoint lift n k t : term :=
     elim_list (lift n k A) (lift n k P)
               (lift n k e) (lift n k c) (lift n k l)
   | List A => List (lift n k A)
+  | refl A u => refl (lift n k A) (lift n k u)
+  | coe A P u v e t =>
+    coe
+      (lift n k A) (lift n k P)
+      (lift n k u) (lift n k v) (lift n k e)
+      (lift n k t)
+  | Eq A u v => Eq (lift n k A) (lift n k u) (lift n k v)
   | univ s => univ s
   end.
 
@@ -53,6 +60,13 @@ Fixpoint subst s k u :=
     elim_list (subst s k A) (subst s k P)
               (subst s k e) (subst s k c) (subst s k l)
   | List A => List (subst s k A)
+  | refl A u => refl (subst s k A) (subst s k u)
+  | coe A P u v e t =>
+    coe
+      (subst s k A) (subst s k P)
+      (subst s k u) (subst s k v) (subst s k e)
+      (subst s k t)
+  | Eq A u v => Eq (subst s k A) (subst s k u) (subst s k v)
   | univ s => univ s
   end.
 
@@ -71,7 +85,7 @@ Proof.
   induction u in k |- *.
   all: try solve [
     cbn ;
-    rewrite ?IHu, ?IHu1, ?IHu2, ?IHu3, ?IHu4, ?IHu5 ;
+    rewrite ?IHu, ?IHu1, ?IHu2, ?IHu3, ?IHu4, ?IHu5, ?IHu6 ;
     reflexivity
   ].
   cbn. destruct (k <=? n).

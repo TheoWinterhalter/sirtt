@@ -76,6 +76,29 @@ Inductive scoping (Γ : scope) : term → Type :=
       scoping Γ A →
       scoping Γ (List A)
 
+| scope_refl :
+    ∀ A u,
+      scoping Γ A →
+      scoping Γ u →
+      scoping Γ (refl A u)
+
+| scope_coe :
+    ∀ A P u v e t,
+      scoping Γ A →
+      scoping Γ P →
+      scoping Γ u →
+      scoping Γ v →
+      scoping Γ e →
+      scoping Γ t →
+      scoping Γ (coe A P u v e t)
+
+| scope_Eq :
+    ∀ A u v,
+      scoping Γ A →
+      scoping Γ u →
+      scoping Γ v →
+      scoping Γ (Eq A u v)
+
 | scope_univ :
     ∀ s,
       scoping Γ (univ s)

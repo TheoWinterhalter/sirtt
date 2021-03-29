@@ -21,6 +21,9 @@ Inductive term :=
 | lcons (A a l : term)
 | elim_list (A P e c l : term)
 | List (A : term)
+| refl (A u : term)
+| coe (A P u v e t : term)
+| Eq (A u v : term)
 | univ (s : sort)
 .
 

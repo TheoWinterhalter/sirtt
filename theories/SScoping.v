@@ -103,8 +103,31 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_Vec :
     ∀ ℓ A n,
       scoping Γ ℓ A →
-      scoping Γ S n →
+      scoping Γ (S ⊔ ℓ) n →
       scoping Γ ℓ (Vec A n)
+
+| scope_refl :
+    ∀ ℓ A u,
+      scoping Γ ℓ A →
+      scoping Γ ℓ u →
+      scoping Γ ℓ (refl A u)
+
+| scope_coe :
+    ∀ ℓ A P u v e t,
+      scoping Γ ℓ A →
+      scoping Γ ℓ P →
+      scoping Γ ℓ u →
+      scoping Γ ℓ v →
+      scoping Γ ℓ e →
+      scoping Γ ℓ t →
+      scoping Γ ℓ (coe A P u v e t)
+
+| scope_Eq :
+    ∀ ℓ A u v,
+      scoping Γ ℓ A →
+      scoping Γ ℓ u →
+      scoping Γ ℓ v →
+      scoping Γ ℓ (Eq A u v)
 
 | scope_univ :
     ∀ ℓ s,
@@ -323,13 +346,60 @@ Lemma inversion_scope_Vec :
   ∀ Γ ℓ A n,
     scoping Γ ℓ (Vec A n) →
     scoping Γ ℓ A ×
-    scoping Γ S n.
+    scoping Γ (S ⊔ ℓ) n.
 Proof.
   intros Γ ℓ A n h.
   dependent induction h.
   - intuition auto.
   - intuition auto.
-    eapply scope_sub. all: eauto.
+    + eapply scope_sub. all: eauto.
+    + eapply scope_sub. 1: eauto.
+      rewrite max_sym. etransitivity. 1: eapply max_le_cong_l. 1: eauto.
+      rewrite max_sym. reflexivity.
+Qed.
+
+Lemma inversion_scope_refl :
+  ∀ Γ ℓ A u,
+    scoping Γ ℓ (refl A u) →
+    scoping Γ ℓ A ×
+    scoping Γ ℓ u.
+Proof.
+  intros Γ ℓ A u h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    all: eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_coe :
+  ∀ Γ ℓ A P u v e t,
+    scoping Γ ℓ (coe A P u v e t) →
+    scoping Γ ℓ A ×
+    scoping Γ ℓ P ×
+    scoping Γ ℓ u ×
+    scoping Γ ℓ v ×
+    scoping Γ ℓ e ×
+    scoping Γ ℓ t.
+Proof.
+  intros Γ ℓ A P u v e t h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    all: eapply scope_sub. all: eauto.
+Qed.
+
+Lemma inversion_scope_Eq :
+  ∀ Γ ℓ A u v,
+    scoping Γ ℓ (Eq A u v) →
+    scoping Γ ℓ A ×
+    scoping Γ ℓ u ×
+    scoping Γ ℓ v.
+Proof.
+  intros Γ ℓ A u v h.
+  dependent induction h.
+  - intuition auto.
+  - intuition auto.
+    all: eapply scope_sub. all: eauto.
 Qed.
 
 Ltac scope_inv h h' :=
@@ -350,6 +420,9 @@ Ltac scope_inv h h' :=
     | vcons ?A ?a ?n ?v => apply inversion_scope_vcons in h as h'
     | elim_vec ?A ?P ?e ?c ?n ?v => apply inversion_scope_elim_vec in h as h'
     | Vec ?A ?n => apply inversion_scope_Vec in h as h'
+    | refl ?A ?u => apply inversion_scope_refl in h as h'
+    | coe ?A ?P ?u ?v ?e ?t => apply inversion_scope_coe in h as h'
+    | Eq ?A ?u ?v => apply inversion_scope_Eq in h as h'
     | _ => fail "scope_inv: case not handled"
     end
   | _ => fail "scope_inv only applies to scoping assumptions"

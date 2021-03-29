@@ -41,6 +41,11 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   | SIRTT.elim_vec A P e c m v =>
     MLTT.elim_list (trans Γ A) (trans Γ P) (trans Γ e) (trans Γ c) (trans Γ v)
   | SIRTT.Vec A m => MLTT.List (trans Γ A)
+  | SIRTT.refl A u => MLTT.refl (trans Γ A) (trans Γ u)
+  | SIRTT.coe A P u v e t =>
+    MLTT.coe
+      (trans Γ A) (trans Γ P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
+  | SIRTT.Eq A u v => MLTT.Eq (trans Γ A) (trans Γ u) (trans Γ v)
   | SIRTT.univ s => MLTT.univ s
   end.
 

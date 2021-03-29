@@ -39,6 +39,13 @@ Qed.
 Definition potentially_more_relevant := clos_refl more_relevant.
 Notation "u ⊑ v" := (potentially_more_relevant u v) (at level 20).
 
+Instance potentially_more_relevant_refl :
+  Reflexive potentially_more_relevant.
+Proof.
+  intro u.
+  eapply r_refl.
+Qed.
+
 Instance potentially_more_relevant_trans :
   Transitive potentially_more_relevant.
 Proof.

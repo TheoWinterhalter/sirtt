@@ -25,6 +25,9 @@ Inductive term :=
 | vcons (A a n v : term)
 | elim_vec (A P e c n v : term)
 | Vec (A n : term)
+| refl (A u : term)
+| coe (A P u v e t : term)
+| Eq (A u v : term)
 | univ (s : sort)
 .
 (* No equality yet, we'll try to have something abstract,
