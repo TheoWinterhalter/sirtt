@@ -232,12 +232,9 @@ with conversion (Γ : context) : level → term → term → Type :=
         elim_vec A P e c n (vcons A a n v) ≡
         apps c [ (R, a) ; (I, n) ; (R, v) ; (R, elim_vec A P e c n v) ]
 
-(* TODO coe
-
-  Also it seems I should change reduction with no linear rule?
-  I don't know which is best.
-
-*)
+| comp_coe_refl :
+  ∀ ℓ A P u t,
+    Γ ⊢[ ℓ ] coe A P u u (refl A u) t ≡ t
 
 (* Congruence rules *)
 
