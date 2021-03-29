@@ -12,8 +12,7 @@ I use coq 8.12.0 and Equations 1.2.3
 | `SSubst.v` | SIRTT Lifting and substitution |
 | `SReduction.v`| Reduction for SIRTT |
 | `SScoping.v`| Scoping in SIRTT |
-| `SConversion.v`| Conversion in SIRTT |
-| `STyping.v`| Typing in SIRTT |
+| `STyping.v`| Typing and conversion in SIRTT |
 | `SIRTT.v` | All of SIRTT in one module for practicality |
 | `TAst.v` | MLTT AST |
 | `TSubst.v` | MLTT Lifting and substitution |

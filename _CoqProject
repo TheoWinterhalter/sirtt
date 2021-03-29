@@ -7,7 +7,6 @@ theories/SAst.v
 theories/SSubst.v
 theories/SReduction.v
 theories/SScoping.v
-theories/SConversion.v
 theories/STyping.v
 theories/SIRTT.v
 theories/TAst.v
