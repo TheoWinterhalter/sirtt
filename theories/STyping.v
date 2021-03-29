@@ -222,7 +222,22 @@ with conversion (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ]
         elim_nat P z s (succ n) ≡ apps s [ (I, n) ; (R, elim_nat P z s n) ]
 
-(* TODO elim_vec and coe *)
+| comp_elim_vec_vnil :
+    ∀ ℓ A P e c n,
+      Γ ⊢[ ℓ ] elim_vec A P e c n (vnil A) ≡ e
+
+| comp_elim_vec_vcons :
+    ∀ ℓ A P e c n a v,
+      Γ ⊢[ ℓ ]
+        elim_vec A P e c n (vcons A a n v) ≡
+        apps c [ (R, a) ; (I, n) ; (R, v) ; (R, elim_vec A P e c n v) ]
+
+(* TODO coe
+
+  Also it seems I should change reduction with no linear rule?
+  I don't know which is best.
+
+*)
 
 (* Congruence rules *)
 
