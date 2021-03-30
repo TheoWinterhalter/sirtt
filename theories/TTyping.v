@@ -224,7 +224,13 @@ Instance conv_lam_proper :
 Proof.
   (* eapply clos_refl_sym_trans_preserves_Proper2. *)
   intros A A' hA t t' ht.
-  (* eapply prove_clos_refl_sym_trans in hA. *)
+  etransitivity.
+  1: eapply prove_clos_refl_sym_trans. 1-3: exact _. 1: exact ht.
+  1:{
+    intros x y h. constructor. constructor. auto.
+  }
+  eapply prove_clos_refl_sym_trans with (f := λ x, lam x t'). 1-3: exact _.
+  1: exact hA.
   (* eapply clos_refl_sym_trans_preserves_Proper. *)
   (* It seems I'll have to it by hand, sadly.
     Probably with a tactic that does the above...
