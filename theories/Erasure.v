@@ -831,7 +831,9 @@ Lemma erase_conv :
     trans Γ u ≡ trans Γ v.
 Proof.
   intros Γ u v hu hv h.
-  induction h in hu, hv |- *.
+  remember Level.R as ℓR eqn:eℓ.
+  induction h in eℓ, hu, hv |- *.
+  all: try discriminate eℓ.
   all: try solve [
     try scope_inv hu hu' ; try scope_inv hv hv' ; intuition eauto
   ].
@@ -839,17 +841,36 @@ Proof.
     try scope_inv hu hu' ; try scope_inv hv hv' ;
     cbn ; econstructor ; intuition eauto
   ].
-  - scope_inv hu hs. destruct hs as [hl hu'].
+  - subst. scope_inv hu hs. cbn in hs. destruct hs as [hl hu'].
     scope_inv hl hl'.
     cbn. destruct ℓ'.
-    + rewrite Level.max_l_R in hu'.
-      erewrite erase_subst10_relevant. 2,3: give_up.
-      (* It's a bit annoying because we don't have the right level.
-        Could we get around it with a stronger hyp? We have probably lost
-        information when doing induction, we did not remember the level of
-        conversion!
-      *)
+    + erewrite erase_subst10_relevant. 2,3: intuition eauto.
       constructor. constructor.
     + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
       erewrite erase_subst0 with (Δ := [ _ ]).
+      2:{ cbn. intuition eauto. }
+      3: reflexivity.
+      2:{ constructor. 2: constructor. auto. }
+      cbn. rewrite subst_empty. reflexivity.
+    + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      erewrite erase_subst0 with (Δ := [ _ ]).
+      2:{ cbn. intuition eauto. }
+      3: reflexivity.
+      2:{ constructor. 2: constructor. auto. }
+      cbn. rewrite subst_empty. reflexivity.
+  - subst. scope_inv hu hs. destruct hs. discriminate.
+  - subst. cbn. constructor. constructor.
+  - subst. cbn. constructor. constructor.
+  - subst. cbn. constructor. constructor.
+  - subst. cbn. constructor. constructor.
+  - subst. cbn. constructor. constructor.
+  - subst. cbn.
+    scope_inv hu hu'. scope_inv hv hv'.
+    destruct ℓ'.
+    + (* Need to prove congruence rules
+      and better yet to provide some tactic to do it automatically?
+      *)
+      admit.
+    + intuition eauto.
+    + intuition eauto.
 Abort.

@@ -221,7 +221,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 | comp_elim_nat_succ :
     ∀ ℓ P z s n,
       Γ ⊢[ ℓ ]
-        elim_nat P z s (succ n) ≡ apps s [ (I, n) ; (R, elim_nat P z s n) ]
+        elim_nat P z s (succ n) ≡ apps s [ (R, n) ; (R, elim_nat P z s n) ]
 
 | comp_elim_vec_vnil :
     ∀ ℓ A P e c n,
