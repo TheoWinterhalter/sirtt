@@ -172,15 +172,26 @@ Proof.
   constructor. eapply nth_error_Some_length in e. auto.
 Qed.
 
-(* Showing conversion is a congruence, some bits might move to TReduction *)
+(* Showing conversion is a congruence *)
+
+Ltac prove_cong_from h :=
+  simple refine (prove_clos_refl_sym_trans (λ x, _) h _) ;
+  intros ? ? ? ; constructor ; auto.
+
+Ltac prove_cong :=
+  lazymatch goal with
+  | h : _ ≡ _, h' : _ ≡ _ |- _ =>
+    etransitivity ; [
+      prove_cong_from h
+    | clear h ; prove_cong
+    ]
+  | h : _ ≡ _ |- _ =>
+    prove_cong_from h
+  end.
 
 Instance conv_lam_proper :
   Proper (conv ==> conv ==> conv) lam.
 Proof.
   intros A A' hA t t' ht.
-  etransitivity.
-  - simple refine (prove_clos_refl_sym_trans (λ x, _) hA _).
-    intros ? ? ?. constructor. auto.
-  - simple refine (prove_clos_refl_sym_trans (λ x, _) ht _).
-    intros ? ? ?. constructor. auto.
+  prove_cong.
 Qed.
