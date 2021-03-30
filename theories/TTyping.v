@@ -219,20 +219,27 @@ Proof.
   - etransitivity. all: eauto.
 Qed.
 
+Lemma prove_clos_refl_sym_trans2 :
+  ∀ {A B} {R : crelation A} {R' : crelation B} {x y} f,
+    clos_refl_sym_trans R x y →
+    Proper (R ==> R') f →
+    clos_refl_sym_trans R' (f x) (f y).
+Proof.
+  intros A B R R' x y f h hf.
+  induction h.
+  - eapply rst_step. eapply hf. auto.
+  - reflexivity.
+  - symmetry. eauto.
+  - etransitivity. all: eauto.
+Qed.
+
 Instance conv_lam_proper :
   Proper (conv ==> conv ==> conv) lam.
 Proof.
-  (* eapply clos_refl_sym_trans_preserves_Proper2. *)
   intros A A' hA t t' ht.
   etransitivity.
-  1: eapply prove_clos_refl_sym_trans. 1-3: exact _. 1: exact ht.
-  1:{
-    intros x y h. constructor. constructor. auto.
-  }
-  eapply prove_clos_refl_sym_trans with (f := λ x, lam x t'). 1-3: exact _.
-  1: exact hA.
-  (* eapply clos_refl_sym_trans_preserves_Proper. *)
-  (* It seems I'll have to it by hand, sadly.
-    Probably with a tactic that does the above...
-  *)
-Abort.
+  - simple refine (prove_clos_refl_sym_trans2 (λ x, _) hA _).
+    intros ? ? ?. constructor. auto.
+  - simple refine (prove_clos_refl_sym_trans2 (λ x, _) ht _).
+    intros ? ? ?. constructor. auto.
+Qed.
