@@ -882,8 +882,7 @@ Proof.
     destruct ℓ'.
     + t_cong. all: intuition eauto.
     + intuition eauto.
-    + cbn. intuition eauto. give_up.
-      (* Probably a mismatch somewhere *)
+    + cbn. intuition eauto.
   - subst. etransitivity.
     + eapply IHh1. all: intuition eauto.
       (* Missing something again!

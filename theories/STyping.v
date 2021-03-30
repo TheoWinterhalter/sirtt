@@ -254,7 +254,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 | cong_Prod :
     ∀ ℓ ℓ' A A' B B',
       Γ ⊢[ ℓ ] A ≡ A' →
-      (ℓ', A) :: Γ ⊢[ ℓ ] B ≡ B' →
+      (▪ ℓ', A) :: Γ ⊢[ ℓ ] B ≡ B' →
       Γ ⊢[ ℓ ] Prod ℓ' A B ≡ Prod ℓ' A' B'
 
 | cong_ex :
