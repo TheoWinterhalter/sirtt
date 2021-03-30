@@ -841,6 +841,12 @@ Proof.
     try scope_inv hu hu' ; try scope_inv hv hv' ;
     cbn ; econstructor ; intuition eauto
   ].
+  all: try solve [ subst ; cbn ; constructor ; constructor ].
+  all: try solve [
+    subst ; cbn ;
+    try scope_inv hu hu' ; try scope_inv hv hv' ;
+    t_cong ; intuition eauto
+  ].
   - subst. scope_inv hu hs. cbn in hs. destruct hs as [hl hu'].
     scope_inv hl hl'.
     cbn. destruct ℓ'.
@@ -859,15 +865,33 @@ Proof.
       2:{ constructor. 2: constructor. auto. }
       cbn. rewrite subst_empty. reflexivity.
   - subst. scope_inv hu hs. destruct hs. discriminate.
-  - subst. cbn. constructor. constructor.
-  - subst. cbn. constructor. constructor.
-  - subst. cbn. constructor. constructor.
-  - subst. cbn. constructor. constructor.
-  - subst. cbn. constructor. constructor.
   - subst. cbn.
     scope_inv hu hu'. scope_inv hv hv'.
     destruct ℓ'.
-    + eapply conv_lam_proper. all: intuition eauto.
+    + t_cong. all: intuition eauto.
     + intuition eauto.
     + intuition eauto.
+  - subst. cbn.
+    scope_inv hu hu'. scope_inv hv hv'.
+    destruct ℓ'.
+    + t_cong. all: intuition eauto.
+    + intuition eauto.
+    + intuition eauto.
+  - subst. cbn.
+    scope_inv hu hu'. scope_inv hv hv'.
+    destruct ℓ'.
+    + t_cong. all: intuition eauto.
+    + intuition eauto.
+    + cbn. intuition eauto. give_up.
+      (* Probably a mismatch somewhere *)
+  - subst. etransitivity.
+    + eapply IHh1. all: intuition eauto.
+      (* Missing something again!
+        Can we say that if u is R and u ≡ v then v is R too?
+      *)
+      give_up.
+    + give_up.
+  - subst. inversion p.
+    + subst. inversion H.
+    + subst. intuition eauto.
 Admitted.
