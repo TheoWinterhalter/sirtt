@@ -269,3 +269,36 @@ Instance conv_exfalso_proper :
 Proof.
   prove_cong_full.
 Qed.
+
+(* Tactic to apply confruence automatically *)
+
+Ltac t_cong :=
+  lazymatch goal with
+  | |- lam _ _ ≡ _ =>
+    eapply conv_lam_proper
+  | |- app _ _ ≡ _ =>
+    eapply conv_app_proper
+  | |- Prod _ _ ≡ _ =>
+    eapply conv_Prod_proper
+  | |- succ _ ≡ _ =>
+    eapply conv_succ_proper
+  | |- elim_nat _ _ _ _ ≡ _ =>
+    eapply conv_elim_nat_proper
+  | |- lnil _ ≡ _ =>
+    eapply conv_lnil_proper
+  | |- lcons _ _ _ ≡ _ =>
+    eapply conv_lcons_proper
+  | |- elim_list _ _ _ _ _ ≡ _ =>
+    eapply conv_elim_list_proper
+  | |- List _ ≡ _ =>
+    eapply conv_List_proper
+  | |- refl _ _ ≡ _ =>
+    eapply conv_refl_proper
+  | |- coe _ _ _ _ _ _ ≡ _ =>
+    eapply conv_coe_proper
+  | |- Eq _ _ _ ≡ _ =>
+    eapply conv_Eq_proper
+  | |- exfalso _ _ ≡ _ =>
+    eapply conv_exfalso_proper
+  | |- _ => fail "Cannot apply congruence rule"
+  end.

@@ -867,15 +867,7 @@ Proof.
   - subst. cbn.
     scope_inv hu hu'. scope_inv hv hv'.
     destruct ℓ'.
-    + (* Need to prove congruence rules
-      and better yet to provide some tactic to do it automatically?
-
-      Would it be possible to do it with setoid?
-      Like say that if f is a morphism from R to R' then it is also
-      from clos_refl_sym_trans R to crst R'?
-      Might be nice.
-      *)
-      admit.
+    + eapply conv_lam_proper. all: intuition eauto.
     + intuition eauto.
     + intuition eauto.
-Abort.
+Admitted.
