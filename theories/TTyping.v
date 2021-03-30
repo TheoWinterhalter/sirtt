@@ -174,72 +174,13 @@ Qed.
 
 (* Showing conversion is a congruence, some bits might move to TReduction *)
 
-(* TODO MOVE to Util *)
-(* clos_refl_sym_trans preserves congruences / morphisms *)
-(* Instance clos_refl_sym_trans_preserves_Proper'
-  (A B : Type) R R' (f : A → B) (p : Proper (R ==> R') f) :
-  Proper (R ==> clos_refl_sym_trans R') f.
-Proof.
-  intros x y h. apply rst_step. eapply p. auto.
-Qed. *)
-
-(* clos_refl_sym_trans preserves congruences / morphisms *)
-Instance clos_refl_sym_trans_preserves_Proper2
-  (A B : Type) R R' (f : A → B) (p : Proper (R ==> R') f)
-  `{@Reflexive B R'} `{@Symmetric B R'} `{@Transitive B R'} :
-  Proper (clos_refl_sym_trans R ==> R') f.
-Proof.
-  intros x y h.
-  induction h.
-  - eapply p. auto.
-  - reflexivity.
-  - symmetry. auto.
-  - etransitivity. all: eauto.
-Qed.
-
-Instance relfexive_arrow (A B : Type) (R : crelation A) (R' : crelation B)
-  `{@Reflexive B R'} :
-  Reflexive (R ==> R')%signature.
-Proof.
-  intros f x y h.
-Abort.
-
-Lemma prove_clos_refl_sym_trans :
-  ∀ A B (R : crelation A) (R' : crelation B)
-    `{@Reflexive B R'} `{@Symmetric B R'} `{@Transitive B R'} x y f,
-    clos_refl_sym_trans R x y →
-    (∀ x y, R x y → R' (f x) (f y)) →
-    R' (f x) (f y).
-Proof.
-  intros A B R R' ? ? ? x y f h hp.
-  induction h.
-  - eapply hp. auto.
-  - reflexivity.
-  - symmetry. eapply IHh.
-  - etransitivity. all: eauto.
-Qed.
-
-Lemma prove_clos_refl_sym_trans2 :
-  ∀ {A B} {R : crelation A} {R' : crelation B} {x y} f,
-    clos_refl_sym_trans R x y →
-    Proper (R ==> R') f →
-    clos_refl_sym_trans R' (f x) (f y).
-Proof.
-  intros A B R R' x y f h hf.
-  induction h.
-  - eapply rst_step. eapply hf. auto.
-  - reflexivity.
-  - symmetry. eauto.
-  - etransitivity. all: eauto.
-Qed.
-
 Instance conv_lam_proper :
   Proper (conv ==> conv ==> conv) lam.
 Proof.
   intros A A' hA t t' ht.
   etransitivity.
-  - simple refine (prove_clos_refl_sym_trans2 (λ x, _) hA _).
+  - simple refine (prove_clos_refl_sym_trans (λ x, _) hA _).
     intros ? ? ?. constructor. auto.
-  - simple refine (prove_clos_refl_sym_trans2 (λ x, _) ht _).
+  - simple refine (prove_clos_refl_sym_trans (λ x, _) ht _).
     intros ? ? ?. constructor. auto.
 Qed.
