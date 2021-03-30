@@ -86,4 +86,21 @@ Inductive red : term → term → Type :=
 
 | List_ty : ∀ A A', A ↦ A' → (List A) ↦ (List A')
 
+| refl_ty : ∀ A A' u, A ↦ A' → (refl A u) ↦ (refl A' u)
+| refl_tm : ∀ A u u', u ↦ u' → (refl A u) ↦ (refl A u')
+
+| coe_ty : ∀ A P u v e t A', A ↦ A' → (coe A P u v e t) ↦ (coe A' P u v e t)
+| coe_p : ∀ A P u v e t P', P ↦ P' → (coe A P u v e t) ↦ (coe A P' u v e t)
+| coe_u : ∀ A P u v e t u', u ↦ u' → (coe A P u v e t) ↦ (coe A P u' v e t)
+| coe_v : ∀ A P u v e t v', v ↦ v' → (coe A P u v e t) ↦ (coe A P u v' e t)
+| coe_e : ∀ A P u v e t e', e ↦ e' → (coe A P u v e t) ↦ (coe A P u v e' t)
+| coe_t : ∀ A P u v e t t', t ↦ t' → (coe A P u v e t) ↦ (coe A P u v e t')
+
+| Eq_ty : ∀ A u v A', A ↦ A' → (Eq A u v) ↦ (Eq A' u v)
+| Eq_u : ∀ A u v u', u ↦ u' → (Eq A u v) ↦ (Eq A u' v)
+| Eq_v : ∀ A u v v', v ↦ v' → (Eq A u v) ↦ (Eq A u v')
+
+| exfalso_ty : ∀ A p A', A ↦ A' → (exfalso A p) ↦ (exfalso A' p)
+| exfalso_tm : ∀ A p p', p ↦ p' → (exfalso A p) ↦ (exfalso A p')
+
 where "u ↦ v" := (red u v) : t_scope.

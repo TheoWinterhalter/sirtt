@@ -189,9 +189,83 @@ Ltac prove_cong :=
     prove_cong_from h
   end.
 
+Ltac prove_cong_full :=
+  repeat (intros ? ? ?) ; prove_cong.
+
 Instance conv_lam_proper :
   Proper (conv ==> conv ==> conv) lam.
 Proof.
-  intros A A' hA t t' ht.
-  prove_cong.
+  prove_cong_full.
+Qed.
+
+Instance conv_app_proper :
+  Proper (conv ==> conv ==> conv) app.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_Prod_proper :
+  Proper (conv ==> conv ==> conv) Prod.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_succ_proper :
+  Proper (conv ==> conv) succ.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_elim_nat_proper :
+  Proper (conv ==> conv ==> conv ==> conv ==> conv) elim_nat.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_lnil_proper :
+  Proper (conv ==> conv) lnil.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_lcons_proper :
+  Proper (conv ==> conv ==> conv ==> conv) lcons.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_elim_list_proper :
+  Proper (conv ==> conv ==> conv ==> conv ==> conv ==> conv) elim_list.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_List_proper :
+  Proper (conv ==> conv) List.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_refl_proper :
+  Proper (conv ==> conv ==> conv) refl.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_coe_proper :
+  Proper (conv ==> conv ==> conv ==> conv ==> conv ==> conv ==> conv) coe.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_Eq_proper :
+  Proper (conv ==> conv ==> conv ==> conv) Eq.
+Proof.
+  prove_cong_full.
+Qed.
+
+Instance conv_exfalso_proper :
+  Proper (conv ==> conv ==> conv) exfalso.
+Proof.
+  prove_cong_full.
 Qed.
