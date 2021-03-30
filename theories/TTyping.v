@@ -1,6 +1,6 @@
 (* Typing in SIRTT *)
 
-From Coq Require Import Utf8 List.
+From Coq Require Import Utf8 List CRelationClasses CMorphisms.
 Require Import Util TAst TSubst TReduction TScoping.
 
 Import ListNotations.
@@ -171,3 +171,62 @@ Proof.
   all: try solve [ constructor ; eauto ].
   constructor. eapply nth_error_Some_length in e. auto.
 Qed.
+
+(* Showing conversion is a congruence, some bits might move to TReduction *)
+
+(* TODO MOVE to Util *)
+(* clos_refl_sym_trans preserves congruences / morphisms *)
+(* Instance clos_refl_sym_trans_preserves_Proper'
+  (A B : Type) R R' (f : A → B) (p : Proper (R ==> R') f) :
+  Proper (R ==> clos_refl_sym_trans R') f.
+Proof.
+  intros x y h. apply rst_step. eapply p. auto.
+Qed. *)
+
+(* clos_refl_sym_trans preserves congruences / morphisms *)
+Instance clos_refl_sym_trans_preserves_Proper2
+  (A B : Type) R R' (f : A → B) (p : Proper (R ==> R') f)
+  `{@Reflexive B R'} `{@Symmetric B R'} `{@Transitive B R'} :
+  Proper (clos_refl_sym_trans R ==> R') f.
+Proof.
+  intros x y h.
+  induction h.
+  - eapply p. auto.
+  - reflexivity.
+  - symmetry. auto.
+  - etransitivity. all: eauto.
+Qed.
+
+Instance relfexive_arrow (A B : Type) (R : crelation A) (R' : crelation B)
+  `{@Reflexive B R'} :
+  Reflexive (R ==> R')%signature.
+Proof.
+  intros f x y h.
+Abort.
+
+Lemma prove_clos_refl_sym_trans :
+  ∀ A B (R : crelation A) (R' : crelation B)
+    `{@Reflexive B R'} `{@Symmetric B R'} `{@Transitive B R'} x y f,
+    clos_refl_sym_trans R x y →
+    (∀ x y, R x y → R' (f x) (f y)) →
+    R' (f x) (f y).
+Proof.
+  intros A B R R' ? ? ? x y f h hp.
+  induction h.
+  - eapply hp. auto.
+  - reflexivity.
+  - symmetry. eapply IHh.
+  - etransitivity. all: eauto.
+Qed.
+
+Instance conv_lam_proper :
+  Proper (conv ==> conv ==> conv) lam.
+Proof.
+  (* eapply clos_refl_sym_trans_preserves_Proper2. *)
+  intros A A' hA t t' ht.
+  (* eapply prove_clos_refl_sym_trans in hA. *)
+  (* eapply clos_refl_sym_trans_preserves_Proper. *)
+  (* It seems I'll have to it by hand, sadly.
+    Probably with a tactic that does the above...
+  *)
+Abort.
