@@ -130,3 +130,10 @@ Proof.
     all: left ; constructor.
   - right.
 Qed.
+
+Lemma max_l_R :
+  ∀ ℓ, ℓ ⊔ R = ℓ.
+Proof.
+  intro ℓ.
+  destruct ℓ. all: reflexivity.
+Qed.

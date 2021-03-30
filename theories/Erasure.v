@@ -818,3 +818,38 @@ Proof.
     constructor.
   - cbn. rewrite (erase_reveal _ e). rewrite e0. cbn. constructor.
 Qed.
+
+(* Even though typing and conversion are mutual, we can probably still
+  conclude on conversion first as we will never need the induction hyothesis
+  on typing.
+*)
+Lemma erase_conv :
+  ∀ (Γ : SIRTT.context) u v,
+    SIRTT.scoping Γ Level.R u →
+    SIRTT.scoping Γ Level.R v →
+    (Γ ⊢[ Level.R ] u ≡ v)%s →
+    trans Γ u ≡ trans Γ v.
+Proof.
+  intros Γ u v hu hv h.
+  induction h in hu, hv |- *.
+  all: try solve [
+    try scope_inv hu hu' ; try scope_inv hv hv' ; intuition eauto
+  ].
+  all: try solve [
+    try scope_inv hu hu' ; try scope_inv hv hv' ;
+    cbn ; econstructor ; intuition eauto
+  ].
+  - scope_inv hu hs. destruct hs as [hl hu'].
+    scope_inv hl hl'.
+    cbn. destruct ℓ'.
+    + rewrite Level.max_l_R in hu'.
+      erewrite erase_subst10_relevant. 2,3: give_up.
+      (* It's a bit annoying because we don't have the right level.
+        Could we get around it with a stronger hyp? We have probably lost
+        information when doing induction, we did not remember the level of
+        conversion!
+      *)
+      constructor. constructor.
+    + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      erewrite erase_subst0 with (Δ := [ _ ]).
+Abort.
