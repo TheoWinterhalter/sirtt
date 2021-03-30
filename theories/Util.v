@@ -1,6 +1,6 @@
 (* Global utility *)
 
-From Coq Require Import Utf8 List Lia CRelationClasses.
+From Coq Require Import Utf8 List Lia CRelationClasses CMorphisms.
 Import ListNotations.
 
 Set Default Goal Selector "!".
@@ -84,6 +84,19 @@ Instance Transitive_clos_refl_sym_trans :
     @Transitive A (clos_refl_sym_trans R).
 Proof.
   intros A R x y z h1 h2. eapply rst_trans. all: eauto.
+Qed.
+
+(* clos_refl_sym_trans preserves congruences / morphisms *)
+Instance clos_refl_sym_trans_preserves_Proper
+  (A B : Type) R R' (f : A → B) (p : Proper (R ==> R') f) :
+  Proper (clos_refl_sym_trans R ==> clos_refl_sym_trans R') f.
+Proof.
+  intros x y h.
+  induction h.
+  - apply rst_step. eapply p. auto.
+  - apply rst_refl.
+  - apply rst_sym. auto.
+  - eapply rst_trans. all: eauto.
 Qed.
 
 Record prod A B := pair {

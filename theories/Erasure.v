@@ -869,6 +869,11 @@ Proof.
     destruct ℓ'.
     + (* Need to prove congruence rules
       and better yet to provide some tactic to do it automatically?
+
+      Would it be possible to do it with setoid?
+      Like say that if f is a morphism from R to R' then it is also
+      from clos_refl_sym_trans R to crst R'?
+      Might be nice.
       *)
       admit.
     + intuition eauto.
