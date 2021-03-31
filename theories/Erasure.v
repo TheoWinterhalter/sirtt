@@ -895,31 +895,71 @@ Fixpoint context_trans (Γ : SIRTT.context) :=
   | [] => []
   end.
 
-(* Lemma context_trans_nth_error :
-  ∀ Γ n,
-    nth_error (context_trans Γ) #| scope_trans (firstn n Γ) | =
-    option_map (trans ) *)
+Lemma context_trans_nth_error :
+  ∀ (Γ : SIRTT.context) n A,
+    nth_error Γ n = Some (Level.R, A) →
+    nth_error (context_trans Γ) #| scope_trans (firstn n (SIRTT.context_to_scope Γ)) | =
+    Some (trans (skipn (S n) (SIRTT.context_to_scope Γ)) A).
+Proof.
+  intros Γ n A h.
+  induction Γ as [| [ℓ B] Γ ih] in n, A, h |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in h. inversion h. subst. clear h. simpl. reflexivity.
+  - cbn in h. eapply ih in h as h'.
+    destruct ℓ.
+    + simpl. rewrite h'. reflexivity.
+    + simpl. rewrite h'. reflexivity.
+    + simpl. rewrite h'. reflexivity.
+Qed.
+
+(* Lemma meta_conv :
+  ∀ Γ ℓ t A B,
+    Γ ⊢[ ℓ ] t : A →
+    A = B →
+    Γ ⊢[ ℓ ] t : B.
+Proof.
+  intros Γ ℓ t A B h e. subst. auto.
+Qed. *)
+
+Lemma meta_conv :
+  ∀ Σ Γ t A B,
+    Σ ;; Γ ⊢ t : A →
+    A = B →
+    Σ ;; Γ ⊢ t : B.
+Proof.
+  intros Σ Γ t A B h e. subst. auto.
+Qed.
+
+(* TODO MOVE *)
+Lemma context_to_scope_length :
+  ∀ (Γ : SIRTT.context),
+    #| SIRTT.context_to_scope Γ | = #| Γ |.
+Proof.
+  intros Γ.
+  induction Γ as [| [[] A] Γ ih]. all: cbn ; eauto.
+Qed.
 
 Lemma erase_typing :
   ∀ Γ t A,
-    (Γ ⊢[ Level.R ] t : A)%s →
+    Γ ⊢[ Level.R ] t : A →
     [ Empty ] ;; context_trans Γ ⊢ trans Γ t : trans Γ A.
 Proof.
   intros Γ t A h.
   remember Level.R as ℓR eqn:eℓ.
   induction h in eℓ |- *.
-  - cbn. constructor.
-    (* Copied from erase_scoping *)
-    (* apply nth_error_Some_split in e as h.
-    rewrite h. rewrite firstn_app. rewrite firstn_firstn.
-    replace (min n n) with n by lia.
-    apply nth_error_Some_length in e.
-    rewrite 2!scope_trans_app. rewrite 2!app_length.
-    match goal with
-    | |- ?x + ?y < ?x + ?z =>
-      cut (y < z)
-    end.
-    1:{ intro. lia. }
-    rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
-    rewrite firstn_O. cbn. lia. *)
+  - cbn. subst.
+    eapply meta_conv.
+    + constructor. eapply context_trans_nth_error. eauto.
+    + pose proof erase_lift as h. specialize h with (Ξ := []).
+      cbn in h. rewrite <- h.
+      * (* rewrite firstn_skipn. *)
+        rewrite firstn_length.
+        eapply nth_error_Some_length in e as hn.
+        rewrite context_to_scope_length.
+        replace (min n #|Γ|) with n by lia.
+        f_equal.
+        (* It's just wrong, what happened? *)
+        give_up.
+      * (* I probably need to also ask the context to be well-scoped. *)
 Abort.
