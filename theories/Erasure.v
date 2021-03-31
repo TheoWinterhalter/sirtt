@@ -949,4 +949,18 @@ Proof.
         eapply context_to_scope_nth_error. eauto.
       * clear h.
         eapply scoping_context_nth_error. all: eauto.
+  - subst. cbn. destruct ℓ'.
+    + econstructor. 1: eauto.
+      eapply IHh2. 2: reflexivity.
+      constructor. 1: auto.
+      eapply SIRTT.typed_scoped. eauto.
+    + cbn. eapply IHh2. 2: reflexivity.
+      constructor. 1: auto.
+      eapply SIRTT.typed_scoped.
+      eapply type_sub. 1: eauto.
+      constructor. constructor.
+    + cbn. (* Here we have a mismatch between the scopes
+        Does this mean we should use map Level.pred in Γ in the type?
+        It would probably make sense.
+      *)
 Abort.
