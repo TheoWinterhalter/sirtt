@@ -363,8 +363,20 @@ with conversion (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] v ≡ u →
       Γ ⊢[ ℓ ] u ≡ v
 
+(**
+  For transitivity I couldn't find another solution than requirement
+  well-scopedness of v.
+  Indeed, otherwise we cannot recovert this fact from scopedness of u and w
+  alone, resulting in a difficulty to erase conversion.
+  This might be moral as we want to avoid transitivity to be used to consume
+  irrelevant beta-redexes or so.
+
+  (Maybe another solution would be to only conclude conversion at level ℓ of
+  terms at level ℓ? We're kinda forcing it here.)
+*)
 | conv_trans :
     ∀ ℓ u v w,
+      scoping Γ ℓ v →
       Γ ⊢[ ℓ ] u ≡ v →
       Γ ⊢[ ℓ ] v ≡ w →
       Γ ⊢[ ℓ ] u ≡ w

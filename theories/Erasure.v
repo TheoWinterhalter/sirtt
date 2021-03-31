@@ -883,14 +883,7 @@ Proof.
     + t_cong. all: intuition eauto.
     + intuition eauto.
     + cbn. intuition eauto.
-  - subst. etransitivity.
-    + eapply IHh1. all: intuition eauto.
-      (* Missing something again!
-        Can we say that if u is R and u ≡ v then v is R too?
-      *)
-      give_up.
-    + give_up.
   - subst. inversion p.
     + subst. inversion H.
     + subst. intuition eauto.
-Admitted.
+Qed.
