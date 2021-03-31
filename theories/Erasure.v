@@ -913,14 +913,31 @@ Proof.
     + simpl. rewrite h'. reflexivity.
 Qed.
 
+(* TODO MOVE *)
+Lemma scoping_context_nth_error :
+  ∀ (Γ : SIRTT.context) n ℓ A,
+    scoping_context Γ →
+    nth_error Γ n = Some (ℓ, A) →
+    SIRTT.scoping (skipn (S n) (SIRTT.context_to_scope Γ)) ℓ A.
+Proof.
+  intros Γ n ℓ A h e.
+  induction h in n, ℓ, A, e |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in e. inversion e. subst. clear e.
+    cbn. auto.
+  - cbn in e. eapply IHh in e. auto.
+Qed.
+
 Lemma erase_typing :
   ∀ Γ t A,
+    scoping_context Γ →
     Γ ⊢[ Level.R ] t : A →
     [ Empty ] ;; context_trans Γ ⊢ trans Γ t : trans Γ A.
 Proof.
-  intros Γ t A h.
+  intros Γ t A hΓ h.
   remember Level.R as ℓR eqn:eℓ.
-  induction h in eℓ |- *.
+  induction h in eℓ, hΓ |- *.
   - cbn. subst.
     eapply meta_conv.
     + constructor. eapply context_trans_nth_error. eauto.
@@ -946,6 +963,6 @@ Proof.
         rewrite <- app_assoc. cbn - [skipn].
         symmetry. eapply nth_error_Some_split.
         eapply context_to_scope_nth_error. eauto.
-      * (* I probably need to also ask the context to be well-scoped. *)
-        clear h.
+      * clear h.
+        eapply scoping_context_nth_error. all: eauto.
 Abort.
