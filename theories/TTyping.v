@@ -302,3 +302,12 @@ Ltac t_cong :=
     eapply conv_exfalso_proper
   | |- _ => fail "Cannot apply congruence rule"
   end.
+
+Lemma meta_conv :
+  ∀ Σ Γ t A B,
+    Σ ;; Γ ⊢ t : A →
+    A = B →
+    Σ ;; Γ ⊢ t : B.
+Proof.
+  intros Σ Γ t A B h e. subst. auto.
+Qed.

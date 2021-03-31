@@ -913,49 +913,6 @@ Proof.
     + simpl. rewrite h'. reflexivity.
 Qed.
 
-(* Lemma meta_conv :
-  ∀ Γ ℓ t A B,
-    Γ ⊢[ ℓ ] t : A →
-    A = B →
-    Γ ⊢[ ℓ ] t : B.
-Proof.
-  intros Γ ℓ t A B h e. subst. auto.
-Qed. *)
-
-Lemma meta_conv :
-  ∀ Σ Γ t A B,
-    Σ ;; Γ ⊢ t : A →
-    A = B →
-    Σ ;; Γ ⊢ t : B.
-Proof.
-  intros Σ Γ t A B h e. subst. auto.
-Qed.
-
-(* TODO MOVE *)
-Lemma context_to_scope_length :
-  ∀ (Γ : SIRTT.context),
-    #| SIRTT.context_to_scope Γ | = #| Γ |.
-Proof.
-  intros Γ.
-  induction Γ as [| [[] A] Γ ih]. all: cbn ; eauto.
-Qed.
-
-(* TODO MOVE *)
-Lemma context_to_scope_nth_error :
-  ∀ (Γ : SIRTT.context) n ℓ A,
-    nth_error Γ n = Some (ℓ, A) →
-    nth_error (SIRTT.context_to_scope Γ) n = Some ℓ.
-Proof.
-  intros Γ n ℓ A h.
-  induction Γ as [| [ℓ' B] Γ ih] in n, ℓ, A, h |- *.
-  1:{ destruct n. all: discriminate. }
-  destruct n.
-  - cbn in h. inversion h. subst. clear h.
-    cbn. reflexivity.
-  - cbn in h. eapply ih in h.
-    cbn. auto.
-Qed.
-
 Lemma erase_typing :
   ∀ Γ t A,
     Γ ⊢[ Level.R ] t : A →

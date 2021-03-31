@@ -410,3 +410,12 @@ Proof.
     rewrite e. cbn. reflexivity.
   - eapply scope_sub. all: eauto.
 Qed.
+
+Lemma meta_conv :
+  ∀ Γ ℓ t A B,
+    Γ ⊢[ ℓ ] t : A →
+    A = B →
+    Γ ⊢[ ℓ ] t : B.
+Proof.
+  intros Γ ℓ t A B h e. subst. auto.
+Qed.

@@ -1,6 +1,6 @@
 (* Syntax for SIRTT *)
 
-From Coq Require Import List.
+From Coq Require Import List Utf8.
 Require Import Util Level.
 
 Import ListNotations.
@@ -59,3 +59,26 @@ Fixpoint apps (t : term) (l : list (level × term)) :=
   | (ℓ, u) :: l => apps (app ℓ t u) l
   | [] => t
   end.
+
+Lemma context_to_scope_length :
+  ∀ (Γ : context),
+    #| context_to_scope Γ | = #| Γ |.
+Proof.
+  intros Γ.
+  induction Γ as [| [[] A] Γ ih]. all: cbn ; eauto.
+Qed.
+
+Lemma context_to_scope_nth_error :
+  ∀ (Γ : context) n ℓ A,
+    nth_error Γ n = Some (ℓ, A) →
+    nth_error (context_to_scope Γ) n = Some ℓ.
+Proof.
+  intros Γ n ℓ A h.
+  induction Γ as [| [ℓ' B] Γ ih] in n, ℓ, A, h |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in h. inversion h. subst. clear h.
+    cbn. reflexivity.
+  - cbn in h. eapply ih in h.
+    cbn. auto.
+Qed.
