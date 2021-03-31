@@ -913,22 +913,6 @@ Proof.
     + simpl. rewrite h'. reflexivity.
 Qed.
 
-(* TODO MOVE *)
-Lemma scoping_context_nth_error :
-  ∀ (Γ : SIRTT.context) n ℓ A,
-    scoping_context Γ →
-    nth_error Γ n = Some (ℓ, A) →
-    SIRTT.scoping (skipn (S n) (SIRTT.context_to_scope Γ)) ℓ A.
-Proof.
-  intros Γ n ℓ A h e.
-  induction h in n, ℓ, A, e |- *.
-  1:{ destruct n. all: discriminate. }
-  destruct n.
-  - cbn in e. inversion e. subst. clear e.
-    cbn. auto.
-  - cbn in e. eapply IHh in e. auto.
-Qed.
-
 Lemma erase_typing :
   ∀ Γ t A,
     scoping_context Γ →

@@ -462,3 +462,18 @@ Ltac scope_inv h h' :=
     end
   | _ => fail "scope_inv only applies to scoping assumptions"
   end.
+
+Lemma scoping_context_nth_error :
+  ∀ (Γ : context) n ℓ A,
+    scoping_context Γ →
+    nth_error Γ n = Some (ℓ, A) →
+    scoping (skipn (Datatypes.S n) (context_to_scope Γ)) ℓ A.
+Proof.
+  intros Γ n ℓ A h e.
+  induction h in n, ℓ, A, e |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in e. inversion e. subst. clear e.
+    cbn. auto.
+  - cbn in e. eapply IHh in e. auto.
+Qed.
