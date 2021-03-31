@@ -41,7 +41,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_var :
     ∀ n ℓ A,
       nth_error Γ n = Some (ℓ, A) →
-      Γ ⊢[ ℓ ] var n : (lift0 n A)
+      Γ ⊢[ ℓ ] var n : (lift0 (Datatypes.S n) A)
 
 | type_lam :
     ∀ ℓ ℓ' A B t s,

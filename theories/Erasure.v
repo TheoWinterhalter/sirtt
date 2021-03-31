@@ -940,6 +940,22 @@ Proof.
   induction Γ as [| [[] A] Γ ih]. all: cbn ; eauto.
 Qed.
 
+(* TODO MOVE *)
+Lemma context_to_scope_nth_error :
+  ∀ (Γ : SIRTT.context) n ℓ A,
+    nth_error Γ n = Some (ℓ, A) →
+    nth_error (SIRTT.context_to_scope Γ) n = Some ℓ.
+Proof.
+  intros Γ n ℓ A h.
+  induction Γ as [| [ℓ' B] Γ ih] in n, ℓ, A, h |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in h. inversion h. subst. clear h.
+    cbn. reflexivity.
+  - cbn in h. eapply ih in h.
+    cbn. auto.
+Qed.
+
 Lemma erase_typing :
   ∀ Γ t A,
     Γ ⊢[ Level.R ] t : A →
@@ -952,14 +968,27 @@ Proof.
     eapply meta_conv.
     + constructor. eapply context_trans_nth_error. eauto.
     + pose proof erase_lift as h. specialize h with (Ξ := []).
-      cbn in h. rewrite <- h.
-      * (* rewrite firstn_skipn. *)
+      cbn in h.
+      specialize h
+      with (Δ := firstn n (SIRTT.context_to_scope Γ) ++ [ Level.R ]).
+      specialize h with (Γ0 := skipn (S n) (SIRTT.context_to_scope Γ)).
+      specialize (h A).
+      rewrite scope_trans_app in h. rewrite !app_length in h.
+      cbn - [skipn] in h.
+      repeat lazymatch type of h with
+      | context [ ?n + 1 ] =>
+        replace (n + 1) with (S n) in h by lia
+      end.
+      rewrite <- h.
+      * clear h.
         rewrite firstn_length.
         eapply nth_error_Some_length in e as hn.
         rewrite context_to_scope_length.
         replace (min n #|Γ|) with n by lia.
         f_equal.
-        (* It's just wrong, what happened? *)
-        give_up.
+        rewrite <- app_assoc. cbn - [skipn].
+        symmetry. eapply nth_error_Some_split.
+        eapply context_to_scope_nth_error. eauto.
       * (* I probably need to also ask the context to be well-scoped. *)
+        clear h.
 Abort.

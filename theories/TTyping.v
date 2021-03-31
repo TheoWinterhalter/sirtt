@@ -26,7 +26,7 @@ Inductive typing (Σ : list term) (Γ : context) : term → term → Type :=
 | type_var :
     ∀ n A,
       nth_error Γ n = Some A →
-      Σ ;; Γ ⊢ var n : (lift0 n A)
+      Σ ;; Γ ⊢ var n : (lift0 (S n) A)
 
 | type_lam :
     ∀ A B t s,
