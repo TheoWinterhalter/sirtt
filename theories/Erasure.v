@@ -887,3 +887,39 @@ Proof.
     + subst. inversion H.
     + subst. intuition eauto.
 Qed.
+
+Fixpoint context_trans (Γ : SIRTT.context) :=
+  match Γ with
+  | (Level.R, A) :: Γ => trans (SIRTT.context_to_scope Γ) A :: context_trans Γ
+  | _ :: Γ => context_trans Γ
+  | [] => []
+  end.
+
+(* Lemma context_trans_nth_error :
+  ∀ Γ n,
+    nth_error (context_trans Γ) #| scope_trans (firstn n Γ) | =
+    option_map (trans ) *)
+
+Lemma erase_typing :
+  ∀ Γ t A,
+    (Γ ⊢[ Level.R ] t : A)%s →
+    [ Empty ] ;; context_trans Γ ⊢ trans Γ t : trans Γ A.
+Proof.
+  intros Γ t A h.
+  remember Level.R as ℓR eqn:eℓ.
+  induction h in eℓ |- *.
+  - cbn. constructor.
+    (* Copied from erase_scoping *)
+    (* apply nth_error_Some_split in e as h.
+    rewrite h. rewrite firstn_app. rewrite firstn_firstn.
+    replace (min n n) with n by lia.
+    apply nth_error_Some_length in e.
+    rewrite 2!scope_trans_app. rewrite 2!app_length.
+    match goal with
+    | |- ?x + ?y < ?x + ?z =>
+      cut (y < z)
+    end.
+    1:{ intro. lia. }
+    rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
+    rewrite firstn_O. cbn. lia. *)
+Abort.
