@@ -150,6 +150,14 @@ Inductive scoping (Γ : scope) : level → term → Type :=
       scoping Γ ℓ' t
 .
 
+Inductive scoping_context : context → Type :=
+| scope_nil : scoping_context []
+| scope_cons :
+    ∀ ℓ A Γ,
+      scoping_context Γ →
+      scoping Γ ℓ A →
+      scoping_context ((ℓ, A) :: Γ).
+
 (* Inversion lemmata for scoping *)
 
 Set Equations With UIP.
