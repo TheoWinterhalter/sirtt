@@ -27,12 +27,12 @@ Definition scope_trans Γ :=
 Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   match t with
   | SIRTT.var i => MLTT.var #| scope_trans (firstn i Γ) |
-  | SIRTT.lam Level.R A t => MLTT.lam (trans Γ A) (trans (Level.R :: Γ) t)
+  | SIRTT.lam Level.R A t => MLTT.lam (trans (psc Γ) A) (trans (Level.R :: Γ) t)
   | SIRTT.lam l A t => trans (l :: Γ) t
   | SIRTT.app Level.R u v => MLTT.app (trans Γ u) (trans Γ v)
   | SIRTT.app l u v => trans Γ u
   | SIRTT.Prod Level.R A B => MLTT.Prod (trans Γ A) (trans (Level.R :: Γ) B)
-  | SIRTT.Prod l A B =>trans (Level.pred l :: Γ) B
+  | SIRTT.Prod l A B => trans (Level.pred l :: Γ) B
   | SIRTT.ex u p => trans Γ u
   | SIRTT.wit t => trans Γ t
   | SIRTT.prf t => dummy
@@ -40,17 +40,17 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   | SIRTT.zero => MLTT.zero
   | SIRTT.succ t => MLTT.succ (trans Γ t)
   | SIRTT.elim_nat P z s t =>
-    MLTT.elim_nat (trans Γ P) (trans Γ z) (trans Γ s) (trans Γ t)
+    MLTT.elim_nat (trans (psc Γ) P) (trans Γ z) (trans Γ s) (trans Γ t)
   | SIRTT.Nat => MLTT.Nat
-  | SIRTT.vnil A => MLTT.lnil (trans Γ A)
-  | SIRTT.vcons A a m v => MLTT.lcons (trans Γ A) (trans Γ a) (trans Γ v)
+  | SIRTT.vnil A => MLTT.lnil (trans (psc Γ) A)
+  | SIRTT.vcons A a m v => MLTT.lcons (trans (psc Γ) A) (trans Γ a) (trans Γ v)
   | SIRTT.elim_vec A P e c m v =>
-    MLTT.elim_list (trans Γ A) (trans Γ P) (trans Γ e) (trans Γ c) (trans Γ v)
+    MLTT.elim_list (trans (psc Γ) A) (trans (psc Γ) P) (trans Γ e) (trans Γ c) (trans Γ v)
   | SIRTT.Vec A m => MLTT.List (trans Γ A)
-  | SIRTT.refl A u => MLTT.refl (trans Γ A) (trans Γ u)
+  | SIRTT.refl A u => MLTT.refl (trans (psc Γ) A) (trans Γ u)
   | SIRTT.coe A P u v e t =>
     MLTT.coe
-      (trans Γ A) (trans Γ P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
+      (trans (psc Γ) A) (trans (psc Γ) P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
   | SIRTT.Eq A u v => MLTT.Eq (trans Γ A) (trans Γ u) (trans Γ v)
   | SIRTT.exfalso A p => MLTT.axiom 0
   | SIRTT.Empty => MLTT.Empty
@@ -82,6 +82,23 @@ Proof.
   apply filter_firstn_length.
 Qed.
 
+(* TODO MOVE *)
+Lemma relevant_pred :
+  ∀ ℓ,
+    Level.relevant (Level.pred ℓ) = Level.relevant ℓ.
+Proof.
+  intros []. all: reflexivity.
+Qed.
+
+Lemma scope_trans_psc :
+  ∀ Γ,
+    scope_trans (psc Γ) = scope_trans Γ.
+Proof.
+  intro Γ. induction Γ as [| [] Γ ih].
+  all: cbn. all: eauto.
+  f_equal. eapply ih.
+Qed.
+
 Set Equations With UIP.
 
 Lemma erase_scoping :
@@ -97,6 +114,13 @@ Proof.
   all: try solve [
     destruct ℓ' ;
     cbn ; auto ; constructor ; auto
+  ].
+  all: try solve [
+    cbn ; auto ; constructor ; auto ; rewrite <- scope_trans_psc ; auto
+  ].
+  all: try solve [
+    destruct ℓ' ;
+    cbn ; auto ; constructor ; auto ; rewrite <- scope_trans_psc ; auto
   ].
   - constructor.
     apply nth_error_Some_split in e as h.
@@ -917,7 +941,8 @@ Lemma erase_typing :
   ∀ Γ t A,
     scoping_context Γ →
     Γ ⊢[ Level.R ] t : A →
-    [ Empty ] ;; context_trans Γ ⊢ trans Γ t : trans Γ A.
+    [ Empty ] ;; context_trans Γ ⊢ trans Γ t :
+    trans (map Level.pred (SIRTT.context_to_scope Γ)) A.
 Proof.
   intros Γ t A hΓ h.
   remember Level.R as ℓR eqn:eℓ.

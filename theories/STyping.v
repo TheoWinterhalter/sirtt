@@ -31,6 +31,16 @@ Set Default Goal Selector "!".
 Definition arrow A B := Prod R A (lift0 1 B).
 Notation "A ⇒ B" := (arrow A B) (at level 70, right associativity) : s_scope.
 
+(** When Γ ⊢[ ℓ ] t : A then A doesn't live in Γ, but really
+    in Γ where all bindings have been Level.pred-ed, meaning all irrelevant
+    bindings become shape-irrelevant.
+    This means that types in typing judgments need to live in the
+    transformed context.
+    We call this operation [pctx] pending a better name.
+*)
+Definition pctx (Γ : context) : context :=
+  map (λ '(ℓ, A), (Level.pred ℓ, A)) Γ.
+
 Reserved Notation "Γ ⊢[ l ] t : A"
   (at level 80, l, t, A at next level, format "Γ  ⊢[  l  ]  t  :  A").
 
@@ -45,7 +55,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_lam :
     ∀ ℓ ℓ' A B t s,
-      Γ ⊢[ ℓ ] A : univ s →
+      pctx Γ ⊢[ ℓ ] A : univ s →
       (ℓ', A) :: Γ ⊢[ ℓ ] t : B →
       Γ ⊢[ ℓ ] lam ℓ' A t : Prod ℓ' A B
 
@@ -94,7 +104,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_elim_nat :
     ∀ ℓ P z s n i,
-      Γ ⊢[ ℓ ] P : Nat ⇒ univ i →
+      pctx Γ ⊢[ ℓ ] P : Nat ⇒ univ i →
       Γ ⊢[ ℓ ] z : app R P zero →
       Γ ⊢[ ℓ ] s :
         Prod R Nat
@@ -108,12 +118,12 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_vnil :
     ∀ ℓ A i,
-      Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] vnil A : Vec A zero
 
 | type_vcons :
     ∀ ℓ A a n v i,
-      Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] a : A →
       Γ ⊢[ I ] n : Nat →
       Γ ⊢[ ℓ ] v : Vec A n →
@@ -121,8 +131,8 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_elim_vec :
     ∀ ℓ A P e c n v i j,
-      Γ ⊢[ ℓ ] A : univ i →
-      Γ ⊢[ ℓ ] P : Prod I Nat (Vec (lift0 1 A) (var 0) ⇒ univ j) →
+      pctx Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ℓ ] P : Prod I Nat (Vec (lift0 1 A) (var 0) ⇒ univ j) →
       Γ ⊢[ ℓ ] e : app R (app I P zero) (vnil A) →
       Γ ⊢[ ℓ ] c :
         Prod R A
@@ -147,14 +157,14 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_refl :
     ∀ ℓ A u i,
-      Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] u : A →
       Γ ⊢[ ℓ ] refl A u : Eq A u u
 
 | type_coe :
     ∀ ℓ A P u v e t i j,
-      Γ ⊢[ ℓ ] A : univ i →
-      Γ ⊢[ ℓ ] P : A ⇒ univ j →
+      pctx Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ℓ ] P : A ⇒ univ j →
       Γ ⊢[ ℓ ] u : A →
       Γ ⊢[ ℓ ] v : A →
       Γ ⊢[ ℓ ] e : Eq A u v →
@@ -170,7 +180,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_exfalso :
     ∀ ℓ A p i,
-      Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ℓ ] A : univ i →
       Γ ⊢[ I ] p : Empty →
       Γ ⊢[ ℓ ] exfalso A p : A
 
@@ -186,8 +196,8 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_conv :
     ∀ t A B ℓ s,
       Γ ⊢[ ℓ ] t : A →
-      Γ ⊢[ R ] A ≡ B →
-      Γ ⊢[ ▪ ℓ ] B : univ s →
+      pctx Γ ⊢[ R ] A ≡ B →
+      pctx Γ ⊢[ ▪ ℓ ] B : univ s →
       Γ ⊢[ ℓ ] t : B
 
 | type_sub :
@@ -241,7 +251,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_lam :
     ∀ ℓ ℓ' A A' t t',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       (ℓ', A) :: Γ ⊢[ ℓ ] t ≡ t' →
       Γ ⊢[ ℓ ] lam ℓ' A t ≡ lam ℓ' A' t'
 
@@ -253,8 +263,8 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Prod :
     ∀ ℓ ℓ' A A' B B',
-      Γ ⊢[ ℓ ] A ≡ A' →
-      (▪ ℓ', A) :: Γ ⊢[ ℓ ] B ≡ B' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      (▪ ℓ', A) :: pctx Γ ⊢[ ℓ ] B ≡ B' →
       Γ ⊢[ ℓ ] Prod ℓ' A B ≡ Prod ℓ' A' B'
 
 | cong_ex :
@@ -269,8 +279,8 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Sum :
     ∀ ℓ A A' P P',
-      Γ ⊢[ ℓ ] A ≡ A' →
-      Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] Sum A P ≡ Sum A' P'
 
 | cong_succ :
@@ -280,7 +290,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_elim_nat :
     ∀ ℓ P P' z z' s s' n n',
-      Γ ⊢[ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] z ≡ z' →
       Γ ⊢[ ℓ ] s ≡ s' →
       Γ ⊢[ ℓ ] n ≡ n' →
@@ -288,20 +298,20 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_vnil :
     ∀ ℓ A A',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] vnil A ≡ vnil A'
 
 | cong_vcons :
     ∀ ℓ A A' a a' n n' v v',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] a ≡ a' →
       Γ ⊢[ ℓ ] v ≡ v' →
       Γ ⊢[ ℓ ] vcons A a n v ≡ vcons A' a' n' v'
 
 | cong_elim_vec :
     ∀ ℓ A A' P P' e e' c c' n n' v v',
-      Γ ⊢[ ℓ ] A ≡ A' →
-      Γ ⊢[ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] e ≡ e' →
       Γ ⊢[ ℓ ] c ≡ c' →
       Γ ⊢[ ℓ ] v ≡ v' →
@@ -309,20 +319,20 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Vec :
     ∀ ℓ A A' n n',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ S ⊔ ℓ ] n ≡ n' →
       Γ ⊢[ ℓ ] Vec A n ≡ Vec A' n'
 
 | cong_refl :
     ∀ ℓ A A' u u',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] u ≡ u' →
       Γ ⊢[ ℓ ] refl A u ≡ refl A' u'
 
 | cong_coe :
     ∀ ℓ A A' P P' u u' v v' e e' t t',
-      Γ ⊢[ ℓ ] A ≡ A' →
-      Γ ⊢[ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] u ≡ u' →
       Γ ⊢[ ℓ ] v ≡ v' →
       Γ ⊢[ ℓ ] e ≡ e' →
@@ -331,14 +341,14 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Eq :
     ∀ ℓ A A' u u' v v',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] u ≡ u' →
       Γ ⊢[ ℓ ] v ≡ v' →
       Γ ⊢[ ℓ ] Eq A u v ≡ Eq A' u' v'
 
 | cong_exfalso :
     ∀ ℓ A A' p p',
-      Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] exfalso A p ≡ exfalso A' p'
 
 (* Specific rules *)
@@ -397,6 +407,14 @@ Inductive wf_context : context → Type :=
       Γ ⊢[ ▪ ℓ ] A : univ s →
       wf_context ((ℓ, A) :: Γ).
 
+Lemma psc_context_to_scope :
+  ∀ Γ, psc (context_to_scope Γ) = pctx Γ.
+Proof.
+  intros Γ. induction Γ as [| [ℓ A] Γ ih].
+  - reflexivity.
+  - cbn. f_equal. auto.
+Qed.
+
 Lemma typed_scoped :
   ∀ Γ ℓ t A,
     Γ ⊢[ ℓ ] t : A →
@@ -406,6 +424,7 @@ Proof.
   induction h.
   all: try assumption.
   all: try solve [ constructor ; eauto ].
+  all: try solve [ constructor ; rewrite ?psc_context_to_scope ; eauto ].
   - constructor. unfold context_to_scope. rewrite nth_error_map.
     rewrite e. cbn. reflexivity.
   - eapply scope_sub. all: eauto.
