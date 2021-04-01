@@ -240,6 +240,21 @@ Proof.
   - reflexivity.
 Qed.
 
+#[local] Ltac erase_lift_ih Γ' Δ' Ξ' :=
+  lazymatch goal with
+  | h : ∀ Γ Δ Ξ, _ |- _ =>
+    first [
+      rewrite h by intuition eauto ; clear h
+    | specialize (h (psc Γ') (psc Δ') (psc Ξ')) ;
+      forward h ; [
+        rewrite <- psc_app ; intuition eauto
+      | rewrite <- !psc_app, !trans_psc in h ;
+        rewrite !scope_trans_psc, !psc_length in h ;
+        rewrite h ; clear h
+      ]
+    ]
+  end.
+
 Lemma erase_lift :
   ∀ Γ Δ Ξ t,
     SIRTT.scoping (Ξ ++ Γ) Level.R t →
@@ -285,7 +300,38 @@ Proof.
       reflexivity.
   - scope_inv h hs.
     destruct l.
-    + cbn. rewrite IHt1. 2: intuition eauto.
+    + cbn.
+      (* erase_lift_ih Γ Δ Ξ. *)
+      (* lazymatch goal with
+      | h : ∀ Γ Δ Ξ, _ |- _ =>
+        first [
+          rewrite h by intuition eauto ; clear h
+        | specialize (h (psc Γ') (psc Δ') (psc Ξ')) ;
+          forward h ; [
+            rewrite <- psc_app ; intuition eauto
+          | rewrite <- !psc_app, !trans_psc in h ;
+            rewrite !scope_trans_psc, !psc_length in h ;
+            rewrite h ; clear h
+          ]
+        ]
+      end. *)
+      first [
+        rewrite IHt1 by intuition eauto ; clear IHt1
+      | specialize (IHt1 (psc Γ) (psc Δ) (psc Ξ)) ;
+        forward IHt1 ; [
+          rewrite <- psc_app ; intuition eauto
+        | rewrite <- !psc_app, !trans_psc in IHt1 ;
+          rewrite !scope_trans_psc, !psc_length in IHt1 ;
+          rewrite IHt1 ; clear IHt1
+        ]
+      ].
+      (* specialize (IHt1 (psc Γ) (psc Δ) (psc Ξ)).
+      forward IHt1. { rewrite <- psc_app. intuition eauto. }
+      rewrite <- !psc_app in IHt1. rewrite !trans_psc in IHt1.
+      rewrite !scope_trans_psc in IHt1. rewrite !psc_length in IHt1.
+      rewrite IHt1. *)
+
+    rewrite IHt1. 2: intuition eauto.
     +
     +
 
