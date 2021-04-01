@@ -650,7 +650,7 @@ Qed.
     h' : trans_subst _ ?Δ ?σ = Some ?θ |-
     context [ trans (?Ξ ++ ?Γ) (SIRTT.subst ?σ _ ?t) ] =>
     first [
-      rewrite h by intuition eauto ; clear h
+      erewrite h by intuition eauto ; clear h
     | specialize (h (psc Γ) (psc Δ) (psc Ξ) σ θ) ;
       forward h ; [ rewrite <- !psc_app ; intuition eauto |] ;
       forward h ; [ eapply relevant_scoping_subst_psc ; auto |] ;
@@ -698,204 +698,85 @@ Proof.
     destruct l ;
     cbn ; repeat erase_subst_ih ; reflexivity
   ].
-  - cbn. scope_inv h hs. clear h. destruct hs as [ℓ [hℓ e]].
-    eapply potentially_more_R in hℓ. subst.
-    destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
-    + rewrite firstn_app. rewrite firstn_all2 by lia.
-      rewrite scope_trans_app. rewrite app_length.
-      lazymatch goal with
-      | |- context [ ?x <=? ?y ] =>
-        destruct (PeanoNat.Nat.leb_spec x y)
-      end.
-      2: lia.
-      lazymatch goal with
-      | |- context [ ?x + ?y - ?x ] =>
-        replace (x + y - x) with y by lia
-      end.
-      rewrite nth_error_app2 in e. 2: auto.
-      destruct (PeanoNat.Nat.ltb_spec (n - #|Ξ|) #|Δ|) as [h|h].
-      * rewrite nth_error_app1 in e. 2: auto.
-        eapply trans_subst_nth_error_R in hσ as hh. 2: eauto.
-        destruct hh as [u [h1 h2]].
-        rewrite h1.
-        eapply nth_error_Some_length in e as el.
-        rewrite firstn_app. replace (n - #|Ξ| - #|Δ|) with 0 by lia.
-        rewrite firstn_O. rewrite app_nil_r.
-        rewrite h2.
-        apply erase_lift0.
-        eapply relevant_scoping_subst_nth_error in sσ. all: eauto.
-      * rewrite nth_error_app2 in e. 2: auto.
-        destruct (nth_error σ _) eqn:e1.
-        1:{
-          eapply nth_error_Some_length in e1.
-          eapply trans_subst_length_left in hσ.
-          lia.
-        }
-        destruct (nth_error θ _) eqn:e2.
-        1:{
-          eapply nth_error_Some_length in e2.
-          eapply trans_subst_length_right in hσ.
-          rewrite firstn_app in e2.
-          rewrite firstn_all2 in e2. 2: lia.
-          rewrite scope_trans_app in e2. rewrite app_length in e2.
-          lia.
-        }
-        cbn. f_equal.
-        rewrite firstn_app.
-        rewrite firstn_all2.
-        2:{ eapply trans_subst_length_left in hσ. lia. }
-        rewrite scope_trans_app. rewrite app_length.
-        rewrite firstn_app. rewrite scope_trans_app. rewrite app_length.
-        rewrite (firstn_all2 Δ). 2: lia.
-        replace (n - #|σ| - #|Ξ|) with (n - #|Ξ| - #|Δ|).
-        2:{ eapply trans_subst_length_left in hσ. lia. }
-        eapply trans_subst_length_right in hσ. lia.
-    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+  cbn. scope_inv h hs. clear h. destruct hs as [ℓ [hℓ e]].
+  eapply potentially_more_R in hℓ. subst.
+  destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+  - rewrite firstn_app. rewrite firstn_all2 by lia.
+    rewrite scope_trans_app. rewrite app_length.
+    lazymatch goal with
+    | |- context [ ?x <=? ?y ] =>
+      destruct (PeanoNat.Nat.leb_spec x y)
+    end.
+    2: lia.
+    lazymatch goal with
+    | |- context [ ?x + ?y - ?x ] =>
+      replace (x + y - x) with y by lia
+    end.
+    rewrite nth_error_app2 in e. 2: auto.
+    destruct (PeanoNat.Nat.ltb_spec (n - #|Ξ|) #|Δ|) as [h|h].
+    + rewrite nth_error_app1 in e. 2: auto.
+      eapply trans_subst_nth_error_R in hσ as hh. 2: eauto.
+      destruct hh as [u [h1 h2]].
+      rewrite h1.
+      eapply nth_error_Some_length in e as el.
+      rewrite firstn_app. replace (n - #|Ξ| - #|Δ|) with 0 by lia.
       rewrite firstn_O. rewrite app_nil_r.
-      lazymatch goal with
-      | |- context [ if ?u <=? ?v then _ else _ ] =>
-        destruct (PeanoNat.Nat.leb_spec u v)
-      end.
+      rewrite h2.
+      apply erase_lift0.
+      eapply relevant_scoping_subst_nth_error in sσ. all: eauto.
+    + rewrite nth_error_app2 in e. 2: auto.
+      destruct (nth_error σ _) eqn:e1.
       1:{
-        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
-        { pose proof (scope_trans_firstn_length Ξ n). lia. }
-        clear H0.
-        rewrite nth_error_app1 in e. 2: lia.
-        apply nth_error_Some_split in e as h.
-        apply (f_equal scope_trans) in h.
-        rewrite scope_trans_app in h. cbn - [skipn] in h.
-        rewrite h in el.
-        rewrite app_length in el. cbn - [skipn] in el. lia.
+        eapply nth_error_Some_length in e1.
+        eapply trans_subst_length_left in hσ.
+        lia.
+      }
+      destruct (nth_error θ _) eqn:e2.
+      1:{
+        eapply nth_error_Some_length in e2.
+        eapply trans_subst_length_right in hσ.
+        rewrite firstn_app in e2.
+        rewrite firstn_all2 in e2. 2: lia.
+        rewrite scope_trans_app in e2. rewrite app_length in e2.
+        lia.
       }
       cbn. f_equal.
-      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      reflexivity.
-  - scope_inv h hs.
-    destruct l.
-    + cbn. repeat erase_subst_ih. reflexivity.
-    + cbn. repeat erase_subst_ih. reflexivity.
-    + cbn. repeat erase_subst_ih. reflexivity.
-
-
-Lemma erase_subst :
-  ∀ Γ Δ Ξ σ t θ,
-    SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
-    scoping_subst Γ Δ σ → (* Could be weakened to only talk about relevant bits *)
-    trans_subst Γ Δ σ = Some θ →
-    trans (Ξ ++ Γ) (SIRTT.subst σ #|Ξ| t) =
-    MLTT.subst θ #|scope_trans Ξ| (trans (Ξ ++ Δ ++ Γ) t).
-Proof.
-  intros Γ Δ Ξ σ t θ h sσ hσ.
-  remember (Ξ ++ Δ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ σ θ sσ hσ eΘ.
-  dependent induction h.
-  all: intros Θ Δ Ξ σ θ sσ hσ eΘ.
-  all: try solve [
-    subst ;
-    cbn ; erewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by eauto ;
-    reflexivity
-  ].
-  - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
-    + rewrite firstn_app. rewrite firstn_all2 by lia.
+      rewrite firstn_app.
+      rewrite firstn_all2.
+      2:{ eapply trans_subst_length_left in hσ. lia. }
       rewrite scope_trans_app. rewrite app_length.
-      lazymatch goal with
-      | |- context [ ?x <=? ?y ] =>
-        destruct (PeanoNat.Nat.leb_spec x y)
-      end.
-      2: lia.
-      lazymatch goal with
-      | |- context [ ?x + ?y - ?x ] =>
-        replace (x + y - x) with y by lia
-      end.
-      rewrite nth_error_app2 in e. 2: auto.
-      destruct (PeanoNat.Nat.ltb_spec (n - #|Ξ|) #|Δ|) as [h|h].
-      * rewrite nth_error_app1 in e. 2: auto.
-        eapply trans_subst_nth_error_R in hσ as hh. 2: eauto.
-        destruct hh as [u [h1 h2]].
-        rewrite h1.
-        eapply nth_error_Some_length in e as el.
-        rewrite firstn_app. replace (n - #|Ξ| - #|Δ|) with 0 by lia.
-        rewrite firstn_O. rewrite app_nil_r.
-        rewrite h2.
-        apply erase_lift0.
-        eapply scoping_subst_nth_error in sσ. all: eauto.
-      * rewrite nth_error_app2 in e. 2: auto.
-        destruct (nth_error σ _) eqn:e1.
-        1:{
-          eapply nth_error_Some_length in e1.
-          eapply trans_subst_length_left in hσ.
-          lia.
-        }
-        destruct (nth_error θ _) eqn:e2.
-        1:{
-          eapply nth_error_Some_length in e2.
-          eapply trans_subst_length_right in hσ.
-          rewrite firstn_app in e2.
-          rewrite firstn_all2 in e2. 2: lia.
-          rewrite scope_trans_app in e2. rewrite app_length in e2.
-          lia.
-        }
-        cbn. f_equal.
-        rewrite firstn_app.
-        rewrite firstn_all2.
-        2:{ eapply trans_subst_length_left in hσ. lia. }
-        rewrite scope_trans_app. rewrite app_length.
-        rewrite firstn_app. rewrite scope_trans_app. rewrite app_length.
-        rewrite (firstn_all2 Δ). 2: lia.
-        replace (n - #|σ| - #|Ξ|) with (n - #|Ξ| - #|Δ|).
-        2:{ eapply trans_subst_length_left in hσ. lia. }
-        eapply trans_subst_length_right in hσ. lia.
-    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      lazymatch goal with
-      | |- context [ if ?u <=? ?v then _ else _ ] =>
-        destruct (PeanoNat.Nat.leb_spec u v)
-      end.
-      1:{
-        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
-        { pose proof (scope_trans_firstn_length Ξ n). lia. }
-        clear H0.
-        rewrite nth_error_app1 in e. 2: lia.
-        apply nth_error_Some_split in e as h.
-        apply (f_equal scope_trans) in h.
-        rewrite scope_trans_app in h. cbn - [skipn] in h.
-        rewrite h in el.
-        rewrite app_length in el. cbn - [skipn] in el. lia.
-      }
-      cbn. f_equal.
-      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      reflexivity.
-  - subst. cbn. destruct ℓ'.
-    + cbn. erewrite ?IHh1, ?IHh2 by eauto.
-      f_equal. specialize IHh2 with (Ξ0 := Level.R :: Ξ). cbn in IHh2.
-      erewrite IHh2. all: eauto.
-    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
-      eapply IHh2. all: eauto.
-    + specialize IHh2 with (Ξ0 := Level.I :: Ξ). cbn in IHh2.
-      eapply IHh2. all: eauto.
-  - subst. cbn. destruct ℓ'.
-    all: try solve [
-      cbn ; erewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by eauto ;
-      reflexivity
-    ].
-  - subst. cbn. destruct ℓ'.
-    + erewrite IHh1 by eauto. cbn. f_equal.
-      specialize IHh2 with (Ξ0 := Level.R :: Ξ). cbn in IHh2.
-      erewrite IHh2. all: eauto.
-    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
-      eapply IHh2. all: eauto.
-    + specialize IHh2 with (Ξ0 := Level.S :: Ξ). cbn in IHh2.
-      eapply IHh2. all: eauto.
-  - subst. eapply IHh. all: eauto.
-    inversion p. 1:{ subst. inversion H. }
-    subst. reflexivity.
+      rewrite firstn_app. rewrite scope_trans_app. rewrite app_length.
+      rewrite (firstn_all2 Δ). 2: lia.
+      replace (n - #|σ| - #|Ξ|) with (n - #|Ξ| - #|Δ|).
+      2:{ eapply trans_subst_length_left in hσ. lia. }
+      eapply trans_subst_length_right in hσ. lia.
+  - rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+    rewrite firstn_O. rewrite app_nil_r.
+    lazymatch goal with
+    | |- context [ if ?u <=? ?v then _ else _ ] =>
+      destruct (PeanoNat.Nat.leb_spec u v)
+    end.
+    1:{
+      assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
+      { pose proof (scope_trans_firstn_length Ξ n). lia. }
+      clear H0.
+      rewrite nth_error_app1 in e. 2: lia.
+      apply nth_error_Some_split in e as h.
+      apply (f_equal scope_trans) in h.
+      rewrite scope_trans_app in h. cbn - [skipn] in h.
+      rewrite h in el.
+      rewrite app_length in el. cbn - [skipn] in el. lia.
+    }
+    cbn. f_equal.
+    rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+    rewrite firstn_O. rewrite app_nil_r.
+    reflexivity.
 Qed.
 
 Corollary erase_subst0 :
   ∀ Γ Δ σ t θ,
     SIRTT.scoping (Δ ++ Γ) Level.R t →
-    scoping_subst Γ Δ σ →
+    relevant_scoping_subst Γ Δ σ →
     trans_subst Γ Δ σ = Some θ →
     trans Γ (SIRTT.subst0 σ t) =
     MLTT.subst0 θ (trans (Δ ++ Γ) t).
