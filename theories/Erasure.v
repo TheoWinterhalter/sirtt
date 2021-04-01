@@ -240,12 +240,29 @@ Proof.
   - reflexivity.
 Qed.
 
-#[local] Ltac erase_lift_ih Γ' Δ' Ξ' :=
+#[local] Ltac erase_lift_ih :=
   lazymatch goal with
-  | h : ∀ Γ Δ Ξ, _ |- _ =>
+  | h : ∀ Γ Δ Ξ, SIRTT.scoping _ _ ?t → _ |-
+    context [ trans (?Ξ ++ ?Δ ++ ?Γ) (SIRTT.lift _ _ ?t) ] =>
     first [
       rewrite h by intuition eauto ; clear h
-    | specialize (h (psc Γ') (psc Δ') (psc Ξ')) ;
+    | specialize (h (psc Γ) (psc Δ) (psc Ξ)) ;
+      forward h ; [
+        rewrite <- psc_app ; intuition eauto
+      | rewrite <- !psc_app, !trans_psc in h ;
+        rewrite !scope_trans_psc, !psc_length in h ;
+        rewrite h ; clear h
+      ]
+    ]
+  | h : ∀ Γ Δ Ξ, SIRTT.scoping _ _ ?t → _ |-
+    context [ trans (?ℓ :: ?Ξ ++ ?Δ ++ ?Γ) (SIRTT.lift _ _ ?t) ] =>
+    first [
+      specialize (h Γ Δ (ℓ :: Ξ)) ;
+      forward h ; [
+        intuition eauto
+      | cbn in h ; rewrite h ; clear h
+      ]
+    | specialize (h (psc Γ) (psc Δ) (psc (ℓ :: Ξ))) ;
       forward h ; [
         rewrite <- psc_app ; intuition eauto
       | rewrite <- !psc_app, !trans_psc in h ;
@@ -262,176 +279,51 @@ Lemma erase_lift :
     MLTT.lift #|scope_trans Δ| #|scope_trans Ξ| (trans (Ξ ++ Γ) t).
 Proof.
   intros Γ Δ Ξ t h.
-
   induction t in Γ, Δ, Ξ, h |- *.
-  - scope_inv h hs. destruct hs as [ℓ [hℓ e]].
-    eapply potentially_more_R in hℓ. subst.
-    cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
-    + rewrite firstn_app. rewrite firstn_all2 by lia.
-      rewrite firstn_app. rewrite firstn_all2 by lia.
-      replace (#| Δ | + n - #| Ξ | - #| Δ |) with (n - #|Ξ|) by lia.
-      rewrite firstn_app. rewrite firstn_all2 with (l := Ξ) by lia.
-      rewrite !scope_trans_app. rewrite !app_length.
-      lazymatch goal with
-      | |- context [ if ?u <=? ?v then _ else _ ] =>
-        destruct (PeanoNat.Nat.leb_spec u v)
-      end.
-      2: lia.
-      f_equal. lia.
-    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      lazymatch goal with
-      | |- context [ if ?u <=? ?v then _ else _ ] =>
-        destruct (PeanoNat.Nat.leb_spec u v)
-      end.
-      1:{
-        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
-        { pose proof (scope_trans_firstn_length Ξ n). lia. }
-        clear H0.
-        rewrite nth_error_app1 in e. 2: lia.
-        apply nth_error_Some_split in e as h'.
-        apply (f_equal scope_trans) in h'.
-        rewrite scope_trans_app in h'. cbn - [skipn] in h'.
-        rewrite h' in el.
-        rewrite app_length in el. cbn - [skipn] in el. lia.
-      }
-      reflexivity.
-  - scope_inv h hs.
-    destruct l.
-    + cbn.
-      (* erase_lift_ih Γ Δ Ξ. *)
-      (* lazymatch goal with
-      | h : ∀ Γ Δ Ξ, _ |- _ =>
-        first [
-          rewrite h by intuition eauto ; clear h
-        | specialize (h (psc Γ') (psc Δ') (psc Ξ')) ;
-          forward h ; [
-            rewrite <- psc_app ; intuition eauto
-          | rewrite <- !psc_app, !trans_psc in h ;
-            rewrite !scope_trans_psc, !psc_length in h ;
-            rewrite h ; clear h
-          ]
-        ]
-      end. *)
-      first [
-        rewrite IHt1 by intuition eauto ; clear IHt1
-      | specialize (IHt1 (psc Γ) (psc Δ) (psc Ξ)) ;
-        forward IHt1 ; [
-          rewrite <- psc_app ; intuition eauto
-        | rewrite <- !psc_app, !trans_psc in IHt1 ;
-          rewrite !scope_trans_psc, !psc_length in IHt1 ;
-          rewrite IHt1 ; clear IHt1
-        ]
-      ].
-      (* specialize (IHt1 (psc Γ) (psc Δ) (psc Ξ)).
-      forward IHt1. { rewrite <- psc_app. intuition eauto. }
-      rewrite <- !psc_app in IHt1. rewrite !trans_psc in IHt1.
-      rewrite !scope_trans_psc in IHt1. rewrite !psc_length in IHt1.
-      rewrite IHt1. *)
-
-    rewrite IHt1. 2: intuition eauto.
-    +
-    +
-
-
-
-  remember (Ξ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ eΘ.
-  dependent induction h.
-  all: intros Θ Δ Ξ eΘ.
+  all: try solve [ scope_inv h hs ; destruct hs ; discriminate ].
   all: try solve [
-    cbn ; rewrite ?IHh, ?IHh1, ?IHh2, ?IHh3, ?IHh4, ?IHh5, ?IHh6 by auto ;
-    reflexivity
+    try scope_inv h hs ;
+    cbn ; repeat erase_lift_ih ; reflexivity
   ].
-  - subst. cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
-    + rewrite firstn_app. rewrite firstn_all2 by lia.
-      rewrite firstn_app. rewrite firstn_all2 by lia.
-      replace (#| Δ | + n - #| Ξ | - #| Δ |) with (n - #|Ξ|) by lia.
-      rewrite firstn_app. rewrite firstn_all2 with (l := Ξ) by lia.
-      rewrite !scope_trans_app. rewrite !app_length.
-      lazymatch goal with
-      | |- context [ if ?u <=? ?v then _ else _ ] =>
-        destruct (PeanoNat.Nat.leb_spec u v)
-      end.
-      2: lia.
-      f_equal. lia.
-    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
-      rewrite firstn_O. rewrite app_nil_r.
-      lazymatch goal with
-      | |- context [ if ?u <=? ?v then _ else _ ] =>
-        destruct (PeanoNat.Nat.leb_spec u v)
-      end.
-      1:{
-        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
-        { pose proof (scope_trans_firstn_length Ξ n). lia. }
-        clear H0.
-        rewrite nth_error_app1 in e. 2: lia.
-        apply nth_error_Some_split in e as h.
-        apply (f_equal scope_trans) in h.
-        rewrite scope_trans_app in h. cbn - [skipn] in h.
-        rewrite h in el.
-        rewrite app_length in el. cbn - [skipn] in el. lia.
-      }
-      reflexivity.
-  - destruct ℓ'.
-    + cbn.
-      lazymatch goal with
-      | |- context [ trans (psc (?Ξ ++ ?Δ ++ ?Θ)) (SIRTT.lift ?k ?n ?t) ] =>
-        replace (trans (psc (Ξ ++ Δ ++ Θ)) (SIRTT.lift k n t))
-        with (trans (psc Ξ ++ psc Δ ++ psc Θ) (SIRTT.lift #|psc Δ| #|psc Ξ| t))
-        by (rewrite !psc_length, !psc_app ; reflexivity)
-      end.
-      rewrite IHh1. 2: subst ; apply psc_app.
-      specialize (IHh2 Θ Δ (Level.R :: Ξ)).
-      forward IHh2.
-      { cbn. f_equal. auto. }
-      cbn in IHh2. rewrite IHh2.
-      reflexivity.
-    + cbn. specialize (IHh2 Θ Δ (Level.S :: Ξ)).
-      forward IHh2.
-      { cbn. f_equal. auto. }
-      cbn in IHh2. rewrite IHh2.
-      reflexivity.
-    + cbn. specialize (IHh2 Θ Δ (Level.I :: Ξ)).
-      forward IHh2.
-      { cbn. f_equal. auto. }
-      cbn in IHh2. rewrite IHh2.
-      reflexivity.
-  - destruct ℓ'.
-    + cbn. rewrite IHh1. 2: auto.
-      cbn in IHh2. specialize IHh2 with (1 := eq_refl).
-      rewrite IHh2. 2: auto.
-      reflexivity.
-    + cbn. rewrite IHh1. 2: auto.
-      reflexivity.
-    + cbn. rewrite IHh1. 2: auto.
-      reflexivity.
-  - destruct ℓ'.
-    + cbn. rewrite IHh1. 2: auto.
-      specialize (IHh2 Θ Δ (Level.R :: Ξ)).
-      forward IHh2.
-      { cbn. f_equal. auto. }
-      cbn in IHh2. rewrite IHh2.
-      reflexivity.
-    + cbn. specialize (IHh2 Θ Δ (Level.S :: Ξ)).
-      forward IHh2.
-      { cbn. f_equal. auto. }
-      cbn in IHh2. rewrite IHh2.
-      reflexivity.
-    + cbn. specialize (IHh2 Θ Δ (Level.S :: Ξ)).
-      forward IHh2.
-      { cbn. f_equal. auto. }
-      cbn in IHh2. rewrite IHh2.
-      reflexivity.
-  - destruct ℓ.
-    2:{ inversion p. subst. inversion H. }
-    2:{ inversion p. subst. inversion H. }
-    eapply IHh.
-    + reflexivity.
-    + auto.
+  all: try solve [
+    try scope_inv h hs ;
+    destruct l ;
+    cbn ; repeat erase_lift_ih ; reflexivity
+  ].
+  scope_inv h hs. destruct hs as [ℓ [hℓ e]].
+  eapply potentially_more_R in hℓ. subst.
+  cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+  - rewrite firstn_app. rewrite firstn_all2 by lia.
+    rewrite firstn_app. rewrite firstn_all2 by lia.
+    replace (#| Δ | + n - #| Ξ | - #| Δ |) with (n - #|Ξ|) by lia.
+    rewrite firstn_app. rewrite firstn_all2 with (l := Ξ) by lia.
+    rewrite !scope_trans_app. rewrite !app_length.
+    lazymatch goal with
+    | |- context [ if ?u <=? ?v then _ else _ ] =>
+      destruct (PeanoNat.Nat.leb_spec u v)
+    end.
+    2: lia.
+    f_equal. lia.
+  - rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+    rewrite firstn_O. rewrite app_nil_r.
+    rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+    rewrite firstn_O. rewrite app_nil_r.
+    lazymatch goal with
+    | |- context [ if ?u <=? ?v then _ else _ ] =>
+      destruct (PeanoNat.Nat.leb_spec u v)
+    end.
+    1:{
+      assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
+      { pose proof (scope_trans_firstn_length Ξ n). lia. }
+      clear H0.
+      rewrite nth_error_app1 in e. 2: lia.
+      apply nth_error_Some_split in e as h'.
+      apply (f_equal scope_trans) in h'.
+      rewrite scope_trans_app in h'. cbn - [skipn] in h'.
+      rewrite h' in el.
+      rewrite app_length in el. cbn - [skipn] in el. lia.
+    }
+    reflexivity.
 Qed.
 
 Corollary erase_lift0 :
