@@ -141,6 +141,27 @@ Proof.
     eapply IHh. reflexivity.
 Qed.
 
+(* TODO MOVE? *)
+Lemma psc_app :
+  ∀ Γ Δ,
+    psc (Γ ++ Δ) = psc Γ ++ psc Δ.
+Proof.
+  intros Γ Δ.
+  induction Γ in Δ |- *.
+  - reflexivity.
+  - cbn. f_equal. eapply IHΓ.
+Qed.
+
+(* TODO MOVE? *)
+Lemma psc_length :
+  ∀ Γ,
+    #| psc Γ | = #| Γ |.
+Proof.
+  intros Γ. induction Γ.
+  - reflexivity.
+  - cbn. eauto.
+Qed.
+
 Lemma erase_lift :
   ∀ Γ Δ Ξ t,
     SIRTT.scoping (Ξ ++ Γ) Level.R t →
@@ -188,7 +209,18 @@ Proof.
       }
       reflexivity.
   - destruct ℓ'.
-    + cbn. rewrite IHh1. 2: auto.
+    + cbn.
+    (* Instead of doing all this, it might be better to notice
+      that trans Γ =1 trans (psc Γ), meaning in the def we might not even use
+      psc in the definition of trans.
+    *)
+      lazymatch goal with
+      | |- context [ trans (psc (?Ξ ++ ?Δ ++ ?Θ)) (SIRTT.lift ?k ?n ?t) ] =>
+        replace (trans (psc (Ξ ++ Δ ++ Θ)) (SIRTT.lift k n t))
+        with (trans (psc Ξ ++ psc Δ ++ psc Θ) (SIRTT.lift #|psc Δ| #|psc Ξ| t))
+        by (rewrite !psc_length, !psc_app ; reflexivity)
+      end.
+      rewrite IHh1. 2: subst ; apply psc_app.
       specialize (IHh2 Θ Δ (Level.R :: Ξ)).
       forward IHh2.
       { cbn. f_equal. auto. }
