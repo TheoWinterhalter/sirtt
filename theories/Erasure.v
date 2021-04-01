@@ -903,6 +903,16 @@ Proof.
   ].
   all: try solve [
     simpl ; scope_inv h hs ; constructor ; intuition eauto ;
+    try lazymatch goal with
+    | h : ∀ Γ Δ Ξ ℓ, SIRTT.scoping _ _ ?t → _ |-
+      SIRTT.scoping (psc (?Ξ ++ ?Δ ++ ?Γ)) ?ℓ (SIRTT.lift _ _ ?t) =>
+      specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ) ;
+      rewrite !psc_app ;
+      rewrite !psc_length in h ;
+      apply h ;
+      rewrite <- !psc_app ;
+      intuition eauto
+    end ;
     eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
   ].
   - cbn. scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
