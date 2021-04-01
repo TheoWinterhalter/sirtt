@@ -28,11 +28,11 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   match t with
   | SIRTT.var i => MLTT.var #| scope_trans (firstn i Γ) |
   | SIRTT.lam Level.R A t => MLTT.lam (trans (psc Γ) A) (trans (Level.R :: Γ) t)
-  | SIRTT.lam l A t => trans (l :: Γ) t
+  | SIRTT.lam l _ t => trans (l :: Γ) t
   | SIRTT.app Level.R u v => MLTT.app (trans Γ u) (trans Γ v)
-  | SIRTT.app l u v => trans Γ u
+  | SIRTT.app _ u _ => trans Γ u
   | SIRTT.Prod Level.R A B => MLTT.Prod (trans Γ A) (trans (Level.R :: Γ) B)
-  | SIRTT.Prod l A B => trans (Level.pred l :: Γ) B
+  | SIRTT.Prod l _ B => trans (Level.pred l :: Γ) B
   | SIRTT.ex u p => trans Γ u
   | SIRTT.wit t => trans Γ t
   | SIRTT.prf t => dummy

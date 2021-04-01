@@ -1,6 +1,6 @@
 # Shape Irrelevant Reflection in Type Theory
 
-I use coq 8.12.0 and Equations 1.2.3
+I use coq 8.13.1 and Equations 1.2.4
 
 ## File overview
 
