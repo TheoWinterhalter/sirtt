@@ -626,10 +626,28 @@ Proof.
     cbn. eapply scoping_psc. eauto.
 Qed.
 
+Lemma trans_subst_psc :
+  ∀ Γ Δ σ θ,
+    trans_subst Γ Δ σ = Some θ →
+    trans_subst (psc Γ) (psc Δ) σ = Some θ.
+Proof.
+  intros Γ Δ σ θ e.
+  induction Δ as [| [] Δ ih] in σ, θ, e |- *.
+  all: destruct σ ; try discriminate.
+  - cbn in e. inversion e. reflexivity.
+  - cbn in e. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion e. subst. clear e.
+    eapply ih in e1 as h.
+    cbn. fold (psc Δ). rewrite h.
+    rewrite trans_psc. reflexivity.
+  - cbn in e. cbn. eapply ih. auto.
+  - cbn in e. cbn. eapply ih. auto.
+Qed.
+
 Lemma erase_subst :
   ∀ Γ Δ Ξ σ t θ,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
-    scoping_subst Γ Δ σ → (* Could be weakened to only talk about relevant bits *)
+    relevant_scoping_subst Γ Δ σ →
     trans_subst Γ Δ σ = Some θ →
     trans (Ξ ++ Γ) (SIRTT.subst σ #|Ξ| t) =
     MLTT.subst θ #|scope_trans Ξ| (trans (Ξ ++ Δ ++ Γ) t).
@@ -661,7 +679,7 @@ Proof.
         rewrite firstn_O. rewrite app_nil_r.
         rewrite h2.
         apply erase_lift0.
-        eapply scoping_subst_nth_error in sσ. all: eauto.
+        eapply relevant_scoping_subst_nth_error in sσ. all: eauto.
       * rewrite nth_error_app2 in e. 2: auto.
         destruct (nth_error σ _) eqn:e1.
         1:{
@@ -714,8 +732,8 @@ Proof.
     + cbn.
       specialize (IHt1 (psc Γ) (psc Δ) (psc Ξ) σ θ).
       forward IHt1. { rewrite <- !psc_app. intuition eauto. }
-      forward IHt1. { (* Need lemma *) admit. }
-      forward IHt1. { (* Similar. *) admit. }
+      forward IHt1. { eapply relevant_scoping_subst_psc. auto. }
+      forward IHt1. { eapply trans_subst_psc. auto. }
       rewrite <- !psc_app in IHt1.
       rewrite !trans_psc, !psc_length, !scope_trans_psc in IHt1.
       rewrite IHt1.
