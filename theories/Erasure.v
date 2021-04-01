@@ -644,6 +644,40 @@ Proof.
   - cbn in e. cbn. eapply ih. auto.
 Qed.
 
+#[local] Ltac erase_subst_ih :=
+  lazymatch goal with
+  | h : ∀ Γ Δ Ξ σ θ, SIRTT.scoping _ _ ?t → _,
+    h' : trans_subst _ ?Δ ?σ = Some ?θ |-
+    context [ trans (?Ξ ++ ?Γ) (SIRTT.subst ?σ _ ?t) ] =>
+    first [
+      rewrite h by intuition eauto ; clear h
+    | specialize (h (psc Γ) (psc Δ) (psc Ξ) σ θ) ;
+      forward h ; [ rewrite <- !psc_app ; intuition eauto |] ;
+      forward h ; [ eapply relevant_scoping_subst_psc ; auto |] ;
+      forward h ; [ eapply trans_subst_psc ; auto |] ;
+      rewrite <- !psc_app in h ;
+      rewrite !trans_psc, !psc_length, !scope_trans_psc in h ;
+      rewrite h ; clear h
+    ]
+  | h : ∀ Γ Δ Ξ σ θ, SIRTT.scoping _ _ ?t → _,
+    h' : trans_subst _ ?Δ ?σ = Some ?θ |-
+    context [ trans (?ℓ :: ?Ξ ++ ?Γ) (SIRTT.subst ?σ _ ?t) ] =>
+    first [
+      specialize (h Γ Δ (ℓ :: Ξ) σ θ) ;
+      forward h ; [ intuition eauto |] ;
+      forward h ; [ auto |] ;
+      forward h ; [ auto |] ;
+      cbn in h ; rewrite h ; clear h
+    | specialize (h (psc Γ) (psc Δ) (psc (ℓ :: Ξ)) σ θ) ;
+      forward h ; [ rewrite <- !psc_app ; intuition eauto |] ;
+      forward h ; [ eapply relevant_scoping_subst_psc ; auto |] ;
+      forward h ; [ eapply trans_subst_psc ; auto |] ;
+      rewrite <- !psc_app in h ;
+      rewrite !trans_psc, !psc_length, !scope_trans_psc in h ;
+      rewrite h ; clear h
+    ]
+  end.
+
 Lemma erase_subst :
   ∀ Γ Δ Ξ σ t θ,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
@@ -654,6 +688,16 @@ Lemma erase_subst :
 Proof.
   intros Γ Δ Ξ σ t θ h sσ hσ.
   induction t in Γ, Δ, Ξ, σ, θ, h, sσ, hσ |- *.
+  all: try solve [ scope_inv h hs ; destruct hs ; discriminate ].
+  all: try solve [
+    try scope_inv h hs ;
+    cbn ; repeat erase_subst_ih ; reflexivity
+  ].
+  all: try solve [
+    try scope_inv h hs ;
+    destruct l ;
+    cbn ; repeat erase_subst_ih ; reflexivity
+  ].
   - cbn. scope_inv h hs. clear h. destruct hs as [ℓ [hℓ e]].
     eapply potentially_more_R in hℓ. subst.
     destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
@@ -729,16 +773,9 @@ Proof.
       reflexivity.
   - scope_inv h hs.
     destruct l.
-    + cbn.
-      specialize (IHt1 (psc Γ) (psc Δ) (psc Ξ) σ θ).
-      forward IHt1. { rewrite <- !psc_app. intuition eauto. }
-      forward IHt1. { eapply relevant_scoping_subst_psc. auto. }
-      forward IHt1. { eapply trans_subst_psc. auto. }
-      rewrite <- !psc_app in IHt1.
-      rewrite !trans_psc, !psc_length, !scope_trans_psc in IHt1.
-      rewrite IHt1.
-    +
-    +
+    + cbn. repeat erase_subst_ih. reflexivity.
+    + cbn. repeat erase_subst_ih. reflexivity.
+    + cbn. repeat erase_subst_ih. reflexivity.
 
 
 Lemma erase_subst :
