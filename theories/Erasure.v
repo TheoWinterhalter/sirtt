@@ -931,6 +931,53 @@ Proof.
     constructor. intuition eauto.
 Qed.
 
+(* TODO MOVE *)
+Lemma weaker_scope_refl :
+  ∀ Γ,
+    weaker_scope Γ Γ.
+Proof.
+  intro Γ. induction Γ.
+  - constructor.
+  - constructor. 1: auto.
+    reflexivity.
+Qed.
+
+(* TODO MOVE *)
+Lemma scoping_psc_pred :
+  ∀ Γ ℓ t,
+    SIRTT.scoping Γ ℓ t →
+    SIRTT.scoping (psc Γ) (Level.pred ℓ) t.
+Proof.
+  intros Γ ℓ t h.
+  induction t in Γ, ℓ, h |- *.
+  all: try solve [ constructor ; eauto ].
+  all: try solve [ scope_inv h hs ; constructor ; intuition eauto ].
+  - scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
+    eapply scope_sub.
+    + constructor. unfold psc. rewrite nth_error_map. rewrite e. cbn.
+      reflexivity.
+    + eapply pred_pred_le. auto.
+  - scope_inv h hs. constructor. all: intuition eauto.
+    eapply scoping_weak_level. 1: eapply IHt2. 1: eauto.
+    cbn. constructor. 1: eapply weaker_scope_refl.
+Abort.
+
+(* It seems we need a stronger scoping_psc where the end level is pred
+  but I don't know how to prove it...
+*)
+(* Lemma scoping_subst_psc :
+  ∀ Γ Δ σ,
+    scoping_subst Γ Δ σ →
+    scoping_subst (psc Γ) (psc Δ) σ.
+Proof.
+  intros Γ Δ σ h.
+  induction h.
+  - cbn. constructor. 2: eauto.
+    destruct ℓ. 2-3: discriminate.
+    cbn. eapply scoping_psc. eauto.
+  - cbn. constructor.
+Qed. *)
+
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) ℓ t →
@@ -968,6 +1015,18 @@ Proof.
       eapply scope_sub. 2: eauto.
       constructor. rewrite nth_error_app1. 2: auto.
       auto.
+  - simpl. scope_inv ht hs. constructor.
+    + lazymatch goal with
+    | h : ∀ Γ Δ Ξ ℓ σ, SIRTT.scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
+      SIRTT.scoping (psc (?Ξ ++ ?Γ)) ?ℓ (SIRTT.subst ?σ _ ?t) =>
+      specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ σ) ;
+      rewrite !psc_app ;
+      rewrite !psc_length in h ;
+      apply h ; [
+        rewrite <- !psc_app ; intuition eauto
+      | (* eapply scoping_subst_psc *)
+      ]
+    end.
   - simpl. scope_inv ht hs. destruct hs as [e ?]. subst.
     constructor. intuition eauto.
 Qed.
