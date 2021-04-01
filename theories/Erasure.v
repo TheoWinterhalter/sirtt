@@ -111,22 +111,58 @@ Proof.
     + cbn. f_equal. eapply ih.
 Qed.
 
+Lemma trans_upto :
+  ∀ Γ Δ t,
+    psc Γ = psc Δ →
+    trans Γ t = trans Δ t.
+Proof.
+  intros Γ Δ t h.
+  induction t in Γ, Δ, h |- *.
+  all: try reflexivity.
+  all: try solve [ cbn ; eauto ].
+  all: try solve [ cbn ; f_equal ; eauto ].
+  - cbn. rewrite <- scope_trans_psc. rewrite <- firstn_psc. rewrite h.
+    rewrite firstn_psc. rewrite scope_trans_psc. reflexivity.
+  - cbn. destruct l.
+    + f_equal. 1: eauto.
+      eapply IHt2. cbn. f_equal. auto.
+    + eapply IHt2. cbn. f_equal. auto.
+    + eapply IHt2. cbn. f_equal. auto.
+  - cbn. destruct l. 2-3: eauto.
+    f_equal. all: eauto.
+  - cbn. destruct l.
+    + f_equal. 1: eauto.
+      eapply IHt2. cbn. f_equal. auto.
+    + eapply IHt2. cbn. f_equal. auto.
+    + eapply IHt2. cbn. f_equal. auto.
+Qed.
+
+(* TODO MOVE *)
+Lemma pred_idemp :
+  ∀ ℓ,
+    Level.pred (Level.pred ℓ) = Level.pred ℓ.
+Proof.
+  intro ℓ. destruct ℓ. all: reflexivity.
+Qed.
+
+(* TODO MOVE *)
+Lemma psc_idemp :
+  ∀ Γ,
+    psc (psc Γ) = psc Γ.
+Proof.
+  induction Γ as [| ℓ Γ ih].
+  - reflexivity.
+  - cbn. rewrite pred_idemp. f_equal. auto.
+Qed.
+
 Lemma trans_psc :
   ∀ Γ t,
     trans (psc Γ) t = trans Γ t.
 Proof.
   intros Γ t.
-  induction t in Γ |- *.
-  all: try reflexivity.
-  all: try solve [ cbn ; eauto ].
-  all: try solve [ cbn ; f_equal ; eauto ].
-  - cbn. rewrite firstn_psc. rewrite scope_trans_psc. reflexivity.
-  - cbn. destruct l.
-    + f_equal. all: eauto.
-      eapply IHt2 with (Γ := (Level.R :: _)).
-    + eapply IHt2 with (Γ := (Level.S :: _)).
-    +
-Abort.
+  eapply trans_upto.
+  apply psc_idemp.
+Qed.
 
 Set Equations With UIP.
 
