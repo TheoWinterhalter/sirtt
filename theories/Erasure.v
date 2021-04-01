@@ -439,6 +439,193 @@ Proof.
   - cbn in eΔ, eσ. eapply IHh. all: eauto.
 Qed.
 
+(* Alternative where we only care about the relevant bits *)
+Inductive relevant_scoping_subst Γ : SIRTT.scope → list SIRTT.term → Type :=
+| relevant_scoping_subst_nil :
+    relevant_scoping_subst Γ [] []
+| relevant_scoping_subst_cons :
+    ∀ ℓ Δ u σ,
+      (ℓ = Level.R → SIRTT.scoping Γ ℓ u) →
+      relevant_scoping_subst Γ Δ σ →
+      relevant_scoping_subst Γ (ℓ :: Δ) (u :: σ).
+
+Lemma relevant_scoping_subst_nth_error :
+  ∀ Γ Δ σ n u,
+    relevant_scoping_subst Γ Δ σ →
+    nth_error Δ n = Some Level.R →
+    nth_error σ n = Some u →
+    SIRTT.scoping Γ Level.R u.
+Proof.
+  intros Γ Δ σ n u h eΔ eσ.
+  induction h in n, u, eΔ, eσ |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in eΔ, eσ. inversion eΔ. inversion eσ. subst. clear eΔ eσ.
+    auto.
+  - cbn in eΔ, σ. eapply IHh. all: eauto.
+Qed.
+
+(* TODO MOVE *)
+Lemma pred_le :
+  ∀ ℓ,
+    Level.potentially_more_relevant (Level.pred ℓ) ℓ.
+Proof.
+  intro ℓ. destruct ℓ. all: cbn.
+  - right.
+  - right.
+  - left. constructor.
+Qed.
+
+(* TODO MOVE *)
+Inductive weaker_scope : SIRTT.scope → SIRTT.scope → Type :=
+| weaker_nil :
+    weaker_scope [] []
+| weaker_cons :
+    ∀ Γ Δ ℓ ℓ',
+      weaker_scope Γ Δ →
+      Level.potentially_more_relevant ℓ ℓ' →
+      weaker_scope (ℓ :: Γ) (ℓ' :: Δ).
+
+(* TODO MOVE *)
+(* Lemma weaker_scope_nth_error :
+  ∀ Γ Δ n ℓ,
+    nth_error Γ n = Some ℓ →
+    weaker_scope Γ Δ →
+    ∑ ℓ', nth_error Δ n = Some ℓ' × Level.potentially_more_relevant ℓ ℓ'.
+Proof.
+  intros Γ Δ n ℓ e h.
+  induction h in n, ℓ, e |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn. cbn in e. inversion e. subst. clear e.
+    eexists. intuition eauto.
+  - cbn. cbn in e. eapply IHh in e. destruct e as [ℓ'' [e hℓ]].
+    eexists. intuition eauto.
+Qed. *)
+
+Lemma weaker_scope_nth_error :
+  ∀ Γ Δ n ℓ,
+    nth_error Δ n = Some ℓ →
+    weaker_scope Γ Δ →
+    ∑ ℓ', nth_error Γ n = Some ℓ' × Level.potentially_more_relevant ℓ' ℓ.
+Proof.
+  intros Γ Δ n ℓ e h.
+  induction h in n, ℓ, e |- *.
+  1:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn. cbn in e. inversion e. subst. clear e.
+    eexists. intuition eauto.
+  - cbn. cbn in e. eapply IHh in e. destruct e as [ℓ'' [e hℓ]].
+    eexists. intuition eauto.
+Qed.
+
+(* TODO MOVE *)
+Lemma pred_pred_le :
+  ∀ ℓ ℓ',
+    Level.potentially_more_relevant ℓ ℓ' →
+    Level.potentially_more_relevant (Level.pred ℓ) (Level.pred ℓ').
+Proof.
+  intros ℓ ℓ' h.
+  destruct h as [ℓ' h|].
+  - destruct h. all: cbn.
+    + left. constructor.
+    + left. constructor.
+    + right.
+  - right.
+Qed.
+
+Lemma weaker_scope_psc :
+  ∀ Γ Δ,
+    weaker_scope Γ Δ →
+    weaker_scope (psc Γ) (psc Δ).
+Proof.
+  intros Γ Δ h.
+  induction h.
+  - cbn. constructor.
+  - cbn. constructor. 1: auto.
+    eapply pred_pred_le. auto.
+Qed.
+
+(* TODO MOVE *)
+Lemma scoping_weak_level :
+  ∀ Γ Δ ℓ t,
+    SIRTT.scoping Γ ℓ t →
+    weaker_scope Δ Γ →
+    SIRTT.scoping Δ ℓ t.
+Proof.
+  intros Γ Δ ℓ t h hw.
+  induction h in Δ, hw |- *.
+  all: try solve [ constructor ; eauto ].
+  - eapply weaker_scope_nth_error in hw as h. 2: eauto.
+    destruct h as [ℓ' [e' hℓ]].
+    eapply scope_sub. 2: eauto.
+    constructor. auto.
+  - constructor.
+    + eapply IHh1. eapply weaker_scope_psc. auto.
+    + eapply IHh2. constructor. 1: auto.
+      right.
+  - constructor.
+    + eapply IHh1. auto.
+    + eapply IHh2. constructor. 1: auto.
+      right.
+  - constructor. 1: auto.
+    eapply IHh2. constructor. 1: auto. right.
+  - constructor. all: eauto.
+    eapply IHh1. eapply weaker_scope_psc. auto.
+  - constructor. eapply IHh. eapply weaker_scope_psc. auto.
+  - constructor. all: eauto.
+    eapply IHh1. eapply weaker_scope_psc. auto.
+  - constructor. all: eauto.
+    + eapply IHh1. eapply weaker_scope_psc. auto.
+    + eapply IHh2. eapply weaker_scope_psc. auto.
+  - constructor. all: eauto.
+    eapply IHh1. eapply weaker_scope_psc. auto.
+  - constructor. all: eauto.
+    + eapply IHh1. eapply weaker_scope_psc. auto.
+    + eapply IHh2. eapply weaker_scope_psc. auto.
+  - constructor. all: eauto.
+    eapply IHh1. eapply weaker_scope_psc. auto.
+  - eapply scope_sub. 2: eauto.
+    eapply IHh. auto.
+Qed.
+
+(* TODO MOVE *)
+Lemma weaker_psc :
+  ∀ Γ,
+    weaker_scope (psc Γ) Γ.
+Proof.
+  intros Γ. induction Γ as [| ℓ Γ ih].
+  - constructor.
+  - cbn. constructor.
+    + eapply ih.
+    + eapply pred_le.
+Qed.
+
+(* TODO MOVE *)
+Lemma scoping_psc :
+  ∀ Γ ℓ t,
+    SIRTT.scoping Γ ℓ t →
+    SIRTT.scoping (psc Γ) ℓ t.
+Proof.
+  intros Γ ℓ t h.
+  eapply scoping_weak_level.
+  - eauto.
+  - eapply weaker_psc.
+Qed.
+
+Lemma relevant_scoping_subst_psc :
+  ∀ Γ Δ σ,
+    relevant_scoping_subst Γ Δ σ →
+    relevant_scoping_subst (psc Γ) (psc Δ) σ.
+Proof.
+  intros Γ Δ σ h.
+  induction h.
+  - cbn. constructor.
+  - cbn. constructor. 2: eauto.
+    intro e. destruct ℓ. 2-3: discriminate.
+    cbn. eapply scoping_psc. eauto.
+Qed.
+
 Lemma erase_subst :
   ∀ Γ Δ Ξ σ t θ,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) Level.R t →
