@@ -27,7 +27,7 @@ Definition scope_trans Γ :=
 Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   match t with
   | SIRTT.var i => MLTT.var #| scope_trans (firstn i Γ) |
-  | SIRTT.lam Level.R A t => MLTT.lam (trans (psc Γ) A) (trans (Level.R :: Γ) t)
+  | SIRTT.lam Level.R A t => MLTT.lam (trans Γ A) (trans (Level.R :: Γ) t)
   | SIRTT.lam l _ t => trans (l :: Γ) t
   | SIRTT.app Level.R u v => MLTT.app (trans Γ u) (trans Γ v)
   | SIRTT.app _ u _ => trans Γ u
@@ -40,17 +40,17 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
   | SIRTT.zero => MLTT.zero
   | SIRTT.succ t => MLTT.succ (trans Γ t)
   | SIRTT.elim_nat P z s t =>
-    MLTT.elim_nat (trans (psc Γ) P) (trans Γ z) (trans Γ s) (trans Γ t)
+    MLTT.elim_nat (trans Γ P) (trans Γ z) (trans Γ s) (trans Γ t)
   | SIRTT.Nat => MLTT.Nat
-  | SIRTT.vnil A => MLTT.lnil (trans (psc Γ) A)
-  | SIRTT.vcons A a m v => MLTT.lcons (trans (psc Γ) A) (trans Γ a) (trans Γ v)
+  | SIRTT.vnil A => MLTT.lnil (trans Γ A)
+  | SIRTT.vcons A a m v => MLTT.lcons (trans Γ A) (trans Γ a) (trans Γ v)
   | SIRTT.elim_vec A P e c m v =>
-    MLTT.elim_list (trans (psc Γ) A) (trans (psc Γ) P) (trans Γ e) (trans Γ c) (trans Γ v)
+    MLTT.elim_list (trans Γ A) (trans Γ P) (trans Γ e) (trans Γ c) (trans Γ v)
   | SIRTT.Vec A m => MLTT.List (trans Γ A)
-  | SIRTT.refl A u => MLTT.refl (trans (psc Γ) A) (trans Γ u)
+  | SIRTT.refl A u => MLTT.refl (trans Γ A) (trans Γ u)
   | SIRTT.coe A P u v e t =>
     MLTT.coe
-      (trans (psc Γ) A) (trans (psc Γ) P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
+      (trans Γ A) (trans Γ P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
   | SIRTT.Eq A u v => MLTT.Eq (trans Γ A) (trans Γ u) (trans Γ v)
   | SIRTT.exfalso A p => MLTT.axiom 0
   | SIRTT.Empty => MLTT.Empty
@@ -98,6 +98,35 @@ Proof.
   all: cbn. all: eauto.
   f_equal. eapply ih.
 Qed.
+
+Lemma firstn_psc :
+  ∀ Γ n,
+    firstn n (psc Γ) = psc (firstn n Γ).
+Proof.
+  intros Γ n.
+  induction Γ as [| ℓ Γ ih] in n |- *.
+  - cbn. rewrite firstn_nil. reflexivity.
+  - cbn. destruct n.
+    + cbn. reflexivity.
+    + cbn. f_equal. eapply ih.
+Qed.
+
+Lemma trans_psc :
+  ∀ Γ t,
+    trans (psc Γ) t = trans Γ t.
+Proof.
+  intros Γ t.
+  induction t in Γ |- *.
+  all: try reflexivity.
+  all: try solve [ cbn ; eauto ].
+  all: try solve [ cbn ; f_equal ; eauto ].
+  - cbn. rewrite firstn_psc. rewrite scope_trans_psc. reflexivity.
+  - cbn. destruct l.
+    + f_equal. all: eauto.
+      eapply IHt2 with (Γ := (Level.R :: _)).
+    + eapply IHt2 with (Γ := (Level.S :: _)).
+    +
+Abort.
 
 Set Equations With UIP.
 
