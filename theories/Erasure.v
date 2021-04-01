@@ -181,11 +181,13 @@ Proof.
     cbn ; auto ; constructor ; auto
   ].
   all: try solve [
-    cbn ; auto ; constructor ; auto ; rewrite <- scope_trans_psc ; auto
+    cbn ; auto ; constructor ; auto ;
+    rewrite <- scope_trans_psc ; rewrite <- trans_psc ; auto
   ].
   all: try solve [
     destruct ℓ' ;
-    cbn ; auto ; constructor ; auto ; rewrite <- scope_trans_psc ; auto
+    cbn ; auto ; constructor ; auto ;
+    rewrite <- scope_trans_psc ; rewrite <- trans_psc ; auto
   ].
   - constructor.
     apply nth_error_Some_split in e as h.
@@ -227,6 +229,17 @@ Proof.
   - cbn. eauto.
 Qed.
 
+(* TODO MOVE *)
+Lemma potentially_more_R :
+  ∀ ℓ,
+    Level.potentially_more_relevant ℓ Level.R →
+    ℓ = Level.R.
+Proof.
+  intros ℓ h. inversion h.
+  - inversion H.
+  - reflexivity.
+Qed.
+
 Lemma erase_lift :
   ∀ Γ Δ Ξ t,
     SIRTT.scoping (Ξ ++ Γ) Level.R t →
@@ -234,6 +247,50 @@ Lemma erase_lift :
     MLTT.lift #|scope_trans Δ| #|scope_trans Ξ| (trans (Ξ ++ Γ) t).
 Proof.
   intros Γ Δ Ξ t h.
+
+  induction t in Γ, Δ, Ξ, h |- *.
+  - scope_inv h hs. destruct hs as [ℓ [hℓ e]].
+    eapply potentially_more_R in hℓ. subst.
+    cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
+    + rewrite firstn_app. rewrite firstn_all2 by lia.
+      rewrite firstn_app. rewrite firstn_all2 by lia.
+      replace (#| Δ | + n - #| Ξ | - #| Δ |) with (n - #|Ξ|) by lia.
+      rewrite firstn_app. rewrite firstn_all2 with (l := Ξ) by lia.
+      rewrite !scope_trans_app. rewrite !app_length.
+      lazymatch goal with
+      | |- context [ if ?u <=? ?v then _ else _ ] =>
+        destruct (PeanoNat.Nat.leb_spec u v)
+      end.
+      2: lia.
+      f_equal. lia.
+    + rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      rewrite firstn_app. replace (n - #|Ξ|) with 0 by lia.
+      rewrite firstn_O. rewrite app_nil_r.
+      lazymatch goal with
+      | |- context [ if ?u <=? ?v then _ else _ ] =>
+        destruct (PeanoNat.Nat.leb_spec u v)
+      end.
+      1:{
+        assert (el : #| scope_trans Ξ | = #| scope_trans (firstn n Ξ) |).
+        { pose proof (scope_trans_firstn_length Ξ n). lia. }
+        clear H0.
+        rewrite nth_error_app1 in e. 2: lia.
+        apply nth_error_Some_split in e as h'.
+        apply (f_equal scope_trans) in h'.
+        rewrite scope_trans_app in h'. cbn - [skipn] in h'.
+        rewrite h' in el.
+        rewrite app_length in el. cbn - [skipn] in el. lia.
+      }
+      reflexivity.
+  - scope_inv h hs.
+    destruct l.
+    + cbn. rewrite IHt1. 2: intuition eauto.
+    +
+    +
+
+
+
   remember (Ξ ++ Γ) as Θ eqn:eΘ. revert Γ Δ Ξ eΘ.
   dependent induction h.
   all: intros Θ Δ Ξ eΘ.
@@ -275,10 +332,6 @@ Proof.
       reflexivity.
   - destruct ℓ'.
     + cbn.
-    (* Instead of doing all this, it might be better to notice
-      that trans Γ =1 trans (psc Γ), meaning in the def we might not even use
-      psc in the definition of trans.
-    *)
       lazymatch goal with
       | |- context [ trans (psc (?Ξ ++ ?Δ ++ ?Θ)) (SIRTT.lift ?k ?n ?t) ] =>
         replace (trans (psc (Ξ ++ Δ ++ Θ)) (SIRTT.lift k n t))
