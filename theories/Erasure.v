@@ -1470,6 +1470,18 @@ Proof.
   - cbn. auto.
 Qed.
 
+Lemma scoping_context_pctx :
+  ∀ Γ,
+    scoping_context Γ →
+    scoping_context (pctx Γ).
+Proof.
+  intros Γ h.
+  induction h.
+  - cbn. constructor.
+  - cbn. fold (pctx Γ). constructor. 1: auto.
+    rewrite context_to_scope_pctx. rewrite psc_idemp. auto.
+Qed.
+
 Lemma erase_typing :
   ∀ Γ t A,
     scoping_context Γ →

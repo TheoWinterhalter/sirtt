@@ -158,7 +158,7 @@ Inductive scoping_context : context → Type :=
 | scope_cons :
     ∀ ℓ A Γ,
       scoping_context Γ →
-      scoping Γ ℓ A →
+      scoping (psc Γ) R A →
       scoping_context ((ℓ, A) :: Γ).
 
 (* Inversion lemmata for scoping *)
@@ -470,7 +470,7 @@ Lemma scoping_context_nth_error :
   ∀ (Γ : context) n ℓ A,
     scoping_context Γ →
     nth_error Γ n = Some (ℓ, A) →
-    scoping (skipn (Datatypes.S n) (context_to_scope Γ)) ℓ A.
+    scoping (skipn (Datatypes.S n) (psc Γ)) R A.
 Proof.
   intros Γ n ℓ A h e.
   induction h in n, ℓ, A, e |- *.
