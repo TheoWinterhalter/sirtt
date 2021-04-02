@@ -263,8 +263,8 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Prod :
     ∀ ℓ ℓ' A A' B B',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
-      (▪ ℓ', A) :: pctx Γ ⊢[ ℓ ] B ≡ B' →
+      Γ ⊢[ ℓ ] A ≡ A' →
+      (▪ ℓ', A) :: Γ ⊢[ ℓ ] B ≡ B' →
       Γ ⊢[ ℓ ] Prod ℓ' A B ≡ Prod ℓ' A' B'
 
 | cong_ex :
@@ -279,8 +279,8 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Sum :
     ∀ ℓ A A' P P',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
-      pctx Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
+      Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] Sum A P ≡ Sum A' P'
 
 | cong_succ :
@@ -319,7 +319,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Vec :
     ∀ ℓ A A' n n',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ S ⊔ ℓ ] n ≡ n' →
       Γ ⊢[ ℓ ] Vec A n ≡ Vec A' n'
 
@@ -341,7 +341,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_Eq :
     ∀ ℓ A A' u u' v v',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      Γ ⊢[ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] u ≡ u' →
       Γ ⊢[ ℓ ] v ≡ v' →
       Γ ⊢[ ℓ ] Eq A u v ≡ Eq A' u' v'

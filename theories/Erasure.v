@@ -1369,7 +1369,9 @@ Proof.
   all: try solve [
     subst ; cbn ;
     try scope_inv hu hu' ; try scope_inv hv hv' ;
-    t_cong ; intuition eauto
+    t_cong ; intuition eauto ;
+    rewrite context_to_scope_pctx in * ; intuition eauto ;
+    rewrite !trans_psc in * ; intuition eauto
   ].
   - subst. scope_inv hu hs. cbn in hs. destruct hs as [hl hu'].
     scope_inv hl hl'.
@@ -1394,7 +1396,6 @@ Proof.
     scope_inv hu hu'. scope_inv hv hv'.
     destruct ℓ'.
     + t_cong. all: intuition eauto.
-      (* Probably have to establish the link between pctx and psc *)
       rewrite context_to_scope_pctx in *. intuition eauto.
       rewrite !trans_psc in *. intuition eauto.
     + intuition eauto.
@@ -1409,6 +1410,8 @@ Proof.
     scope_inv hu hu'. scope_inv hv hv'.
     destruct ℓ'.
     + t_cong. all: intuition eauto.
+      all: rewrite context_to_scope_pctx in *. all: intuition eauto.
+      all: rewrite !trans_psc in *. all: intuition eauto.
     + intuition eauto.
     + cbn. intuition eauto.
   - subst. inversion p.
