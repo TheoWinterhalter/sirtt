@@ -950,12 +950,16 @@ Proof.
 Qed.
 
 (* TODO MOVE *)
-(* Now we will have to use prf here
-  But note, that we have to change substitutions in Typing as well.
-  In fact we should also define psub or something like that.
-  Probably just map ptm.
-*)
-Lemma scoping_psc_pred :
+Lemma max_pred :
+  ∀ ℓ₀ ℓ₁,
+    Level.max (Level.pred ℓ₀) (Level.pred ℓ₁) = Level.pred (Level.max ℓ₀ ℓ₁).
+Proof.
+  intros ℓ₀ ℓ₁.
+  destruct ℓ₀, ℓ₁. all: reflexivity.
+Qed.
+
+(* TODO MOVE *)
+Lemma scoping_ptm :
   ∀ Γ ℓ t,
     SIRTT.scoping Γ ℓ t →
     SIRTT.scoping (psc Γ) (Level.pred ℓ) (ptm t).
@@ -964,23 +968,46 @@ Proof.
   induction t in Γ, ℓ, h |- *.
   all: try solve [ constructor ; eauto ].
   all: try solve [ scope_inv h hs ; constructor ; intuition eauto ].
+  (* all: try solve [
+    cbn ; try scope_inv h hs ; constructor ; intuition eauto ;
+    eapply IHt2 with (Γ := _ :: _) ; intuition eauto
+  ]. *)
   - scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
     eapply scope_sub.
     + constructor. unfold psc. rewrite nth_error_map. rewrite e. cbn.
       reflexivity.
     + eapply pred_pred_le. auto.
-  - scope_inv h hs.
-    destruct ℓ.
-    3:{
-      cbn. constructor.
-      - eapply IHt1 with (ℓ := Level.I). intuition eauto.
-      - destruct hs as [h1 h2]. eapply IHt2 in h2 as h'.
-        cbn in h'.
-    }
-    constructor. all: intuition eauto.
-    eapply scoping_weak_level. 1: eapply IHt2. 1: eauto.
-    cbn. constructor. 1: eapply weaker_scope_refl.
-Abort.
+  - cbn. scope_inv h hs.
+    constructor. 1: intuition eauto.
+    eapply IHt2 with (Γ := _ :: _). intuition eauto.
+  - cbn. scope_inv h hs.
+    constructor. 1: intuition eauto.
+    rewrite max_pred. intuition eauto.
+  - cbn. scope_inv h hs.
+    constructor. 1: intuition eauto.
+    eapply IHt2 with (Γ := _ :: _). intuition eauto.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    eapply scoping_psc. intuition eauto.
+  - cbn. scope_inv h hs. destruct hs as [hs ?h].
+    eapply scope_sub.
+    + constructor. eapply scoping_psc. auto.
+    + destruct ℓ. all: cbn. 1: auto.
+      all: reflexivity.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    destruct hs as [h1 h2].
+    eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
+    auto.
+  - cbn. scope_inv h hs. constructor. all: try solve [ intuition eauto ].
+    eapply scoping_psc. intuition eauto.
+  - cbn. scope_inv h hs. constructor. all: try solve [ intuition eauto ].
+    eapply scoping_psc. intuition eauto.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    destruct hs as [h1 h2].
+    eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
+    auto.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    eapply scoping_psc. intuition eauto.
+Qed.
 
 (* It seems we need a stronger scoping_psc where the end level is pred
   but I don't know how to prove it...
