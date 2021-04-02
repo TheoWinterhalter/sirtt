@@ -1528,7 +1528,7 @@ Proof.
         reflexivity.
       * clear h.
         eapply scoping_context_nth_error in e as h. 2: auto.
-        eapply scoping_psc in h. auto.
+        rewrite skipn_psc in h. auto.
   - subst. cbn. destruct ℓ'.
     + rewrite context_to_scope_pctx.
       change (Level.R :: psc Γ)
@@ -1538,18 +1538,18 @@ Proof.
       * rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
         rewrite context_trans_pctx in IHh1.
         eapply IHh1. 2: reflexivity.
-        (* Need some lemma? *)
-        admit.
-      * eapply IHh2. 2: reflexivity.
+        eapply scoping_context_pctx. auto.
+      * rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
+        eapply IHh2. 2: reflexivity.
         constructor. 1: auto.
-        eapply SIRTT.typed_scoped. eauto.
-    + cbn. eapply IHh2. 2: reflexivity.
+        eapply SIRTT.typed_scoped in h1.
+        rewrite context_to_scope_pctx in h1. auto.
+    + cbn. cbn in IHh2. eapply IHh2. 2: reflexivity.
       constructor. 1: auto.
-      eapply SIRTT.typed_scoped.
-      eapply type_sub. 1: eauto.
-      constructor. constructor.
-    + cbn. (* Here we have a mismatch between the scopes
-        Does this mean we should use map Level.pred in Γ in the type?
-        It would probably make sense.
-      *)
+      eapply SIRTT.typed_scoped in h1.
+      rewrite context_to_scope_pctx in h1. auto.
+    + cbn. cbn in IHh2. eapply IHh2. 2: reflexivity.
+      constructor. 1: auto.
+      eapply SIRTT.typed_scoped in h1.
+      rewrite context_to_scope_pctx in h1. auto.
 Abort.
