@@ -1444,24 +1444,37 @@ Proof.
     + simpl. rewrite h'. reflexivity.
 Qed.
 
+(* TODO MOVE *)
+Lemma skipn_psc :
+  ∀ Γ n,
+    skipn n (psc Γ) = psc (skipn n Γ).
+Proof.
+  intros Γ n.
+  induction Γ as [| ℓ Γ ih] in n |- *.
+  - cbn. rewrite skipn_nil. reflexivity.
+  - cbn. destruct n.
+    + cbn. reflexivity.
+    + cbn. eapply ih.
+Qed.
+
 Lemma erase_typing :
   ∀ Γ t A,
     scoping_context Γ →
     Γ ⊢[ Level.R ] t : A →
     [ Empty ] ;; context_trans Γ ⊢ trans Γ t :
-    trans (map Level.pred (SIRTT.context_to_scope Γ)) A.
+    trans (pctx Γ) A.
 Proof.
   intros Γ t A hΓ h.
   remember Level.R as ℓR eqn:eℓ.
   induction h in eℓ, hΓ |- *.
+  all: try discriminate.
   - cbn. subst.
     eapply meta_conv.
     + constructor. eapply context_trans_nth_error. eauto.
     + pose proof erase_lift as h. specialize h with (Ξ := []).
       cbn in h.
-      specialize h
-      with (Δ := firstn n (SIRTT.context_to_scope Γ) ++ [ Level.R ]).
-      specialize h with (Γ0 := skipn (S n) (SIRTT.context_to_scope Γ)).
+      specialize h with (Δ := firstn n (psc Γ) ++ [ Level.R ]).
+      specialize h with (Γ0 := skipn (S n) (psc Γ)).
       specialize (h A).
       rewrite scope_trans_app in h. rewrite !app_length in h.
       cbn - [skipn] in h.
@@ -1469,18 +1482,28 @@ Proof.
       | context [ ?n + 1 ] =>
         replace (n + 1) with (S n) in h by lia
       end.
+      rewrite !firstn_psc in h. rewrite !scope_trans_psc in h.
+      rewrite skipn_psc in h. rewrite !trans_psc in h.
       rewrite <- h.
       * clear h.
+        rewrite <- firstn_psc.
         rewrite firstn_length.
         eapply nth_error_Some_length in e as hn.
+        rewrite psc_length.
         rewrite context_to_scope_length.
         replace (min n #|Γ|) with n by lia.
         f_equal.
         rewrite <- app_assoc. cbn - [skipn].
+        change (Level.R) with (Level.pred (Level.R)).
+        rewrite <- skipn_psc.
+        rewrite context_to_scope_pctx.
         symmetry. eapply nth_error_Some_split.
-        eapply context_to_scope_nth_error. eauto.
+        unfold psc. rewrite nth_error_map.
+        eapply context_to_scope_nth_error in e. rewrite e. cbn.
+        reflexivity.
       * clear h.
-        eapply scoping_context_nth_error. all: eauto.
+        eapply scoping_context_nth_error in e as h. 2: auto.
+        eapply scoping_psc in h. auto.
   - subst. cbn. destruct ℓ'.
     + econstructor. 1: eauto.
       eapply IHh2. 2: reflexivity.
