@@ -53,7 +53,7 @@ Fixpoint subst s k u :=
       | None => var (n - List.length s)
       end
     else var n
-  | lam l A t => lam l (subst s k A) (subst s (S k) t)
+  | lam l A t => lam l (subst (psub s) k A) (subst s (S k) t)
   | app l u v => app l (subst s k u) (subst s k v)
   | Prod l A B => Prod l (subst s k A) (subst s (S k) B)
   | ex u p => ex (subst s k u) (subst s k p)
@@ -63,22 +63,22 @@ Fixpoint subst s k u :=
   | zero => zero
   | succ t => succ (subst s k t)
   | elim_nat P z sc t =>
-    elim_nat (subst s k P) (subst s k z) (subst s k sc) (subst s k t)
+    elim_nat (subst (psub s) k P) (subst s k z) (subst s k sc) (subst s k t)
   | Nat => Nat
-  | vnil A => vnil (subst s k A)
-  | vcons A a m v => vcons (subst s k A) (subst s k a) (subst s k m) (subst s k v)
+  | vnil A => vnil (subst (psub s) k A)
+  | vcons A a m v => vcons (subst (psub s) k A) (subst s k a) (subst s k m) (subst s k v)
   | elim_vec A P e c m v =>
-    elim_vec (subst s k A) (subst s k P)
+    elim_vec (subst (psub s) k A) (subst (psub s) k P)
              (subst s k e) (subst s k c) (subst s k m) (subst s k v)
   | Vec A m => Vec (subst s k A) (subst s k m)
-  | refl A u => refl (subst s k A) (subst s k u)
+  | refl A u => refl (subst (psub s) k A) (subst s k u)
   | coe A P u v e t =>
     coe
-      (subst s k A) (subst s k P)
+      (subst (psub s) k A) (subst (psub s) k P)
       (subst s k u) (subst s k v) (subst s k e)
       (subst s k t)
   | Eq A u v => Eq (subst s k A) (subst s k u) (subst s k v)
-  | exfalso A p => exfalso (subst s k A) (subst s k p)
+  | exfalso A p => exfalso (subst (psub s) k A) (subst s k p)
   | Empty => Empty
   | univ s => univ s
   end.

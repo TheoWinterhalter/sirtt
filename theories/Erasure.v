@@ -647,38 +647,154 @@ Proof.
   - cbn in e. cbn. eapply ih. auto.
 Qed.
 
+Lemma trans_ptm :
+  ∀ Γ t,
+    trans Γ (ptm t) = trans Γ t.
+Proof.
+  intros Γ t.
+  induction t in Γ |- *.
+  all: try reflexivity.
+  all: try solve [ cbn ; intuition eauto ].
+  all: try solve [ cbn ; f_equal ; intuition eauto ].
+  - destruct l.
+    + cbn. f_equal. all: intuition eauto.
+    + cbn. eauto.
+    + cbn. rewrite IHt2. eapply trans_upto. reflexivity.
+  - destruct l.
+    + cbn. f_equal. all: intuition eauto.
+    + cbn. eauto.
+    + cbn. eauto.
+  - destruct l.
+    + cbn. f_equal. all: intuition eauto.
+    + cbn. eauto.
+    + cbn. eauto.
+Qed.
+
+Lemma trans_subst_psub :
+  ∀ Γ Δ σ θ,
+    trans_subst Γ Δ σ = Some θ →
+    trans_subst (psc Γ) (psc Δ) (psub σ) = Some θ.
+Proof.
+  intros Γ Δ σ θ e.
+  induction Δ as [| [] Δ ih] in σ, θ, e |- *.
+  all: destruct σ ; try discriminate.
+  - cbn in e. inversion e. reflexivity.
+  - cbn in e. destruct trans_subst eqn:e1. 2: discriminate.
+    inversion e. subst. clear e.
+    eapply ih in e1 as h.
+    cbn. fold (psc Δ). rewrite h.
+    rewrite trans_psc. rewrite trans_ptm. reflexivity.
+  - cbn in e. cbn. eapply ih. auto.
+  - cbn in e. cbn. eapply ih. auto.
+Qed.
+
+(* TODO MOVE *)
+Lemma max_pred :
+  ∀ ℓ₀ ℓ₁,
+    Level.max (Level.pred ℓ₀) (Level.pred ℓ₁) = Level.pred (Level.max ℓ₀ ℓ₁).
+Proof.
+  intros ℓ₀ ℓ₁.
+  destruct ℓ₀, ℓ₁. all: reflexivity.
+Qed.
+
+(* TODO MOVE *)
+Lemma scoping_ptm :
+  ∀ Γ ℓ t,
+    SIRTT.scoping Γ ℓ t →
+    SIRTT.scoping (psc Γ) (Level.pred ℓ) (ptm t).
+Proof.
+  intros Γ ℓ t h.
+  induction t in Γ, ℓ, h |- *.
+  all: try solve [ constructor ; eauto ].
+  all: try solve [ scope_inv h hs ; constructor ; intuition eauto ].
+  (* all: try solve [
+    cbn ; try scope_inv h hs ; constructor ; intuition eauto ;
+    eapply IHt2 with (Γ := _ :: _) ; intuition eauto
+  ]. *)
+  - scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
+    eapply scope_sub.
+    + constructor. unfold psc. rewrite nth_error_map. rewrite e. cbn.
+      reflexivity.
+    + eapply pred_pred_le. auto.
+  - cbn. scope_inv h hs.
+    constructor. 1: intuition eauto.
+    eapply IHt2 with (Γ := _ :: _). intuition eauto.
+  - cbn. scope_inv h hs.
+    constructor. 1: intuition eauto.
+    rewrite max_pred. intuition eauto.
+  - cbn. scope_inv h hs.
+    constructor. 1: intuition eauto.
+    eapply IHt2 with (Γ := _ :: _). intuition eauto.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    eapply scoping_psc. intuition eauto.
+  - cbn. scope_inv h hs. destruct hs as [hs ?h].
+    eapply scope_sub.
+    + constructor. eapply scoping_psc. auto.
+    + destruct ℓ. all: cbn. 1: auto.
+      all: reflexivity.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    destruct hs as [h1 h2].
+    eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
+    auto.
+  - cbn. scope_inv h hs. constructor. all: try solve [ intuition eauto ].
+    eapply scoping_psc. intuition eauto.
+  - cbn. scope_inv h hs. constructor. all: try solve [ intuition eauto ].
+    eapply scoping_psc. intuition eauto.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    destruct hs as [h1 h2].
+    eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
+    auto.
+  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
+    eapply scoping_psc. intuition eauto.
+Qed.
+
+Lemma relevant_scoping_subst_psub :
+  ∀ Γ Δ σ,
+    relevant_scoping_subst Γ Δ σ →
+    relevant_scoping_subst (psc Γ) (psc Δ) (psub σ).
+Proof.
+  intros Γ Δ σ h.
+  induction h.
+  - cbn. constructor.
+  - cbn. constructor. 2: eauto.
+    intro e. destruct ℓ. 2-3: discriminate.
+    eapply scoping_ptm. auto.
+Qed.
+
 #[local] Ltac erase_subst_ih :=
   lazymatch goal with
   | h : ∀ Γ Δ Ξ σ θ, SIRTT.scoping _ _ ?t → _,
     h' : trans_subst _ ?Δ ?σ = Some ?θ |-
     context [ trans (?Ξ ++ ?Γ) (SIRTT.subst ?σ _ ?t) ] =>
-    first [
       erewrite h by intuition eauto ; clear h
-    | specialize (h (psc Γ) (psc Δ) (psc Ξ) σ θ) ;
+  | h : ∀ Γ Δ Ξ σ θ, SIRTT.scoping _ _ ?t → _,
+    h' : trans_subst _ ?Δ ?σ = Some ?θ |-
+    context [ trans (?Ξ ++ ?Γ) (SIRTT.subst (psub ?σ) _ ?t) ] =>
+      specialize (h (psc Γ) (psc Δ) (psc Ξ) (psub σ) θ) ;
       forward h ; [ rewrite <- !psc_app ; intuition eauto |] ;
-      forward h ; [ eapply relevant_scoping_subst_psc ; auto |] ;
-      forward h ; [ eapply trans_subst_psc ; auto |] ;
+      forward h ; [ eapply relevant_scoping_subst_psub ; auto |] ;
+      forward h ; [ eapply trans_subst_psub ; auto |] ;
       rewrite <- !psc_app in h ;
       rewrite !trans_psc, !psc_length, !scope_trans_psc in h ;
       rewrite h ; clear h
-    ]
   | h : ∀ Γ Δ Ξ σ θ, SIRTT.scoping _ _ ?t → _,
     h' : trans_subst _ ?Δ ?σ = Some ?θ |-
     context [ trans (?ℓ :: ?Ξ ++ ?Γ) (SIRTT.subst ?σ _ ?t) ] =>
-    first [
       specialize (h Γ Δ (ℓ :: Ξ) σ θ) ;
       forward h ; [ intuition eauto |] ;
       forward h ; [ auto |] ;
       forward h ; [ auto |] ;
       cbn in h ; rewrite h ; clear h
-    | specialize (h (psc Γ) (psc Δ) (psc (ℓ :: Ξ)) σ θ) ;
+  | h : ∀ Γ Δ Ξ σ θ, SIRTT.scoping _ _ ?t → _,
+    h' : trans_subst _ ?Δ ?σ = Some ?θ |-
+    context [ trans (?ℓ :: ?Ξ ++ ?Γ) (SIRTT.subst (psub ?σ) _ ?t) ] =>
+      specialize (h (psc Γ) (psc Δ) (psc (ℓ :: Ξ)) (psub σ) θ) ;
       forward h ; [ rewrite <- !psc_app ; intuition eauto |] ;
-      forward h ; [ eapply relevant_scoping_subst_psc ; auto |] ;
-      forward h ; [ eapply trans_subst_psc ; auto |] ;
+      forward h ; [ eapply relevant_scoping_subst_psub ; auto |] ;
+      forward h ; [ eapply trans_subst_psub ; auto |] ;
       rewrite <- !psc_app in h ;
       rewrite !trans_psc, !psc_length, !scope_trans_psc in h ;
       rewrite h ; clear h
-    ]
   end.
 
 Lemma erase_subst :
@@ -949,66 +1065,6 @@ Proof.
     reflexivity.
 Qed.
 
-(* TODO MOVE *)
-Lemma max_pred :
-  ∀ ℓ₀ ℓ₁,
-    Level.max (Level.pred ℓ₀) (Level.pred ℓ₁) = Level.pred (Level.max ℓ₀ ℓ₁).
-Proof.
-  intros ℓ₀ ℓ₁.
-  destruct ℓ₀, ℓ₁. all: reflexivity.
-Qed.
-
-(* TODO MOVE *)
-Lemma scoping_ptm :
-  ∀ Γ ℓ t,
-    SIRTT.scoping Γ ℓ t →
-    SIRTT.scoping (psc Γ) (Level.pred ℓ) (ptm t).
-Proof.
-  intros Γ ℓ t h.
-  induction t in Γ, ℓ, h |- *.
-  all: try solve [ constructor ; eauto ].
-  all: try solve [ scope_inv h hs ; constructor ; intuition eauto ].
-  (* all: try solve [
-    cbn ; try scope_inv h hs ; constructor ; intuition eauto ;
-    eapply IHt2 with (Γ := _ :: _) ; intuition eauto
-  ]. *)
-  - scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
-    eapply scope_sub.
-    + constructor. unfold psc. rewrite nth_error_map. rewrite e. cbn.
-      reflexivity.
-    + eapply pred_pred_le. auto.
-  - cbn. scope_inv h hs.
-    constructor. 1: intuition eauto.
-    eapply IHt2 with (Γ := _ :: _). intuition eauto.
-  - cbn. scope_inv h hs.
-    constructor. 1: intuition eauto.
-    rewrite max_pred. intuition eauto.
-  - cbn. scope_inv h hs.
-    constructor. 1: intuition eauto.
-    eapply IHt2 with (Γ := _ :: _). intuition eauto.
-  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
-    eapply scoping_psc. intuition eauto.
-  - cbn. scope_inv h hs. destruct hs as [hs ?h].
-    eapply scope_sub.
-    + constructor. eapply scoping_psc. auto.
-    + destruct ℓ. all: cbn. 1: auto.
-      all: reflexivity.
-  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
-    destruct hs as [h1 h2].
-    eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
-    auto.
-  - cbn. scope_inv h hs. constructor. all: try solve [ intuition eauto ].
-    eapply scoping_psc. intuition eauto.
-  - cbn. scope_inv h hs. constructor. all: try solve [ intuition eauto ].
-    eapply scoping_psc. intuition eauto.
-  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
-    destruct hs as [h1 h2].
-    eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
-    auto.
-  - cbn. scope_inv h hs. constructor. 1: intuition eauto.
-    eapply scoping_psc. intuition eauto.
-Qed.
-
 Lemma scoping_subst_psub :
   ∀ Γ Δ σ,
     scoping_subst Γ Δ σ →
@@ -1060,16 +1116,16 @@ Proof.
       auto.
   - simpl. scope_inv ht hs. constructor.
     + lazymatch goal with
-    | h : ∀ Γ Δ Ξ ℓ σ, SIRTT.scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
-      SIRTT.scoping (psc (?Ξ ++ ?Γ)) ?ℓ (SIRTT.subst ?σ _ ?t) =>
-      specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ σ) ;
-      rewrite !psc_app ;
-      rewrite !psc_length in h ;
-      apply h ; [
-        rewrite <- !psc_app ; intuition eauto
-      | (* eapply scoping_subst_psc *)
-      ]
-    end.
+      | h : ∀ Γ Δ Ξ ℓ σ, SIRTT.scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
+        SIRTT.scoping (psc (?Ξ ++ ?Γ)) ?ℓ (SIRTT.subst ?σ _ ?t) =>
+        specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ σ) ;
+        rewrite !psc_app ;
+        rewrite !psc_length in h ;
+        apply h ; [
+          rewrite <- !psc_app ; intuition eauto
+        | eapply scoping_subst_psub
+        ]
+      end.
   - simpl. scope_inv ht hs. destruct hs as [e ?]. subst.
     constructor. intuition eauto.
 Qed.
