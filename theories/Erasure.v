@@ -1261,6 +1261,11 @@ Proof.
     scope_inv hs hs' ; intuition auto
   ].
   all: try solve [
+    cbn ; try constructor ; specialize (IHh (psc Γ)) ;
+    rewrite !trans_psc in IHh ; apply IHh ;
+    scope_inv hs hs' ; intuition auto
+  ].
+  all: try solve [
     destruct l ;
     cbn ; try constructor ; apply IHh ;
     scope_inv hs hs' ; intuition auto
