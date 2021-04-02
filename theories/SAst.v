@@ -109,3 +109,6 @@ Fixpoint ptm (t : term) : term :=
   | Empty => Empty
   | univ s => univ s
   end.
+
+Definition psub :=
+  map ptm.

@@ -63,7 +63,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
     ∀ ℓ ℓ' A B u v,
       Γ ⊢[ ℓ ] u : Prod ℓ' A B →
       Γ ⊢[ ℓ ⊔ ℓ' ] v : A →
-      Γ ⊢[ ℓ ] app ℓ' u v : B{ 0 := v }
+      Γ ⊢[ ℓ ] app ℓ' u v : B{ 0 := ptm v }
 
 | type_Prod :
     ∀ ℓ ℓ' A B i j,
@@ -74,7 +74,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_ex :
     ∀ ℓ A P u p,
       Γ ⊢[ ℓ ] u : A →
-      Γ ⊢[ I ] p : P{ 0 := u } →
+      Γ ⊢[ I ] p : P{ 0 := ptm u } →
       Γ ⊢[ ℓ ] ex u p : Sum A P
 
 | type_wit :
@@ -85,7 +85,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_prf :
     ∀ A P p,
       Γ ⊢[ I ] p : Sum A P →
-      Γ ⊢[ S ] prf p : P{ 0 := wit p }
+      Γ ⊢[ S ] prf p : P{ 0 :=ptm (wit p) }
 
 | type_Sum :
     ∀ ℓ A P i j,
