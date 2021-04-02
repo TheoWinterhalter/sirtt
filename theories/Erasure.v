@@ -1077,6 +1077,19 @@ Proof.
   - cbn. constructor.
 Qed.
 
+#[local] Ltac subst_scoping_ih :=
+  lazymatch goal with
+  | h : ∀ Γ Δ Ξ ℓ σ, SIRTT.scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
+    SIRTT.scoping (psc (?Ξ ++ ?Γ)) ?ℓ (SIRTT.subst (psub ?σ) _ ?t) =>
+    specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ (psub σ)) ;
+    rewrite !psc_app ;
+    rewrite !psc_length in h ;
+    apply h ; [
+      rewrite <- !psc_app ; intuition eauto
+    | eapply scoping_subst_psub ; eauto
+    ]
+  end.
+
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) ℓ t →
@@ -1092,6 +1105,11 @@ Proof.
   all: try solve [
     simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
     eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
+    try solve [ eapply IHt2 with (Ξ := _ :: _) ; intuition eauto ] ;
+    subst_scoping_ih
   ].
   - cbn. scope_inv ht hs. destruct hs as [ℓ' [hℓ e]].
     destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
@@ -1114,20 +1132,10 @@ Proof.
       eapply scope_sub. 2: eauto.
       constructor. rewrite nth_error_app1. 2: auto.
       auto.
-  - simpl. scope_inv ht hs. constructor.
-    + lazymatch goal with
-      | h : ∀ Γ Δ Ξ ℓ σ, SIRTT.scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
-        SIRTT.scoping (psc (?Ξ ++ ?Γ)) ?ℓ (SIRTT.subst ?σ _ ?t) =>
-        specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ σ) ;
-        rewrite !psc_app ;
-        rewrite !psc_length in h ;
-        apply h ; [
-          rewrite <- !psc_app ; intuition eauto
-        | eapply scoping_subst_psub
-        ]
-      end.
-  - simpl. scope_inv ht hs. destruct hs as [e ?]. subst.
-    constructor. intuition eauto.
+  - simpl. scope_inv ht hs. destruct hs as [hℓ ?h].
+    eapply scope_sub.
+    + constructor. intuition eauto.
+    + auto.
 Qed.
 
 Lemma scoping_reveal_subst_k :
