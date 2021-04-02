@@ -51,7 +51,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_prf :
     ∀ t,
       scoping Γ I t →
-      scoping Γ I (prf t)
+      scoping Γ S (prf t)
 
 | scope_Sum :
     ∀ ℓ A P,
@@ -271,14 +271,14 @@ Qed.
 Lemma inversion_scope_prf :
     ∀ Γ ℓ t,
       scoping Γ ℓ (prf t) →
-      ℓ = I ×
+      S ⊑ ℓ ×
       scoping Γ I t.
 Proof.
   intros Γ ℓ t h.
   dependent induction h.
+  - intuition auto. reflexivity.
   - intuition auto.
-  - intuition auto.
-    subst. eapply I_sub. assumption.
+    etransitivity. all: eauto.
 Qed.
 
 Lemma inversion_scope_Sum :

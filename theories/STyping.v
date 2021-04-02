@@ -85,7 +85,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_prf :
     ∀ A P p,
       Γ ⊢[ I ] p : Sum A P →
-      Γ ⊢[ I ] prf p : P{ 0 := wit p }
+      Γ ⊢[ S ] prf p : P{ 0 := wit p }
 
 | type_Sum :
     ∀ ℓ A P i j,

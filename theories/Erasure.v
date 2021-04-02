@@ -280,7 +280,6 @@ Lemma erase_lift :
 Proof.
   intros Γ Δ Ξ t h.
   induction t in Γ, Δ, Ξ, h |- *.
-  all: try solve [ scope_inv h hs ; destruct hs ; discriminate ].
   all: try solve [
     try scope_inv h hs ;
     cbn ; repeat erase_lift_ih ; reflexivity
@@ -290,6 +289,10 @@ Proof.
     destruct l ;
     cbn ; repeat erase_lift_ih ; reflexivity
   ].
+  2:{
+    scope_inv h hs. destruct hs as [hs _].
+    inversion hs. inversion H.
+  }
   scope_inv h hs. destruct hs as [ℓ [hℓ e]].
   eapply potentially_more_R in hℓ. subst.
   cbn. destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
@@ -688,7 +691,6 @@ Lemma erase_subst :
 Proof.
   intros Γ Δ Ξ σ t θ h sσ hσ.
   induction t in Γ, Δ, Ξ, σ, θ, h, sσ, hσ |- *.
-  all: try solve [ scope_inv h hs ; destruct hs ; discriminate ].
   all: try solve [
     try scope_inv h hs ;
     cbn ; repeat erase_subst_ih ; reflexivity
@@ -698,6 +700,10 @@ Proof.
     destruct l ;
     cbn ; repeat erase_subst_ih ; reflexivity
   ].
+  2:{
+    scope_inv h hs. destruct hs as [hs _].
+    inversion hs. inversion H.
+  }
   cbn. scope_inv h hs. clear h. destruct hs as [ℓ [hℓ e]].
   eapply potentially_more_R in hℓ. subst.
   destruct (PeanoNat.Nat.leb_spec #|Ξ| n).
@@ -927,8 +933,9 @@ Proof.
       constructor. rewrite nth_error_app1 in e. 2: lia.
       rewrite nth_error_app1. 2: lia.
       auto.
-  - simpl. scope_inv h hs. destruct hs as [e ?]. subst.
-    constructor. intuition eauto.
+  - simpl. scope_inv h hs. destruct hs as [hℓ ?h].
+    eapply scope_sub. 2: eauto.
+    constructor. auto.
 Qed.
 
 (* TODO MOVE *)
@@ -943,10 +950,15 @@ Proof.
 Qed.
 
 (* TODO MOVE *)
+(* Now we will have to use prf here
+  But note, that we have to change substitutions in Typing as well.
+  In fact we should also define psub or something like that.
+  Probably just map ptm.
+*)
 Lemma scoping_psc_pred :
   ∀ Γ ℓ t,
     SIRTT.scoping Γ ℓ t →
-    SIRTT.scoping (psc Γ) (Level.pred ℓ) t.
+    SIRTT.scoping (psc Γ) (Level.pred ℓ) (ptm t).
 Proof.
   intros Γ ℓ t h.
   induction t in Γ, ℓ, h |- *.
@@ -957,7 +969,15 @@ Proof.
     + constructor. unfold psc. rewrite nth_error_map. rewrite e. cbn.
       reflexivity.
     + eapply pred_pred_le. auto.
-  - scope_inv h hs. constructor. all: intuition eauto.
+  - scope_inv h hs.
+    destruct ℓ.
+    3:{
+      cbn. constructor.
+      - eapply IHt1 with (ℓ := Level.I). intuition eauto.
+      - destruct hs as [h1 h2]. eapply IHt2 in h2 as h'.
+        cbn in h'.
+    }
+    constructor. all: intuition eauto.
     eapply scoping_weak_level. 1: eapply IHt2. 1: eauto.
     cbn. constructor. 1: eapply weaker_scope_refl.
 Abort.
