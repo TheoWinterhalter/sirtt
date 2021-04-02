@@ -1493,6 +1493,10 @@ Proof.
   remember Level.R as ℓR eqn:eℓ.
   induction h in eℓ, hΓ |- *.
   all: try discriminate.
+  all: try solve [ subst ; cbn ; intuition eauto ].
+  all: try solve [
+    subst ; cbn ; constructor ; intuition eauto
+  ].
   - cbn. subst.
     eapply meta_conv.
     + constructor. eapply context_trans_nth_error. eauto.
@@ -1552,4 +1556,118 @@ Proof.
       constructor. 1: auto.
       eapply SIRTT.typed_scoped in h1.
       rewrite context_to_scope_pctx in h1. auto.
-Abort.
+  - subst. cbn. destruct ℓ'.
+    + eapply meta_conv.
+      * eapply type_app. all: intuition eauto.
+      * fold trans.
+        erewrite erase_subst10_relevant.
+        3:{
+          eapply SIRTT.typed_scoped in h2 as hs2. cbn in hs2.
+          eapply scoping_ptm in hs2. cbn in hs2.
+          rewrite context_to_scope_pctx. auto.
+        }
+        2:{
+          (* Here we're missing some hyps.
+            We could also prove validity, but it's a pain, and not worth it.
+            Even more so as validity is easier to prove by adding said hyps.
+          *)
+          admit.
+        }
+        rewrite trans_ptm. rewrite context_to_scope_pctx. rewrite trans_psc.
+        reflexivity.
+    + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      erewrite erase_subst0 with (Δ := [ Level.S ]).
+      2:{ cbn. admit. }
+      3: reflexivity.
+      2:{ constructor. 2: constructor. intro. discriminate. }
+      cbn. rewrite subst_empty.
+      eapply IHh1. all: auto.
+    + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
+      erewrite erase_subst0 with (Δ := [ Level.S ]).
+      2:{ cbn. admit. }
+      3: reflexivity.
+      2:{ constructor. 2: constructor. intro. discriminate. }
+      cbn. rewrite subst_empty.
+      eapply IHh1. all: auto.
+  - subst. cbn. destruct ℓ'.
+    + constructor.
+      * cbn in IHh1. eapply IHh1. all: auto.
+      * cbn in IHh2. eapply IHh2. 2: reflexivity.
+        constructor. 1: auto.
+        eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
+    + cbn. cbn in IHh2.
+      forward IHh2.
+      { constructor. 1: auto.
+        eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
+      }
+      forward IHh2 by auto.
+      (* Another problem: universes!
+          Maybe I should change the universe of Prod I and Prod S
+          or add some form of cumulativity in the target.
+          The first option sounds better because this way irrelevant
+          info doesn't affect the level of relevant data.
+      *)
+      admit.
+    + admit.
+  - subst. cbn.
+    (* Same universe trouble *)
+    admit.
+  - subst. cbn. rewrite context_to_scope_pctx. rewrite !trans_psc.
+    eapply type_elim_nat. all: try solve [ intuition eauto ].
+    + forward IHh1. { eapply scoping_context_pctx. auto. }
+      forward IHh1 by auto.
+      rewrite !context_to_scope_pctx in IHh1.
+      rewrite !trans_psc in IHh1.
+      rewrite context_trans_pctx in IHh1. eapply IHh1.
+    + forward IHh2. 1: auto.
+      forward IHh2 by auto.
+      cbn in IHh2. rewrite context_to_scope_pctx in IHh2.
+      rewrite trans_psc in IHh2.
+      eapply IHh2.
+    + forward IHh3. 1: auto.
+      forward IHh3 by auto.
+      cbn in IHh3. rewrite context_to_scope_pctx in IHh3.
+      change (Level.R :: Level.R :: psc Γ)
+      with (psc (Level.R :: Level.R :: SIRTT.context_to_scope Γ)) in IHh3.
+      change (Level.R :: psc Γ)
+      with (psc (Level.R :: SIRTT.context_to_scope Γ)) in IHh3.
+      rewrite !trans_psc in IHh3.
+      pose proof erase_lift0 as h. specialize h with (Δ := [ Level.R ]).
+      cbn in h.
+      eapply SIRTT.typed_scoped in h1 as h1'.
+      rewrite context_to_scope_pctx in h1'.
+      eapply h in h1'.
+      change (Level.R :: psc Γ)
+      with (psc (Level.R :: SIRTT.context_to_scope Γ)) in h1'.
+      rewrite !trans_psc in h1'.
+      rewrite !h1' in IHh3.
+      (* I should prove some lift_lift lemma
+        or use twice a lift0 lemma
+      *)
+      (* eapply IHh3. *)
+      admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - subst. econstructor.
+    + eapply IHh1. all: auto.
+    + eapply erase_conv.
+      * (* From validity or extra requirement? *) admit.
+      * eapply SIRTT.typed_scoped. eauto.
+      * auto.
+    + forward IHh2. { eapply scoping_context_pctx. auto. }
+      forward IHh2 by reflexivity.
+      rewrite context_trans_pctx in IHh2.
+      rewrite !context_to_scope_pctx in IHh2.
+      rewrite !context_to_scope_pctx.
+      rewrite psc_idemp in IHh2.
+      eauto.
+  - subst. inversion p.
+    1:{ inversion H. }
+    subst.
+    eapply IHh. all: auto.
+Admitted.
