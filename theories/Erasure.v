@@ -1009,21 +1009,17 @@ Proof.
     eapply scoping_psc. intuition eauto.
 Qed.
 
-(* It seems we need a stronger scoping_psc where the end level is pred
-  but I don't know how to prove it...
-*)
-(* Lemma scoping_subst_psc :
+Lemma scoping_subst_psub :
   ∀ Γ Δ σ,
     scoping_subst Γ Δ σ →
-    scoping_subst (psc Γ) (psc Δ) σ.
+    scoping_subst (psc Γ) (psc Δ) (psub σ).
 Proof.
   intros Γ Δ σ h.
   induction h.
   - cbn. constructor. 2: eauto.
-    destruct ℓ. 2-3: discriminate.
-    cbn. eapply scoping_psc. eauto.
+    eapply scoping_ptm. auto.
   - cbn. constructor.
-Qed. *)
+Qed.
 
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
