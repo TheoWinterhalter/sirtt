@@ -1606,6 +1606,12 @@ Proof.
           or add some form of cumulativity in the target.
           The first option sounds better because this way irrelevant
           info doesn't affect the level of relevant data.
+
+          The problem with this approach is probably when translating to MLTT
+          with the hope of preserving consistency, a.k.a the checker.
+          i.e. if we encode refinement types and irrelevant products as
+          regular products.
+          Let's cross that bridge when we get there.
       *)
       admit.
     + admit.
