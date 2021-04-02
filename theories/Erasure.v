@@ -1463,12 +1463,12 @@ Lemma context_trans_pctx :
 Proof.
   intros Γ. induction Γ as [| [[] A] Γ ih].
   - reflexivity.
-  - cbn. f_equal. 2: eauto.
-    (* Some property like trans_psc *)
-    admit.
+  - cbn. fold (pctx Γ). rewrite context_to_scope_pctx.
+    rewrite trans_psc.
+    f_equal. auto.
   - cbn. auto.
   - cbn. auto.
-Admitted.
+Qed.
 
 Lemma erase_typing :
   ∀ Γ t A,
