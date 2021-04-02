@@ -1457,6 +1457,19 @@ Proof.
     + cbn. eapply ih.
 Qed.
 
+Lemma context_trans_pctx :
+  ∀ Γ,
+    context_trans (pctx Γ) = context_trans Γ.
+Proof.
+  intros Γ. induction Γ as [| [[] A] Γ ih].
+  - reflexivity.
+  - cbn. f_equal. 2: eauto.
+    (* Some property like trans_psc *)
+    admit.
+  - cbn. auto.
+  - cbn. auto.
+Admitted.
+
 Lemma erase_typing :
   ∀ Γ t A,
     scoping_context Γ →
@@ -1505,10 +1518,19 @@ Proof.
         eapply scoping_context_nth_error in e as h. 2: auto.
         eapply scoping_psc in h. auto.
   - subst. cbn. destruct ℓ'.
-    + econstructor. 1: eauto.
-      eapply IHh2. 2: reflexivity.
-      constructor. 1: auto.
-      eapply SIRTT.typed_scoped. eauto.
+    + rewrite context_to_scope_pctx.
+      change (Level.R :: psc Γ)
+      with (psc (Level.R :: SIRTT.context_to_scope Γ)).
+      rewrite !trans_psc.
+      econstructor.
+      * rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
+        rewrite context_trans_pctx in IHh1.
+        eapply IHh1. 2: reflexivity.
+        (* Need some lemma? *)
+        admit.
+      * eapply IHh2. 2: reflexivity.
+        constructor. 1: auto.
+        eapply SIRTT.typed_scoped. eauto.
     + cbn. eapply IHh2. 2: reflexivity.
       constructor. 1: auto.
       eapply SIRTT.typed_scoped.
