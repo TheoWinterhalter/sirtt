@@ -1332,6 +1332,17 @@ Proof.
   - cbn. rewrite (erase_reveal _ e). rewrite e0. cbn. constructor.
 Qed.
 
+(* TODO MOVE *)
+Lemma context_to_scope_pctx :
+  ∀ Γ,
+    SIRTT.context_to_scope (pctx Γ) = psc Γ.
+Proof.
+  intro Γ. unfold pctx, psc.
+  unfold SIRTT.context_to_scope.
+  rewrite !map_map. eapply map_ext.
+  intros [ℓ t]. reflexivity.
+Qed.
+
 (* Even though typing and conversion are mutual, we can probably still
   conclude on conversion first as we will never need the induction hyothesis
   on typing.
@@ -1377,11 +1388,15 @@ Proof.
       3: reflexivity.
       2:{ constructor. 2: constructor. auto. }
       cbn. rewrite subst_empty. reflexivity.
-  - subst. scope_inv hu hs. destruct hs. discriminate.
+  - subst. scope_inv hu hs. destruct hs as [hs _].
+    inversion hs. inversion H.
   - subst. cbn.
     scope_inv hu hu'. scope_inv hv hv'.
     destruct ℓ'.
     + t_cong. all: intuition eauto.
+      (* Probably have to establish the link between pctx and psc *)
+      rewrite context_to_scope_pctx in *. intuition eauto.
+      rewrite !trans_psc in *. intuition eauto.
     + intuition eauto.
     + intuition eauto.
   - subst. cbn.
