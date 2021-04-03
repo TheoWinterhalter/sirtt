@@ -89,3 +89,13 @@ Definition subst1 t k u := subst [t] k u.
 Notation subst10 t := (subst1 t 0).
 Notation "M { j := N }" :=
   (subst1 N j M) (at level 10, right associativity) : s_scope.
+
+Lemma lift_0 :
+  ∀ k t, lift 0 k t = t.
+Proof.
+  intros k t.
+  induction t in k |- *.
+  all: try reflexivity.
+  all: try solve [ cbn ; f_equal ; intuition eauto ].
+  cbn. destruct (k <=? n). all: reflexivity.
+Qed.
