@@ -1583,14 +1583,20 @@ Proof.
         reflexivity.
     + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
       erewrite erase_subst0 with (Δ := [ Level.S ]).
-      2:{ cbn. admit. }
+      2:{
+        cbn. eapply SIRTT.typed_scoped in h3 as hs3. cbn in hs3.
+        auto.
+      }
       3: reflexivity.
       2:{ constructor. 2: constructor. intro. discriminate. }
       cbn. rewrite subst_empty.
       eapply IHh1. all: auto.
     + change (?t{0 := ?u})%s with (SIRTT.subst0 [u] t).
       erewrite erase_subst0 with (Δ := [ Level.S ]).
-      2:{ cbn. admit. }
+      2:{
+        cbn. eapply SIRTT.typed_scoped in h3 as hs3. cbn in hs3.
+        auto.
+      }
       3: reflexivity.
       2:{ constructor. 2: constructor. intro. discriminate. }
       cbn. rewrite subst_empty.
@@ -1726,7 +1732,11 @@ Proof.
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1.
       eauto.
-    + admit. (* Too lazy rn *)
+    + forward IHh2. { eapply scoping_context_pctx. auto. }
+      forward IHh2 by reflexivity.
+      rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
+      rewrite context_trans_pctx in IHh2.
+      eapply IHh2.
     + forward IHh3 by auto. forward IHh3 by auto.
       rewrite context_to_scope_pctx in IHh3. rewrite trans_psc in IHh3.
       auto.
