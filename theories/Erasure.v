@@ -1650,9 +1650,19 @@ Proof.
       with (psc (Level.R :: SIRTT.context_to_scope Γ)) in h1'.
       rewrite !trans_psc in h1'.
       rewrite !h1' in IHh3.
-      (* I should prove some lift_lift lemma
-        or use twice a lift0 lemma
-      *)
+      rewrite lift_lift in IHh3. simpl in IHh3.
+      clear h1' h.
+      pose proof erase_lift0 as h.
+      specialize h with (Δ := [ Level.R ; Level.R ]).
+      cbn in h.
+      eapply SIRTT.typed_scoped in h1 as h'.
+      rewrite context_to_scope_pctx in h'.
+      eapply h in h'.
+      change (Level.R :: Level.R :: psc Γ)
+      with (psc (Level.R :: Level.R :: SIRTT.context_to_scope Γ)) in h'.
+      rewrite trans_psc in h'.
+      rewrite h' in IHh3.
+      unfold arrow. cbn.
       (* eapply IHh3. *)
       admit.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite trans_psc.
