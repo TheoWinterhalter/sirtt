@@ -194,10 +194,11 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] univ i : univ j
 
 | type_conv :
-    ∀ t A B ℓ s,
+    ∀ t A B ℓ i j,
       Γ ⊢[ ℓ ] t : A →
       pctx Γ ⊢[ R ] A ≡ B →
-      pctx Γ ⊢[ ▪ ℓ ] B : univ s →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i → (* Would follow from validity *)
+      pctx Γ ⊢[ ▪ ℓ ] B : univ j →
       Γ ⊢[ ℓ ] t : B
 
 | type_sub :

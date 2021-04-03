@@ -1662,15 +1662,15 @@ Proof.
   - subst. econstructor.
     + eapply IHh1. all: auto.
     + eapply erase_conv.
-      * (* From validity or extra requirement? *) admit.
+      * eapply SIRTT.typed_scoped. eauto.
       * eapply SIRTT.typed_scoped. eauto.
       * auto.
-    + forward IHh2. { eapply scoping_context_pctx. auto. }
-      forward IHh2 by reflexivity.
-      rewrite context_trans_pctx in IHh2.
-      rewrite !context_to_scope_pctx in IHh2.
+    + forward IHh3. { eapply scoping_context_pctx. auto. }
+      forward IHh3 by reflexivity.
+      rewrite context_trans_pctx in IHh3.
+      rewrite !context_to_scope_pctx in IHh3.
       rewrite !context_to_scope_pctx.
-      rewrite psc_idemp in IHh2.
+      rewrite psc_idemp in IHh3.
       eauto.
   - subst. inversion p.
     1:{ inversion H. }
