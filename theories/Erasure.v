@@ -1576,11 +1576,8 @@ Proof.
           rewrite context_to_scope_pctx. auto.
         }
         2:{
-          (* Here we're missing some hyps.
-            We could also prove validity, but it's a pain, and not worth it.
-            Even more so as validity is easier to prove by adding said hyps.
-          *)
-          admit.
+          eapply SIRTT.typed_scoped in h3 as hs3. cbn in hs3.
+          auto.
         }
         rewrite trans_ptm. rewrite context_to_scope_pctx. rewrite trans_psc.
         reflexivity.

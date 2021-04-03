@@ -60,9 +60,13 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] lam ℓ' A t : Prod ℓ' A B
 
 | type_app :
-    ∀ ℓ ℓ' A B u v,
+    ∀ ℓ ℓ' A B u v j,
       Γ ⊢[ ℓ ] u : Prod ℓ' A B →
       Γ ⊢[ ℓ ⊔ ℓ' ] v : A →
+      (* The following would usually follow from validity and inversion
+         but this way, it's simpler to make the proof.
+      *)
+      (▪ ℓ', A) :: pctx Γ ⊢[ ℓ ] B : univ j →
       Γ ⊢[ ℓ ] app ℓ' u v : B{ 0 := ptm v }
 
 | type_Prod :
