@@ -349,7 +349,7 @@ Fixpoint trans_subst Γ (Δ : SIRTT.scope) σ :=
     | Some θ => Some (trans Γ u :: θ)
     | None => None
     end
-  | ℓ :: Δ, u :: σ => trans_subst Γ Δ σ
+  | ℓ :: Δ, _ :: σ => trans_subst Γ Δ σ
   | [], [] => Some []
   | _, _ => None
   end.
@@ -1624,9 +1624,6 @@ Proof.
       *)
       admit.
     + admit.
-  - subst. cbn.
-    (* Same universe trouble *)
-    admit.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite !trans_psc.
     eapply type_elim_nat. all: try solve [ intuition eauto ].
     + forward IHh1. { eapply scoping_context_pctx. auto. }

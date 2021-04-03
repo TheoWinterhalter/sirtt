@@ -69,7 +69,10 @@ Inductive typing (Γ : context) : level → term → term → Type :=
     ∀ ℓ ℓ' A B i j,
       Γ ⊢[ ℓ ] A : univ i →
       (▪ ℓ', A) :: Γ ⊢[ ℓ ] B : univ j →
-      Γ ⊢[ ℓ ] Prod ℓ' A B : univ (Peano.max i j)
+      (* NOTE: Prod ℓ A B lives in the universe of B when the binder
+        is (shape-)irrelevant.
+      *)
+      Γ ⊢[ ℓ ] Prod ℓ' A B : univ (if relevant ℓ then Peano.max i j else j)
 
 | type_ex :
     ∀ ℓ A P u p,
@@ -91,7 +94,8 @@ Inductive typing (Γ : context) : level → term → term → Type :=
     ∀ ℓ A P i j,
       Γ ⊢[ ℓ ] A : univ i →
       (R, A) :: Γ ⊢[ S ⊔ ℓ ] P : univ j →
-      Γ ⊢[ ℓ ] Sum A P : univ (Peano.max i j)
+      (* NOTE: Sum A P lives in the universe of A, regardless of P *)
+      Γ ⊢[ ℓ ] Sum A P : univ i
 
 | type_zero :
     ∀ ℓ,
