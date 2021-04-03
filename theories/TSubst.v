@@ -108,3 +108,22 @@ Proof.
   all: try solve [ cbn ; f_equal ; intuition eauto ].
   cbn. destruct (k <=? n). all: reflexivity.
 Qed.
+
+Lemma lift_lift :
+  ∀ k n m t,
+    lift n k (lift m k t) = lift (n + m) k t.
+Proof.
+  intros k p m t.
+  induction t in k, p, m |- *.
+  all: try reflexivity.
+  all: try solve [ cbn ; f_equal ; intuition eauto ].
+  cbn. destruct (k <=? n) eqn:e.
+  - destruct (k <=? m + n) eqn:e'.
+    2:{
+      eapply Compare_dec.leb_complete in e.
+      eapply Compare_dec.leb_complete_conv in e'.
+      lia.
+    }
+    f_equal. lia.
+  - rewrite e. reflexivity.
+Qed.

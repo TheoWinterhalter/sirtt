@@ -1650,7 +1650,7 @@ Proof.
       with (psc (Level.R :: SIRTT.context_to_scope Γ)) in h1'.
       rewrite !trans_psc in h1'.
       rewrite !h1' in IHh3.
-      rewrite lift_lift in IHh3. simpl in IHh3.
+      rewrite SIRTT.lift_lift in IHh3. simpl in IHh3.
       clear h1' h.
       pose proof erase_lift0 as h.
       specialize h with (Δ := [ Level.R ; Level.R ]).
@@ -1663,8 +1663,9 @@ Proof.
       rewrite trans_psc in h'.
       rewrite h' in IHh3.
       unfold arrow. cbn.
-      (* eapply IHh3. *)
-      admit.
+      rewrite lift_lift. simpl.
+      rewrite trans_psc in IHh3.
+      eapply IHh3.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite trans_psc.
     econstructor.
     forward IHh. { eapply scoping_context_pctx. auto. }
