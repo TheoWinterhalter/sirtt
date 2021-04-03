@@ -1719,8 +1719,61 @@ Proof.
       forward IHh4 by reflexivity.
       rewrite context_to_scope_pctx in IHh4. rewrite trans_psc in IHh4.
       cbn in IHh4.
-      (* erase_lift again... *)
-      admit.
+      (* One erase_lift0 *)
+      pose proof erase_lift0 as h.
+      specialize h with (Δ := [ Level.S ; Level.R ]).
+      cbn in h.
+      eapply SIRTT.typed_scoped in h1 as h'.
+      rewrite context_to_scope_pctx in h'.
+      eapply h in h'.
+      change (Level.S :: Level.R :: psc Γ)
+      with (psc (Level.S :: Level.R :: SIRTT.context_to_scope Γ)) in h'.
+      rewrite !trans_psc in h'.
+      rewrite h' in IHh4.
+      clear h h'.
+      (* One erase_lift0 *)
+      pose proof erase_lift0 as h.
+      specialize h with (Δ := [ Level.R ; Level.S ; Level.R ]).
+      cbn in h.
+      eapply SIRTT.typed_scoped in h2 as h'.
+      rewrite context_to_scope_pctx in h'.
+      eapply h in h'.
+      change (Level.R :: Level.S :: Level.R :: psc Γ)
+      with (psc (Level.R :: Level.S :: Level.R :: SIRTT.context_to_scope Γ))
+      in h'.
+      rewrite !trans_psc in h'.
+      rewrite h' in IHh4.
+      clear h h'.
+      (* One erase_lift0 *)
+      rewrite !SIRTT.lift_lift in IHh4. simpl in IHh4.
+      pose proof erase_lift0 as h.
+      specialize h with (Δ := [ Level.R ; Level.R ; Level.S ; Level.R ]).
+      cbn in h.
+      eapply SIRTT.typed_scoped in h2 as h'.
+      rewrite context_to_scope_pctx in h'.
+      eapply h in h'.
+      change (Level.R :: Level.R :: Level.S :: Level.R :: psc Γ)
+      with (psc (Level.R :: Level.R :: Level.S :: Level.R :: SIRTT.context_to_scope Γ))
+      in h'.
+      rewrite !trans_psc in h'.
+      rewrite h' in IHh4.
+      clear h h'.
+      (* One erase_lift0 *)
+      pose proof erase_lift0 as h.
+      specialize h with (Δ := [ Level.R ; Level.R ; Level.S ; Level.R ]).
+      cbn in h.
+      eapply SIRTT.typed_scoped in h1 as h'.
+      rewrite context_to_scope_pctx in h'.
+      eapply h in h'.
+      change (Level.R :: Level.R :: Level.S :: Level.R :: psc Γ)
+      with (psc (Level.R :: Level.R :: Level.S :: Level.R :: SIRTT.context_to_scope Γ))
+      in h'.
+      rewrite !trans_psc in h'.
+      rewrite h' in IHh4.
+      clear h h'.
+      unfold arrow. simpl.
+      rewrite !lift_lift. simpl.
+      eapply IHh4.
     + forward IHh6 by auto.
       forward IHh6 by reflexivity.
       rewrite context_to_scope_pctx in IHh6. rewrite trans_psc in IHh6.
@@ -1796,4 +1849,7 @@ Proof.
     1:{ inversion H. }
     subst.
     eapply IHh. all: auto.
-Admitted.
+Qed.
+
+Print Assumptions erase_red.
+Print Assumptions erase_typing.
