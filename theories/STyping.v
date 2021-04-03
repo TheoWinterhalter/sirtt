@@ -72,7 +72,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       (* NOTE: Prod ℓ A B lives in the universe of B when the binder
         is (shape-)irrelevant.
       *)
-      Γ ⊢[ ℓ ] Prod ℓ' A B : univ (if relevant ℓ then Peano.max i j else j)
+      Γ ⊢[ ℓ ] Prod ℓ' A B : univ (if relevant ℓ' then Peano.max i j else j)
 
 | type_ex :
     ∀ ℓ A P u p,

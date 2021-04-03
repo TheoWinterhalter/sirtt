@@ -349,7 +349,7 @@ Fixpoint trans_subst Γ (Δ : SIRTT.scope) σ :=
     | Some θ => Some (trans Γ u :: θ)
     | None => None
     end
-  | ℓ :: Δ, _ :: σ => trans_subst Γ Δ σ
+  | _ :: Δ, _ :: σ => trans_subst Γ Δ σ
   | [], [] => Some []
   | _, _ => None
   end.
@@ -1599,7 +1599,7 @@ Proof.
       cbn. rewrite subst_empty.
       eapply IHh1. all: auto.
   - subst. cbn. destruct ℓ'.
-    + constructor.
+    + cbn. constructor.
       * cbn in IHh1. eapply IHh1. all: auto.
       * cbn in IHh2. eapply IHh2. 2: reflexivity.
         constructor. 1: auto.
@@ -1610,20 +1610,14 @@ Proof.
         eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
       }
       forward IHh2 by auto.
-      (* Another problem: universes!
-          Maybe I should change the universe of Prod I and Prod S
-          or add some form of cumulativity in the target.
-          The first option sounds better because this way irrelevant
-          info doesn't affect the level of relevant data.
-
-          The problem with this approach is probably when translating to MLTT
-          with the hope of preserving consistency, a.k.a the checker.
-          i.e. if we encode refinement types and irrelevant products as
-          regular products.
-          Let's cross that bridge when we get there.
-      *)
-      admit.
-    + admit.
+      auto.
+    + cbn. cbn in IHh2.
+      forward IHh2.
+      { constructor. 1: auto.
+        eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
+      }
+      forward IHh2 by auto.
+      auto.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite !trans_psc.
     eapply type_elim_nat. all: try solve [ intuition eauto ].
     + forward IHh1. { eapply scoping_context_pctx. auto. }
