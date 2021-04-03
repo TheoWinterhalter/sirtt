@@ -98,3 +98,13 @@ Proof.
   - rewrite nth_error_nil. f_equal. lia.
   - reflexivity.
 Qed.
+
+Lemma lift_0 :
+  ∀ k t, lift 0 k t = t.
+Proof.
+  intros k t.
+  induction t in k |- *.
+  all: try reflexivity.
+  all: try solve [ cbn ; f_equal ; intuition eauto ].
+  cbn. destruct (k <=? n). all: reflexivity.
+Qed.

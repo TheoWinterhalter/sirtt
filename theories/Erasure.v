@@ -1698,8 +1698,8 @@ Proof.
       with (psc (Level.S :: SIRTT.context_to_scope Γ)) in h1'.
       rewrite !trans_psc in h1'.
       rewrite h1' in IHh2.
-      (* NEED lift00 lemma *)
-      admit.
+      rewrite lift_0 in IHh2.
+      eauto.
     + forward IHh3 by auto.
       forward IHh3 by reflexivity.
       rewrite context_to_scope_pctx in IHh3. rewrite trans_psc in IHh3.
