@@ -52,7 +52,7 @@ Fixpoint trans (Γ : SIRTT.scope) (t : SIRTT.term) : MLTT.term :=
     MLTT.coe
       (trans Γ A) (trans Γ P) (trans Γ u) (trans Γ v) (trans Γ e) (trans Γ t)
   | SIRTT.Eq A u v => MLTT.Eq (trans Γ A) (trans Γ u) (trans Γ v)
-  | SIRTT.exfalso A p => MLTT.axiom 0
+  | SIRTT.exfalso A p => MLTT.exfalso (trans Γ A) (MLTT.axiom 0)
   | SIRTT.Empty => MLTT.Empty
   | SIRTT.univ s => MLTT.univ s
   end.
@@ -202,6 +202,9 @@ Proof.
     1:{ intro. lia. }
     rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
     rewrite firstn_O. cbn. lia.
+  - cbn. constructor.
+    + rewrite scope_trans_psc in IHh1. rewrite trans_psc in IHh1. auto.
+    + constructor.
   - destruct ℓ.
     2:{ inversion p. subst. inversion H. }
     2:{ inversion p. subst. inversion H. }
@@ -1414,6 +1417,12 @@ Proof.
       all: rewrite !trans_psc in *. all: intuition eauto.
     + intuition eauto.
     + cbn. intuition eauto.
+  - subst. cbn.
+    scope_inv hu hu'. scope_inv hv hv'.
+    t_cong.
+    + rewrite !context_to_scope_pctx in IHh. rewrite !trans_psc in IHh.
+      intuition eauto.
+    + reflexivity.
   - subst. inversion p.
     + subst. inversion H.
     + subst. intuition eauto.
@@ -1753,7 +1762,14 @@ Proof.
     + forward IHh3 by auto. forward IHh3 by auto.
       rewrite context_to_scope_pctx in IHh3. rewrite trans_psc in IHh3.
       auto.
-  - subst. cbn. give_up.
+  - subst. cbn. rewrite context_to_scope_pctx. rewrite trans_psc.
+    econstructor.
+    + forward IHh1. { eapply scoping_context_pctx. auto. }
+      forward IHh1 by reflexivity.
+      rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
+      rewrite context_trans_pctx in IHh1.
+      eauto.
+    + constructor. reflexivity.
   - subst. econstructor.
     + eapply IHh1. all: auto.
     + eapply erase_conv.
