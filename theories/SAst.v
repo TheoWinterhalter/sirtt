@@ -82,3 +82,33 @@ Proof.
   - cbn in h. eapply ih in h.
     cbn. auto.
 Qed.
+
+(* Similar to psc and pctx, we also predify terms for subsitutions *)
+Fixpoint ptm (t : term) : term :=
+  match t with
+  | var n => var n
+  | lam ℓ A t => lam (▪ ℓ) (ptm A) (ptm t)
+  | app ℓ u v => app (▪ ℓ) (ptm u) (ptm v)
+  | Prod ℓ A B => Prod (▪ ℓ) (ptm A) (ptm B)
+  | ex u p => ex (ptm u) p
+  | wit t => wit (ptm t)
+  | prf t => prf t
+  | Sum A P => Sum (ptm A) (ptm P)
+  | zero => zero
+  | succ n => succ (ptm n)
+  | elim_nat P z s n => elim_nat (ptm P) (ptm z) (ptm s) (ptm n)
+  | Nat => Nat
+  | vnil A => vnil (ptm A)
+  | vcons A a n v => vcons (ptm A) (ptm a) n (ptm v)
+  | elim_vec A P e c n v => elim_vec (ptm A) (ptm P) (ptm e) (ptm c) n (ptm v)
+  | Vec A n => Vec (ptm A) (ptm n)
+  | refl A u => refl (ptm A) (ptm u)
+  | coe A P u v e t => coe (ptm A) (ptm P) (ptm u) (ptm v) (ptm e) (ptm t)
+  | Eq A u v => Eq (ptm A) (ptm u) (ptm v)
+  | exfalso A p => exfalso (ptm A) p
+  | Empty => Empty
+  | univ s => univ s
+  end.
+
+Definition psub :=
+  map ptm.

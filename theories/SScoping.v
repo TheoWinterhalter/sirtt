@@ -10,6 +10,9 @@ Import ListNotations.
 
 Set Default Goal Selector "!".
 
+Definition psc (Γ : scope) : scope :=
+  map pred Γ.
+
 Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_var :
     ∀ n ℓ,
@@ -18,7 +21,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_lam :
     ∀ ℓ ℓ' A t,
-      scoping Γ ℓ A → (* Should it be something lower maybe? *)
+      scoping (psc Γ) ℓ A →
       scoping (ℓ' :: Γ) ℓ t →
       scoping Γ ℓ (lam ℓ' A t)
 
@@ -30,7 +33,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_Prod :
     ∀ ℓ ℓ' A B,
-      scoping Γ ℓ A → (* Right level? *)
+      scoping Γ ℓ A →
       scoping (▪ℓ' :: Γ) ℓ B →
       scoping Γ ℓ (Prod ℓ' A B)
 
@@ -48,7 +51,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_prf :
     ∀ t,
       scoping Γ I t →
-      scoping Γ I (prf t)
+      scoping Γ S (prf t)
 
 | scope_Sum :
     ∀ ℓ A P,
@@ -67,7 +70,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_elim_nat :
     ∀ ℓ P z s n,
-      scoping Γ ℓ P →
+      scoping (psc Γ) ℓ P →
       scoping Γ ℓ z →
       scoping Γ ℓ s →
       scoping Γ ℓ n →
@@ -79,12 +82,12 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_vnil :
     ∀ ℓ A,
-      scoping Γ ℓ A →
+      scoping (psc Γ) ℓ A →
       scoping Γ ℓ (vnil A)
 
 | scope_vcons :
     ∀ ℓ A a n v,
-      scoping Γ ℓ A →
+      scoping (psc Γ) ℓ A →
       scoping Γ ℓ a →
       scoping Γ I n →
       scoping Γ ℓ v →
@@ -92,8 +95,8 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_elim_vec :
     ∀ ℓ A P e c n v,
-      scoping Γ ℓ A →
-      scoping Γ ℓ P →
+      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) ℓ P →
       scoping Γ ℓ e →
       scoping Γ ℓ c →
       scoping Γ I n →
@@ -108,14 +111,14 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_refl :
     ∀ ℓ A u,
-      scoping Γ ℓ A →
+      scoping (psc Γ) ℓ A →
       scoping Γ ℓ u →
       scoping Γ ℓ (refl A u)
 
 | scope_coe :
     ∀ ℓ A P u v e t,
-      scoping Γ ℓ A →
-      scoping Γ ℓ P →
+      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) ℓ P →
       scoping Γ ℓ u →
       scoping Γ ℓ v →
       scoping Γ ℓ e →
@@ -131,7 +134,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_exfalso :
     ∀ ℓ A p,
-      scoping Γ ℓ A →
+      scoping (psc Γ) ℓ A →
       scoping Γ I p →
       scoping Γ ℓ (exfalso A p)
 
@@ -155,7 +158,7 @@ Inductive scoping_context : context → Type :=
 | scope_cons :
     ∀ ℓ A Γ,
       scoping_context Γ →
-      scoping Γ ℓ A →
+      scoping (psc Γ) R A →
       scoping_context ((ℓ, A) :: Γ).
 
 (* Inversion lemmata for scoping *)
@@ -202,7 +205,7 @@ Qed.
 Lemma inversion_scope_lam :
   ∀ Γ ℓ ℓ' A t,
     scoping Γ ℓ (lam ℓ' A t) →
-    scoping Γ ℓ A ×
+    scoping (psc Γ) ℓ A ×
     scoping (ℓ' :: Γ) ℓ t.
 Proof.
   intros Γ ℓ ℓ' A t h.
@@ -268,14 +271,14 @@ Qed.
 Lemma inversion_scope_prf :
     ∀ Γ ℓ t,
       scoping Γ ℓ (prf t) →
-      ℓ = I ×
+      S ⊑ ℓ ×
       scoping Γ I t.
 Proof.
   intros Γ ℓ t h.
   dependent induction h.
+  - intuition auto. reflexivity.
   - intuition auto.
-  - intuition auto.
-    subst. eapply I_sub. assumption.
+    etransitivity. all: eauto.
 Qed.
 
 Lemma inversion_scope_Sum :
@@ -308,7 +311,7 @@ Qed.
 Lemma inversion_scope_elim_nat :
   ∀ Γ ℓ P z s n,
     scoping Γ ℓ (elim_nat P z s n) →
-    scoping Γ ℓ P ×
+    scoping (psc Γ) ℓ P ×
     scoping Γ ℓ z ×
     scoping Γ ℓ s ×
     scoping Γ ℓ n.
@@ -323,7 +326,7 @@ Qed.
 Lemma inversion_scope_vnil :
   ∀ Γ ℓ A,
     scoping Γ ℓ (vnil A) →
-    scoping Γ ℓ A.
+    scoping (psc Γ) ℓ A.
 Proof.
   intros Γ ℓ A h.
   dependent induction h.
@@ -334,7 +337,7 @@ Qed.
 Lemma inversion_scope_vcons :
   ∀ Γ ℓ A a n v,
     scoping Γ ℓ (vcons A a n v) →
-    scoping Γ ℓ A ×
+    scoping (psc Γ) ℓ A ×
     scoping Γ ℓ a ×
     scoping Γ I n ×
     scoping Γ ℓ v.
@@ -349,8 +352,8 @@ Qed.
 Lemma inversion_scope_elim_vec :
   ∀ Γ ℓ A P e c n v,
     scoping Γ ℓ (elim_vec A P e c n v) →
-    scoping Γ ℓ A ×
-    scoping Γ ℓ P ×
+    scoping (psc Γ) ℓ A ×
+    scoping (psc Γ) ℓ P ×
     scoping Γ ℓ e ×
     scoping Γ ℓ c ×
     scoping Γ I n ×
@@ -382,7 +385,7 @@ Qed.
 Lemma inversion_scope_refl :
   ∀ Γ ℓ A u,
     scoping Γ ℓ (refl A u) →
-    scoping Γ ℓ A ×
+    scoping (psc Γ) ℓ A ×
     scoping Γ ℓ u.
 Proof.
   intros Γ ℓ A u h.
@@ -395,8 +398,8 @@ Qed.
 Lemma inversion_scope_coe :
   ∀ Γ ℓ A P u v e t,
     scoping Γ ℓ (coe A P u v e t) →
-    scoping Γ ℓ A ×
-    scoping Γ ℓ P ×
+    scoping (psc Γ) ℓ A ×
+    scoping (psc Γ) ℓ P ×
     scoping Γ ℓ u ×
     scoping Γ ℓ v ×
     scoping Γ ℓ e ×
@@ -426,7 +429,7 @@ Qed.
 Lemma inversion_scope_exfalso :
   ∀ Γ ℓ A p,
     scoping Γ ℓ (exfalso A p) →
-    scoping Γ ℓ A ×
+    scoping (psc Γ) ℓ A ×
     scoping Γ I p.
 Proof.
   intros Γ ℓ A p h.
@@ -467,7 +470,7 @@ Lemma scoping_context_nth_error :
   ∀ (Γ : context) n ℓ A,
     scoping_context Γ →
     nth_error Γ n = Some (ℓ, A) →
-    scoping (skipn (Datatypes.S n) (context_to_scope Γ)) ℓ A.
+    scoping (skipn (Datatypes.S n) (psc Γ)) R A.
 Proof.
   intros Γ n ℓ A h e.
   induction h in n, ℓ, A, e |- *.
