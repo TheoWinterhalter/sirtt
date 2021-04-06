@@ -99,9 +99,9 @@ Closed under the global context
 corresponding to the fact that the two main theorems of this formalisation
 are axiom-free (a fact verified by Coq itself).
 
-I use coq 8.13.1 and Equations 1.2.4
-
 ## File overview
+
+Relevant files can be found in the `theories` directory.
 
 | File | Description |
 |------|-------------|
