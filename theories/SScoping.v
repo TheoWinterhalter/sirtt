@@ -921,13 +921,13 @@ Proof.
 Qed.
 
 Lemma scoping_reveal_subst_k :
-  ∀ Γ Δ u t,
+  ∀ Γ Δ u t ℓ,
     let '(v, σ) := reveal u in
     scoping Γ Level.R u →
-    scoping (Δ ++ reveal_scope u ++ Γ) Level.R t →
-    scoping (Δ ++ Γ) Level.R (reveal_subst_k σ #|Δ| t).
+    scoping (Δ ++ reveal_scope u ++ Γ) ℓ t →
+    scoping (Δ ++ Γ) ℓ (reveal_subst_k σ #|Δ| t).
 Proof.
-  cbn. fix aux 3. intros Γ Δ u t hu ht.
+  cbn. fix aux 3. intros Γ Δ u t ℓ hu ht.
   destruct u. all: try assumption.
   - cbn. destruct l.
     + assumption.
@@ -958,13 +958,13 @@ Proof.
 Qed.
 
 Lemma scoping_reveal_subst :
-  ∀ Γ u t,
+  ∀ Γ u t ℓ,
     let '(v, σ) := reveal u in
     scoping Γ Level.R u →
-    scoping (reveal_scope u ++ Γ) Level.R t →
-    scoping Γ Level.R (reveal_subst σ t).
+    scoping (reveal_scope u ++ Γ) ℓ t →
+    scoping Γ ℓ (reveal_subst σ t).
 Proof.
-  cbn. intros Γ u t hu ht.
+  cbn. intros Γ u t ℓ hu ht.
   rewrite reveal_subst_0. eapply scoping_reveal_subst_k with (Δ := []).
   all: auto.
 Qed.
