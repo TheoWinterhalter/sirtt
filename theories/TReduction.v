@@ -104,3 +104,7 @@ Inductive red : term → term → Type :=
 | exfalso_tm : ∀ A p p', p ↦ p' → (exfalso A p) ↦ (exfalso A p')
 
 where "u ↦ v" := (red u v) : t_scope.
+
+Inductive cored : term → term → Prop :=
+| cored1 : ∀ u v, u ↦ v → cored v u
+| cored_trans : ∀ u v w, cored v u → v ↦ w → cored w u.

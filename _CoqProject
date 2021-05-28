@@ -16,3 +16,4 @@ theories/TScoping.v
 theories/TTyping.v
 theories/MLTT.v
 theories/Erasure.v
+theories/Meta.v

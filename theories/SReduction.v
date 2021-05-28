@@ -164,3 +164,7 @@ Inductive red : term → term → Type :=
 | Vec_ty : ∀ A n A', A ↦ A' → (Vec A n) ↦ (Vec A' n)
 
 where "u ↦ v" := (red u v) : s_scope.
+
+Inductive cored : term → term → Prop :=
+| cored1 : ∀ u v, u ↦ v → cored v u
+| cored_trans : ∀ u v w, cored v u → v ↦ w → cored w u.

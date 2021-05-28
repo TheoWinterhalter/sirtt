@@ -120,3 +120,4 @@ Relevant files can be found in the `theories` directory.
 | `TTyping.v`| Typing and conversion in MLTT |
 | `MLTT.v` | All of MLTT in one module for practicality |
 | `Erasure.v` | Erasure translation from SIRTT to MLTT |
+| `Meta.v` | Meta-theoretical consequences of the erasure |
