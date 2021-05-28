@@ -137,3 +137,59 @@ Proof.
   intro ℓ.
   destruct ℓ. all: reflexivity.
 Qed.
+
+Lemma relevant_pred :
+  ∀ ℓ,
+    relevant (▪ ℓ) = relevant ℓ.
+Proof.
+  intros []. all: reflexivity.
+Qed.
+
+Lemma pred_idemp :
+  ∀ ℓ,
+    ▪ (▪ ℓ) = ▪ ℓ.
+Proof.
+  intro ℓ. destruct ℓ. all: reflexivity.
+Qed.
+
+Lemma potentially_more_R :
+  ∀ ℓ,
+    ℓ ⊑ R →
+    ℓ = R.
+Proof.
+  intros ℓ h. inversion h.
+  - inversion H.
+  - reflexivity.
+Qed.
+
+Lemma pred_le :
+  ∀ ℓ,
+    ▪ ℓ ⊑ ℓ.
+Proof.
+  intro ℓ. destruct ℓ. all: cbn.
+  - right.
+  - right.
+  - left. constructor.
+Qed.
+
+Lemma pred_pred_le :
+  ∀ ℓ ℓ',
+    ℓ ⊑ ℓ' →
+    ▪ ℓ ⊑ ▪ ℓ'.
+Proof.
+  intros ℓ ℓ' h.
+  destruct h as [ℓ' h|].
+  - destruct h. all: cbn.
+    + left. constructor.
+    + left. constructor.
+    + right.
+  - right.
+Qed.
+
+Lemma max_pred :
+  ∀ ℓ₀ ℓ₁,
+    (▪ ℓ₀) ⊔ (▪ ℓ₁) = ▪ (ℓ₀ ⊔ ℓ₁).
+Proof.
+  intros ℓ₀ ℓ₁.
+  destruct ℓ₀, ℓ₁. all: reflexivity.
+Qed.

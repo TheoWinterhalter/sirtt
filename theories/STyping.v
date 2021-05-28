@@ -447,3 +447,25 @@ Lemma meta_conv :
 Proof.
   intros Γ ℓ t A B h e. subst. auto.
 Qed.
+
+Lemma context_to_scope_pctx :
+  ∀ Γ,
+    context_to_scope (pctx Γ) = psc Γ.
+Proof.
+  intro Γ. unfold pctx, psc.
+  unfold context_to_scope.
+  rewrite !map_map. eapply map_ext.
+  intros [ℓ t]. reflexivity.
+Qed.
+
+Lemma scoping_context_pctx :
+  ∀ Γ,
+    scoping_context Γ →
+    scoping_context (pctx Γ).
+Proof.
+  intros Γ h.
+  induction h.
+  - cbn. constructor.
+  - cbn. fold (pctx Γ). constructor. 1: auto.
+    rewrite context_to_scope_pctx. rewrite psc_idemp. auto.
+Qed.
