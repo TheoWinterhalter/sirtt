@@ -59,5 +59,7 @@ Corollary scoping_cored :
     scoping Γ Level.R v.
 Proof.
   intros Γ u v hs hr.
-  (* induction hr. *)
-Abort.
+  induction hr.
+  - eapply scoping_red. all: eauto.
+  - intuition eauto. eapply scoping_red. all: eauto.
+Qed.
