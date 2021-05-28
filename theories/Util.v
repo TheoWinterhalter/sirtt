@@ -237,3 +237,8 @@ Proof.
   intros A n.
   destruct n. all: reflexivity.
 Qed.
+
+Inductive squash (A : Type) : Prop :=
+| sq (x : A).
+
+Arguments sq {_} _.

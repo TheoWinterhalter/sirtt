@@ -51,3 +51,13 @@ Proof.
     all: rewrite e0 in h. all: eassumption.
     Unshelve. all: eauto.
 Qed.
+
+Corollary scoping_cored :
+  ∀ Γ u v,
+    scoping Γ Level.R u →
+    cored v u →
+    scoping Γ Level.R v.
+Proof.
+  intros Γ u v hs hr.
+  (* induction hr. *)
+Abort.

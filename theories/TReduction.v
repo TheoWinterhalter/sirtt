@@ -105,6 +105,9 @@ Inductive red : term → term → Type :=
 
 where "u ↦ v" := (red u v) : t_scope.
 
-Inductive cored : term → term → Prop :=
+Inductive cored : term → term → Type :=
 | cored1 : ∀ u v, u ↦ v → cored v u
 | cored_trans : ∀ u v w, cored v u → v ↦ w → cored w u.
+
+Definition scored u v :=
+  squash (cored u v).

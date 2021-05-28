@@ -14,13 +14,13 @@ Set Default Goal Selector "!".
 Definition MLTT_SN :=
   ∀ Σ Γ t A,
     Σ ;; Γ ⊢ t : A →
-    Acc MLTT.cored t.
+    Acc MLTT.scored t.
 
 Definition SIRTT_SN :=
   ∀ Γ t A,
     scoping_context Γ → (* TODO Need scoping above? Maybe would make more sense to ask wf? *)
     Γ ⊢[ Level.R ] t : A →
-    Acc SIRTT.cored t.
+    Acc SIRTT.scored t.
 
 (* TODO MOVE *)
 Lemma erase_cored :
@@ -47,9 +47,10 @@ Proof.
   eapply SIRTT.typed_scoped in ht.
   remember (trans Γ t) as u eqn:e.
   induction ht' as [? h1 h2] in Γ, t, e, ht |- *. subst.
-  constructor. intros u hu.
+  constructor. intros u [hu].
   eapply erase_cored in hu. 2: eauto.
-  eapply h2 in hu as hh. 3: reflexivity.
+  pose proof (sq hu) as hh.
+  eapply h2 in hh. 3: reflexivity.
   2: admit.
   auto.
 Admitted.
