@@ -48,8 +48,6 @@ Proof.
     all: rewrite e0 in hs'.
     all: scope_inv hs' hs''. all: intuition auto.
     all: eapply scoping_reveal_subst in ht as h ; [| shelve].
-    all: rewrite e0 in h. all: try eassumption.
-    (* Do we have a scoping_reveal_subst with ℓ instead of R? *)
-    all: admit.
+    all: rewrite e0 in h. all: eassumption.
     Unshelve. all: eauto.
-Abort.
+Qed.
