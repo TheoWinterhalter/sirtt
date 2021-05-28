@@ -44,13 +44,13 @@ Proof.
   intros h. intros Γ t A hΓ ht.
   eapply erase_typing in ht as ht'. 2: auto.
   eapply h in ht'.
+  eapply SIRTT.typed_scoped in ht.
   remember (trans Γ t) as u eqn:e.
   induction ht' as [? h1 h2] in Γ, t, e, ht |- *. subst.
   constructor. intros u hu.
-  eapply erase_cored in hu.
-  2:{ eapply SIRTT.typed_scoped. eauto. }
+  eapply erase_cored in hu. 2: eauto.
   eapply h2 in hu as hh. 3: reflexivity.
-  2: admit. (* Like this we need SR, but maybe we can reduce it to scope SR *)
+  2: admit.
   auto.
 Admitted.
 
