@@ -113,9 +113,8 @@ make
 It should output the list of files being compiled and the mention
 ```coq
 Closed under the global context
-Closed under the global context
 ```
-corresponding to the fact that the two main theorems of this formalisation
+corresponding to the fact that the main theorems of this formalisation
 are axiom-free (a fact verified by Coq itself).
 
 ## File overview

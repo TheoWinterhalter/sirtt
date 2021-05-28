@@ -22,22 +22,6 @@ Definition SIRTT_SN :=
     Γ ⊢[ Level.R ] t : A →
     Acc SIRTT.scored t.
 
-(* TODO MOVE *)
-Lemma erase_cored :
-  ∀ Γ u v,
-    SIRTT.scoping Γ Level.R u →
-    SIRTT.cored v u →
-    MLTT.cored (trans Γ v) (trans Γ u).
-Proof.
-  intros Γ u v hu h.
-  induction h.
-  - left. eapply erase_red. all: eauto.
-  - eapply MLTT.cored_trans.
-    + eauto.
-    + eapply erase_red. 2: auto.
-      eapply scoping_cored. all: eauto.
-Qed.
-
 Lemma relative_SN :
   MLTT_SN → SIRTT_SN.
 Proof.
@@ -54,5 +38,7 @@ Proof.
   2:{ eapply scoping_cored. all: eauto. }
   auto.
 Qed.
+
+Print Assumptions relative_SN.
 
 (* Also noconf, maybe with a head construct in MLTT and shape construct in SIRTT? *)

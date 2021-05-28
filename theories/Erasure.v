@@ -1234,5 +1234,17 @@ Proof.
     eapply IHh. all: auto.
 Qed.
 
-Print Assumptions erase_red.
-Print Assumptions erase_typing.
+Lemma erase_cored :
+  ∀ Γ u v,
+    SIRTT.scoping Γ Level.R u →
+    SIRTT.cored v u →
+    MLTT.cored (trans Γ v) (trans Γ u).
+Proof.
+  intros Γ u v hu h.
+  induction h.
+  - left. eapply erase_red. all: eauto.
+  - eapply MLTT.cored_trans.
+    + eauto.
+    + eapply erase_red. 2: auto.
+      eapply scoping_cored. all: eauto.
+Qed.
