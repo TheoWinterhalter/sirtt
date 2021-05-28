@@ -18,7 +18,7 @@ Definition MLTT_SN :=
 
 Definition SIRTT_SN :=
   ∀ Γ t A,
-    scoping_context Γ → (* TODO Need scoping above? *)
+    scoping_context Γ → (* TODO Need scoping above? Maybe would make more sense to ask wf? *)
     Γ ⊢[ Level.R ] t : A →
     Acc SIRTT.cored t.
 

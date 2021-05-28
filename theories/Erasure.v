@@ -927,6 +927,7 @@ Proof.
   - cbn. reflexivity.
 Qed.
 
+(* TODO MOVE *)
 Lemma reveal_scope_sound :
   ∀ Γ ℓ t,
     SIRTT.scoping Γ ℓ t →
@@ -1093,6 +1094,7 @@ Qed.
     ]
   end.
 
+(* TODO MOVE *)
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
     SIRTT.scoping (Ξ ++ Δ ++ Γ) ℓ t →

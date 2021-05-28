@@ -112,6 +112,7 @@ Relevant files can be found in the `theories` directory.
 | `SReduction.v`| Reduction for SIRTT |
 | `SScoping.v`| Scoping in SIRTT |
 | `STyping.v`| Typing and conversion in SIRTT |
+| `SSR.v`| Subject reduction in SIRTT |
 | `SIRTT.v` | All of SIRTT in one module for practicality |
 | `TAst.v` | MLTT AST |
 | `TSubst.v` | MLTT Lifting and substitution |
