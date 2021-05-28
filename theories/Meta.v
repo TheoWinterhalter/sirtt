@@ -35,8 +35,8 @@ Proof.
   - eapply MLTT.cored_trans.
     + eauto.
     + eapply erase_red. 2: auto.
-      (* TODO NEED lemma, maybe in some SSR *)
-Admitted.
+      eapply scoping_cored. all: eauto.
+Qed.
 
 Lemma relative_SN :
   MLTT_SN → SIRTT_SN.
@@ -48,11 +48,11 @@ Proof.
   remember (trans Γ t) as u eqn:e.
   induction ht' as [? h1 h2] in Γ, t, e, ht |- *. subst.
   constructor. intros u [hu].
-  eapply erase_cored in hu. 2: eauto.
-  pose proof (sq hu) as hh.
+  eapply erase_cored in hu as hu'. 2: eauto.
+  pose proof (sq hu') as hh.
   eapply h2 in hh. 3: reflexivity.
-  2: admit.
+  2:{ eapply scoping_cored. all: eauto. }
   auto.
-Admitted.
+Qed.
 
 (* Also noconf, maybe with a head construct in MLTT and shape construct in SIRTT? *)
