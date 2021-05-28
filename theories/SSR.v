@@ -16,7 +16,7 @@ Lemma scoping_red :
     scoping Γ Level.R v.
 Proof.
   intros Γ u v hs hr.
-  induction hr.
+  induction hr in Γ, hs |- *.
   all: try solve [
     scope_inv hs hs' ; intuition eauto
   ].
@@ -52,8 +52,4 @@ Proof.
     (* Do we have a scoping_reveal_subst with ℓ instead of R? *)
     all: admit.
     Unshelve. all: eauto.
-  - scope_inv hs hs'. constructor. 2: intuition eauto.
-    (* We need to strengthen the IH *)
-    admit.
-  - admit.
 Abort.
