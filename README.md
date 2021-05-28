@@ -67,6 +67,25 @@ Lemma erase_typing :
 
 Assuming that MLTT (even with axiom `False`/`Empty`) is strongly normalising, we
 get this property for SIRTT from the third and last theorems above.
+
+```coq
+(* From Meta.v *)
+
+Definition MLTT_SN :=
+  ∀ Σ Γ t A,
+    Σ ;; Γ ⊢ t : A →
+    Acc MLTT.scored t.
+
+Definition SIRTT_SN :=
+  ∀ Γ t A,
+    scoping_context Γ →
+    Γ ⊢[ Level.R ] t : A →
+    Acc SIRTT.scored t.
+
+Lemma relative_SN :
+  MLTT_SN → SIRTT_SN.
+```
+
 Assuming that MLTT enjoys non-confusion (for instance that `Nat` is not
 convertible to an arrow type) we get this property for SIRTT using the second
 one.
