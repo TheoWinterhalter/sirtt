@@ -44,3 +44,39 @@ Fixpoint apps (t : term) (l : list term) :=
   | u :: l => apps (app t u) l
   | [] => t
   end.
+
+Inductive term_head :=
+| hvar
+| hlam
+| hprod
+| hzero
+| hsucc
+| hnat
+| hnil
+| hcons
+| hlist
+| hrefl
+| heq
+| hempty
+| haxiom
+| huniv
+.
+
+Definition head (t : term) : option term_head :=
+  match t with
+  | var n => Some hvar
+  | lam A t => Some hlam
+  | Prod A B => Some hprod
+  | zero => Some hzero
+  | succ n => Some hsucc
+  | Nat => Some hnat
+  | lnil A => Some hnil
+  | lcons A a l => Some hcons
+  | List A => Some hlist
+  | refl A u => Some hrefl
+  | Eq A u v => Some heq
+  | Empty => Some hempty
+  | axiom n => Some haxiom
+  | univ s => Some huniv
+  | _ => None
+  end.

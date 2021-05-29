@@ -112,3 +112,41 @@ Fixpoint ptm (t : term) : term :=
 
 Definition psub :=
   map ptm.
+
+Inductive term_head :=
+| hvar
+| hlam
+| hprod
+| hzero
+| hsucc
+| hnat
+| hnil
+| hcons
+| hvec
+| hrefl
+| heq
+| hempty
+| huniv
+.
+
+Fixpoint head (t : term) : option term_head :=
+  match t with
+  | var n => Some hvar
+  | lam R A t => Some hlam
+  | lam _ _ t => head t
+  | Prod R A B => Some hprod
+  | Prod _ _ B => head B
+  | ex u p => head u
+  | Sum A P => head A
+  | zero => Some hzero
+  | succ n => Some hsucc
+  | Nat => Some hnat
+  | vnil A => Some hnil
+  | vcons A a n v => Some hcons
+  | Vec A n => Some hvec
+  | refl A u => Some hrefl
+  | Eq A u v => Some heq
+  | Empty => Some hempty
+  | univ s => Some huniv
+  | _ => None
+  end.
