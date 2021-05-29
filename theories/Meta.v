@@ -41,4 +41,27 @@ Qed.
 
 Print Assumptions relative_SN.
 
-(* Also noconf, maybe with a head construct in MLTT and shape construct in SIRTT? *)
+(** We also lift non-confusion *)
+
+Definition MLTT_NoConf :=
+  ∀ u v hu hv,
+    head u = Some hu →
+    head v = Some hv →
+    u ≡ v →
+    hu = hv.
+
+Definition SIRTT_NoConf :=
+  ∀ Γ u v hu hv,
+    SIRTT.head u = Some hu →
+    SIRTT.head v = Some hv →
+    Γ ⊢[ Level.R ] u ≡ v →
+    hu = hv.
+
+Lemma relative_NoConf :
+  MLTT_NoConf → SIRTT_NoConf.
+Proof.
+  intros h Γ u v hu hv eu ev hc.
+  eapply erase_conv in hc. 2,3: admit. (* NEED extra hyp *)
+  eapply h in hc. 2,3: admit. (* Need lemma *)
+  admit.
+Abort.
