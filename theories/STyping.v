@@ -18,7 +18,7 @@
 
 *)
 
-From Coq Require Import Utf8 List.
+From Coq Require Import Utf8 List Lia.
 Require Import Equations.Prop.DepElim.
 Require Import Equations.Prop.Classes.
 From Equations Require Import Equations.
@@ -413,7 +413,7 @@ Inductive wf_context : context → Type :=
 | wf_cons :
     ∀ Γ A ℓ s,
       wf_context Γ →
-      Γ ⊢[ ▪ ℓ ] A : univ s → (* TODO pctx Γ ? *)
+      Γ ⊢[ ▪ ℓ ] A : univ s → (* TODO pctx Γ ? Prove scoping_context out of wf_context to check *)
       wf_context ((ℓ, A) :: Γ).
 
 Lemma psc_context_to_scope :
@@ -441,16 +441,32 @@ Qed.
 
 Lemma typed_type_scoped :
   ∀ Γ ℓ t A,
+    scoping_context Γ →
     Γ ⊢[ ℓ ] t : A →
     scoping (psc Γ) (▪ ℓ) A.
 Proof.
-  intros Γ ℓ t A h.
+  intros Γ ℓ t A hΓ h.
   induction h.
-  all: try assumption.
   all: try solve [ constructor ; eauto ].
-  (* all: try solve [ constructor ; rewrite ?psc_context_to_scope ; eauto ]. *)
-  - (* eapply lift_scoping. *)
-    (* TODO NEED wf_context or at least scoping assumption of the context *)
+  - eapply scoping_context_nth_error in e as h. 2: auto.
+    eapply lift_scoping with (Ξ := []) in h.
+    cbn - [skipn] in h.
+    rewrite firstn_skipn in h.
+    rewrite firstn_length_le in h.
+    2:{
+      eapply nth_error_Some_length in e as ?.
+      rewrite psc_length. rewrite context_to_scope_length. lia.
+    }
+    (* Here we can conlude by sub scoping, but it might be better to simply
+      update the lemma to conclude R.
+      We'll see which is best.
+    *)
+    admit.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped.
+      (* Again a discrepancy. *)
+      admit.
+    + admit.
 Abort.
 
 Lemma meta_conv :
