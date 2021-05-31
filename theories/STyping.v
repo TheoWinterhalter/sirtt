@@ -472,13 +472,22 @@ Proof.
     (* Here we can conlude by sub scoping, but it might be better to simply
       update the lemma to conclude R.
       We'll see which is best.
+
+      This should probably be an exact fit.
+      So the question is at what level should we see types?
+      Solving this question would mean being consistent with lam/Prod typing
+      and wf_context.
+
+      For uniformity and to be able to have irrelevant types as well as
+      irrelevant terms, it seems we need to change it.
     *)
     admit.
   - constructor.
     + rewrite psc_context_to_scope. eapply typed_scoped.
       (* Again a discrepancy. *)
       admit.
-    + admit.
+    + eapply IHh2. constructor. 1: auto.
+      (* Wrong as well *)
 Abort.
 
 Lemma meta_conv :
