@@ -413,7 +413,7 @@ Inductive wf_context : context → Type :=
 | wf_cons :
     ∀ Γ A ℓ s,
       wf_context Γ →
-      Γ ⊢[ ▪ ℓ ] A : univ s → (* TODO pctx Γ ? Prove scoping_context out of wf_context to check *)
+      pctx Γ ⊢[ R ] A : univ s → (* TODO or ▪ ℓ *)
       wf_context ((ℓ, A) :: Γ).
 
 Lemma psc_context_to_scope :
@@ -448,9 +448,8 @@ Proof.
   induction h.
   - constructor.
   - constructor. 1: auto.
-    rewrite psc_context_to_scope. eapply typed_scoped.
-    (* Mistmatch *)
-Abort.
+    rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+Qed.
 
 Lemma typed_type_scoped :
   ∀ Γ ℓ t A,
