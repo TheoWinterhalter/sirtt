@@ -439,6 +439,19 @@ Proof.
   - eapply scope_sub. all: eauto.
 Qed.
 
+Lemma wf_context_scoped :
+  ∀ Γ,
+    wf_context Γ →
+    scoping_context Γ.
+Proof.
+  intros Γ h.
+  induction h.
+  - constructor.
+  - constructor. 1: auto.
+    rewrite psc_context_to_scope. eapply typed_scoped.
+    (* Mistmatch *)
+Abort.
+
 Lemma typed_type_scoped :
   ∀ Γ ℓ t A,
     scoping_context Γ →
