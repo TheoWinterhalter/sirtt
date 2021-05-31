@@ -39,7 +39,7 @@ Notation "A ⇒ B" := (arrow A B) (at level 70, right associativity) : s_scope.
     We call this operation [pctx] pending a better name.
 *)
 Definition pctx (Γ : context) : context :=
-  map (λ '(ℓ, A), (Level.pred ℓ, A)) Γ.
+  map (λ '(ℓ, A), (▪ ℓ, A)) Γ.
 
 Reserved Notation "Γ ⊢[ l ] t : A"
   (at level 80, l, t, A at next level, format "Γ  ⊢[  l  ]  t  :  A").
@@ -469,3 +469,28 @@ Proof.
   - cbn. fold (pctx Γ). constructor. 1: auto.
     rewrite context_to_scope_pctx. rewrite psc_idemp. auto.
 Qed.
+
+Derive Signature for typing.
+
+Lemma inversion_type_var :
+  ∀ Γ n ℓ T,
+    Γ ⊢[ ℓ ] var n : T →
+    ∑ ℓ' A,
+      nth_error Γ n = Some (ℓ', A) ×
+      ℓ' ⊑ ℓ ×
+      pctx Γ ⊢[ R ] lift0 (Datatypes.S n) A ≡ T.
+Proof.
+  intros Γ n ℓ T h.
+  dependent induction h.
+  - eexists _, _. intuition eauto.
+    + reflexivity.
+    + apply conv_refl.
+  - destruct IHh1 as [ℓ' [A' [e [? ?]]]].
+    eexists _,_. intuition eauto.
+    eapply conv_trans. all: eauto.
+    (* NEED typed_type_scoped *)
+    admit.
+  - destruct IHh as [ℓ'' [A' [e [? ?]]]].
+    eexists _,_. intuition eauto.
+    etransitivity. all: eauto.
+Abort.

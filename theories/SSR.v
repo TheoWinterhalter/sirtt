@@ -63,3 +63,16 @@ Proof.
   - eapply scoping_red. all: eauto.
   - intuition eauto. eapply scoping_red. all: eauto.
 Qed.
+
+Lemma subject_reduction :
+  ∀ Γ u v A,
+    Γ ⊢[ Level.R ] u : A →
+    u ↦ v →
+    Γ ⊢[ Level.R ] v : A.
+Proof.
+  intros Γ u v A hu hr.
+  induction hr.
+  - (* Need substitution lemma *)
+    admit.
+  - (* Need inversion of typing *)
+Abort.
