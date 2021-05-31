@@ -413,7 +413,7 @@ Inductive wf_context : context → Type :=
 | wf_cons :
     ∀ Γ A ℓ s,
       wf_context Γ →
-      Γ ⊢[ ▪ ℓ ] A : univ s →
+      Γ ⊢[ ▪ ℓ ] A : univ s → (* TODO pctx Γ ? *)
       wf_context ((ℓ, A) :: Γ).
 
 Lemma psc_context_to_scope :
@@ -438,6 +438,20 @@ Proof.
     rewrite e. cbn. reflexivity.
   - eapply scope_sub. all: eauto.
 Qed.
+
+Lemma typed_type_scoped :
+  ∀ Γ ℓ t A,
+    Γ ⊢[ ℓ ] t : A →
+    scoping (psc Γ) (▪ ℓ) A.
+Proof.
+  intros Γ ℓ t A h.
+  induction h.
+  all: try assumption.
+  all: try solve [ constructor ; eauto ].
+  (* all: try solve [ constructor ; rewrite ?psc_context_to_scope ; eauto ]. *)
+  - (* eapply lift_scoping. *)
+    (* TODO NEED wf_context or at least scoping assumption of the context *)
+Abort.
 
 Lemma meta_conv :
   ∀ Γ ℓ t A B,
