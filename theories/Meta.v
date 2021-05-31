@@ -55,6 +55,8 @@ Definition SIRTT_NoConf :=
     SIRTT.head u = Some hu →
     SIRTT.head v = Some hv →
     Γ ⊢[ Level.R ] u ≡ v →
+    SIRTT.scoping Γ Level.R u →
+    SIRTT.scoping Γ Level.R v →
     hu = hv.
 
 (* TODO MOVE *)
@@ -136,9 +138,9 @@ Qed.
 Lemma relative_NoConf :
   MLTT_NoConf → SIRTT_NoConf.
 Proof.
-  intros h Γ u v hu hv eu ev hc.
-  eapply erase_conv in hc. 2,3: admit. (* NEED extra hyp *)
+  intros h Γ u v hu hv eu ev hc hsu hsv.
+  eapply erase_conv in hc. 2,3: auto.
   eapply h in hc. 2,3: eapply erasure_head ; eauto.
   apply trans_head_inj in hc.
   assumption.
-Abort.
+Qed.
