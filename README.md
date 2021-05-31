@@ -90,6 +90,29 @@ Assuming that MLTT enjoys non-confusion (for instance that `Nat` is not
 convertible to an arrow type) we get this property for SIRTT using the second
 one.
 
+```coq
+(* From Meta.v *)
+
+Definition MLTT_NoConf :=
+  ∀ u v hu hv,
+    head u = Some hu →
+    head v = Some hv →
+    u ≡ v →
+    hu = hv.
+
+Definition SIRTT_NoConf :=
+  ∀ Γ u v hu hv,
+    SIRTT.head u = Some hu →
+    SIRTT.head v = Some hv →
+    Γ ⊢[ Level.R ] u ≡ v →
+    SIRTT.scoping Γ Level.R u →
+    SIRTT.scoping Γ Level.R v →
+    hu = hv.
+
+Lemma relative_NoConf :
+  MLTT_NoConf → SIRTT_NoConf.
+```
+
 Thanks to this, checking in SIRTT can be made to fail when compared types have
 different heads, and instead reduce to "a few" equalities to prove, typically
 on natural numbers.
