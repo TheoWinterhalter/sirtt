@@ -165,7 +165,8 @@ Proof.
     rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
     rewrite firstn_O. cbn. lia.
   - cbn. constructor.
-    + rewrite scope_trans_psc in IHh1. rewrite trans_psc in IHh1. auto.
+    + simpl in IHh1. specialize IHh1 with (1 := eq_refl).
+      rewrite scope_trans_psc in IHh1. rewrite trans_psc in IHh1. auto.
     + constructor.
   - destruct ℓ.
     2:{ inversion p. subst. inversion H. }
@@ -942,8 +943,7 @@ Proof.
         rewrite context_to_scope_pctx in h1. auto.
     + cbn. cbn in IHh2. eapply IHh2. 2: reflexivity.
       constructor. 1: auto.
-      eapply SIRTT.typed_scoped in h1.
-      rewrite context_to_scope_pctx in h1. auto.
+      rewrite psc_context_to_scope. eapply SIRTT.typed_scoped. eauto.
     + cbn. cbn in IHh2. eapply IHh2. 2: reflexivity.
       constructor. 1: auto.
       eapply SIRTT.typed_scoped in h1.
