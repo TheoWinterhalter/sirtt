@@ -153,13 +153,13 @@ Inductive scoping (Γ : scope) : level → term → Type :=
       scoping Γ ℓ' t
 .
 
-Inductive scoping_context : context → Type :=
-| scope_nil : scoping_context []
+Inductive scoping_context ℓ : context → Type :=
+| scope_nil : scoping_context ℓ []
 | scope_cons :
-    ∀ ℓ A Γ,
-      scoping_context Γ →
-      scoping (psc Γ) (▪ ℓ) A →
-      scoping_context ((ℓ, A) :: Γ).
+    ∀ ℓ' A Γ,
+      scoping_context ℓ Γ →
+      scoping (psc Γ) (ℓ ⊔ ▪ ℓ') A →
+      scoping_context ℓ ((ℓ', A) :: Γ).
 
 (* Inversion lemmata for scoping *)
 
@@ -461,13 +461,13 @@ Ltac scope_inv h h' :=
   end.
 
 Lemma scoping_context_nth_error :
-  ∀ (Γ : context) n ℓ A,
-    scoping_context Γ →
-    nth_error Γ n = Some (ℓ, A) →
-    scoping (skipn (Datatypes.S n) (psc Γ)) (▪ ℓ) A.
+  ∀ (Γ : context) n ℓ ℓ' A,
+    scoping_context ℓ Γ →
+    nth_error Γ n = Some (ℓ', A) →
+    scoping (skipn (Datatypes.S n) (psc Γ)) (ℓ ⊔ ▪ ℓ') A.
 Proof.
-  intros Γ n ℓ A h e.
-  induction h in n, ℓ, A, e |- *.
+  intros Γ n ℓ ℓ' A h e.
+  induction h in n, ℓ', A, e |- *.
   1:{ destruct n. all: discriminate. }
   destruct n.
   - cbn in e. inversion e. subst. clear e.

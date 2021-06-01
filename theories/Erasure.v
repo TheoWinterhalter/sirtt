@@ -877,7 +877,7 @@ Qed.
 
 Lemma erase_typing :
   ∀ Γ t A,
-    scoping_context Γ →
+    scoping_context Level.R Γ →
     Γ ⊢[ Level.R ] t : A →
     [ Empty ] ;; context_trans Γ ⊢ trans Γ t :
     trans (pctx Γ) A.
@@ -924,7 +924,7 @@ Proof.
         eapply context_to_scope_nth_error in e. rewrite e. cbn.
         reflexivity.
       * clear h.
-        eapply scoping_context_nth_error in e as h. 2: auto.
+        eapply scoping_context_nth_error in e as h. 2: eauto.
         rewrite skipn_psc in h. auto.
   - subst. cbn. destruct ℓ'.
     + rewrite context_to_scope_pctx.
@@ -934,17 +934,17 @@ Proof.
       econstructor.
       * rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
         rewrite context_trans_pctx in IHh1.
-        eapply IHh1. 2: reflexivity.
+        eapply IHh1. 1: reflexivity.
         eapply scoping_context_pctx. auto.
       * rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
-        eapply IHh2. 2: reflexivity.
+        eapply IHh2. 1: reflexivity.
         constructor. 1: auto.
         eapply SIRTT.typed_scoped in h1.
         rewrite context_to_scope_pctx in h1. auto.
-    + cbn. cbn in IHh2. eapply IHh2. 2: reflexivity.
+    + cbn. cbn in IHh2. eapply IHh2. 1: reflexivity.
       constructor. 1: auto.
       rewrite psc_context_to_scope. eapply SIRTT.typed_scoped. eauto.
-    + cbn. cbn in IHh2. eapply IHh2. 2: reflexivity.
+    + cbn. cbn in IHh2. eapply IHh2. 1: reflexivity.
       constructor. 1: auto.
       eapply SIRTT.typed_scoped in h1.
       rewrite context_to_scope_pctx in h1. auto.
@@ -987,27 +987,27 @@ Proof.
   - subst. cbn. destruct ℓ'.
     + cbn. constructor.
       * cbn in IHh1. eapply IHh1. all: auto.
-      * cbn in IHh2. eapply IHh2. 2: reflexivity.
+      * cbn in IHh2. eapply IHh2. 1: reflexivity.
         constructor. 1: auto.
         eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
     + cbn. cbn in IHh2.
+      forward IHh2 by reflexivity.
       forward IHh2.
       { constructor. 1: auto.
         eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
       }
-      forward IHh2 by auto.
       auto.
     + cbn. cbn in IHh2.
+      forward IHh2 by reflexivity.
       forward IHh2.
       { constructor. 1: auto.
         eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
       }
-      forward IHh2 by auto.
       auto.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite !trans_psc.
     eapply type_elim_nat. all: try solve [ intuition eauto ].
-    + forward IHh1. { eapply scoping_context_pctx. auto. }
-      forward IHh1 by auto.
+    + forward IHh1 by reflexivity.
+      forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1.
       rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1. eapply IHh1.
@@ -1051,35 +1051,35 @@ Proof.
       eapply IHh3.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite trans_psc.
     econstructor.
-    forward IHh. { eapply scoping_context_pctx. auto. }
     forward IHh by reflexivity.
+    forward IHh. { eapply scoping_context_pctx. auto. }
     rewrite !context_to_scope_pctx in IHh. rewrite !trans_psc in IHh.
     rewrite context_trans_pctx in IHh.
     eauto.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite trans_psc.
     econstructor.
-    + forward IHh1. { eapply scoping_context_pctx. auto. }
-      forward IHh1 by reflexivity.
+    + forward IHh1 by reflexivity.
+      forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1.
       eauto.
-    + forward IHh2 by auto.
-      forward IHh2 by reflexivity.
+    + forward IHh2 by reflexivity.
+      forward IHh2 by auto.
       rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
       eauto.
-    + forward IHh4 by auto.
-      forward IHh4 by reflexivity.
+    + forward IHh4 by reflexivity.
+      forward IHh4 by auto.
       rewrite !context_to_scope_pctx in IHh4. rewrite !trans_psc in IHh4.
       eauto.
   - subst. cbn. rewrite !context_to_scope_pctx. rewrite !trans_psc.
     econstructor.
-    + forward IHh1. { eapply scoping_context_pctx. auto. }
-      forward IHh1 by reflexivity.
+    + forward IHh1 by reflexivity.
+      forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1.
       eauto.
-    + forward IHh2. { eapply scoping_context_pctx. auto. }
-      forward IHh2 by reflexivity.
+    + forward IHh2 by reflexivity.
+      forward IHh2. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
       rewrite !context_trans_pctx in IHh2.
       cbn in IHh2.
@@ -1094,12 +1094,12 @@ Proof.
       rewrite h1' in IHh2.
       rewrite lift_0 in IHh2.
       eauto.
-    + forward IHh3 by auto.
-      forward IHh3 by reflexivity.
+    + forward IHh3 by reflexivity.
+      forward IHh3 by auto.
       rewrite context_to_scope_pctx in IHh3. rewrite trans_psc in IHh3.
       eauto.
-    + forward IHh4 by auto.
-      forward IHh4 by reflexivity.
+    + forward IHh4 by reflexivity.
+      forward IHh4 by auto.
       rewrite context_to_scope_pctx in IHh4. rewrite trans_psc in IHh4.
       cbn in IHh4.
       (* One erase_lift0 *)
@@ -1157,30 +1157,30 @@ Proof.
       unfold arrow. simpl.
       rewrite !lift_lift. simpl.
       eapply IHh4.
-    + forward IHh6 by auto.
-      forward IHh6 by reflexivity.
+    + forward IHh6 by reflexivity.
+      forward IHh6 by auto.
       rewrite context_to_scope_pctx in IHh6. rewrite trans_psc in IHh6.
       eauto.
   - subst. cbn. rewrite !context_to_scope_pctx. rewrite !trans_psc.
     econstructor.
-    + forward IHh1. { eapply scoping_context_pctx. auto. }
-      forward IHh1 by reflexivity.
+    + forward IHh1 by reflexivity.
+      forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1.
       eauto.
-    + forward IHh2 by auto.
-      forward IHh2 by reflexivity.
+    + forward IHh2 by reflexivity.
+      forward IHh2 by auto.
       rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
       eauto.
   - subst. cbn. rewrite !context_to_scope_pctx. rewrite !trans_psc.
     econstructor.
-    + forward IHh1. { eapply scoping_context_pctx. auto. }
-      forward IHh1 by reflexivity.
+    + forward IHh1 by reflexivity.
+      forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1.
       eauto.
-    + forward IHh2. { eapply scoping_context_pctx. auto. }
-      forward IHh2 by reflexivity.
+    + forward IHh2 by reflexivity.
+      forward IHh2. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
       rewrite context_trans_pctx in IHh2.
       eapply IHh2.
@@ -1197,8 +1197,8 @@ Proof.
       rewrite context_to_scope_pctx in IHh6. rewrite trans_psc in IHh6.
       auto.
   - subst. cbn. econstructor.
-    + forward IHh1 by auto.
-      forward IHh1 by reflexivity.
+    + forward IHh1 by reflexivity.
+      forward IHh1 by auto.
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       auto.
     + forward IHh2 by auto. forward IHh2 by auto.
@@ -1209,8 +1209,8 @@ Proof.
       auto.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite trans_psc.
     econstructor.
-    + forward IHh1. { eapply scoping_context_pctx. auto. }
-      forward IHh1 by reflexivity.
+    + forward IHh1 by reflexivity.
+      forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1. rewrite !trans_psc in IHh1.
       rewrite context_trans_pctx in IHh1.
       eauto.
@@ -1221,8 +1221,8 @@ Proof.
       * eapply SIRTT.typed_scoped. eauto.
       * eapply SIRTT.typed_scoped. eauto.
       * auto.
-    + forward IHh3. { eapply scoping_context_pctx. auto. }
-      forward IHh3 by reflexivity.
+    + forward IHh3 by reflexivity.
+      forward IHh3. { eapply scoping_context_pctx. auto. }
       rewrite context_trans_pctx in IHh3.
       rewrite !context_to_scope_pctx in IHh3.
       rewrite !context_to_scope_pctx.

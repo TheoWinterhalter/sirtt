@@ -90,9 +90,15 @@ Definition max u v :=
 
 Notation "u ⊔ v" := (max u v) (at level 19).
 
+Lemma max_xx :
+  ∀ ℓ, ℓ ⊔ ℓ = ℓ.
+Proof.
+  intros []. all: reflexivity.
+Qed.
+
 Lemma max_sym :
   ∀ u v,
-    max u v = max v u.
+    u ⊔ v = v ⊔ u.
 Proof.
   intros u v.
   destruct u, v. all: reflexivity.

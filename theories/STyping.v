@@ -408,13 +408,13 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 where "Γ ⊢[ l ] u ≡ v" := (conversion Γ l u v) : s_scope.
 
-Inductive wf_context : context → Type :=
-| wf_nil : wf_context []
+Inductive wf_context ℓ : context → Type :=
+| wf_nil : wf_context ℓ []
 | wf_cons :
-    ∀ Γ A ℓ s,
-      wf_context Γ →
-      pctx Γ ⊢[ ▪ ℓ ] A : univ s →
-      wf_context ((ℓ, A) :: Γ).
+    ∀ Γ A ℓ' s,
+      wf_context ℓ Γ →
+      pctx Γ ⊢[ ℓ ⊔ ▪ ℓ' ] A : univ s →
+      wf_context ℓ ((ℓ', A) :: Γ).
 
 Lemma psc_context_to_scope :
   ∀ Γ, psc (context_to_scope Γ) = pctx Γ.
@@ -440,11 +440,11 @@ Proof.
 Qed.
 
 Lemma wf_context_scoped :
-  ∀ Γ,
-    wf_context Γ →
-    scoping_context Γ.
+  ∀ ℓ Γ,
+    wf_context ℓ Γ →
+    scoping_context ℓ Γ.
 Proof.
-  intros Γ h.
+  intros ℓ Γ h.
   induction h.
   - constructor.
   - constructor. 1: auto.
@@ -453,14 +453,14 @@ Qed.
 
 Lemma typed_type_scoped :
   ∀ Γ ℓ t A,
-    scoping_context Γ →
+    scoping_context (▪ ℓ) Γ →
     Γ ⊢[ ℓ ] t : A →
     scoping (psc Γ) (▪ ℓ) A.
 Proof.
   intros Γ ℓ t A hΓ h.
   induction h.
   all: try solve [ constructor ; eauto ].
-  - eapply scoping_context_nth_error in e as h. 2: auto.
+  - eapply scoping_context_nth_error in e as h. 2: eauto.
     eapply lift_scoping with (Ξ := []) in h.
     cbn - [skipn] in h.
     rewrite firstn_skipn in h.
@@ -469,6 +469,7 @@ Proof.
       eapply nth_error_Some_length in e as ?.
       rewrite psc_length. rewrite context_to_scope_length. lia.
     }
+    rewrite max_xx in h.
     auto.
   - constructor.
     + rewrite psc_context_to_scope. rewrite max_pred.
@@ -476,12 +477,7 @@ Proof.
     + eapply IHh2. constructor. 1: auto.
       rewrite psc_context_to_scope. eapply scope_sub.
       * eapply typed_scoped. eauto.
-      * rewrite <- max_pred.
-        (* PROBLEM again, it seems we need to have the context typed/scoped
-          at level ℓ.
-          The other solution would be resurrection instead, would it work?
-          Anyway, scoping Γ in I sounds like resurrection.
-        *)
+      * rewrite max_pred. reflexivity.
 Abort.
 
 Lemma meta_conv :
@@ -504,11 +500,11 @@ Proof.
 Qed.
 
 Lemma scoping_context_pctx :
-  ∀ Γ,
-    scoping_context Γ →
-    scoping_context (pctx Γ).
+  ∀ ℓ Γ,
+    scoping_context ℓ Γ →
+    scoping_context ℓ (pctx Γ).
 Proof.
-  intros Γ h.
+  intros ℓ Γ h.
   induction h.
   - cbn. constructor.
   - cbn. fold (pctx Γ). constructor. 1: auto.
