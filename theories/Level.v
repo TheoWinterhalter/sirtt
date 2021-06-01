@@ -211,3 +211,11 @@ Proof.
   intros ℓ₀ ℓ₁.
   destruct ℓ₀, ℓ₁. all: reflexivity.
 Qed.
+
+Lemma le_I :
+  ∀ ℓ, ℓ ⊑ I.
+Proof.
+  intros ℓ.
+  destruct ℓ. 3: reflexivity.
+  all: left. all: constructor.
+Qed.
