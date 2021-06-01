@@ -168,6 +168,18 @@ Proof.
   - reflexivity.
 Qed.
 
+Lemma max_l_le :
+  ∀ ℓ ℓ',
+    ℓ' ⊑ ℓ →
+    ℓ ⊔ ℓ' = ℓ.
+Proof.
+  intros ℓ ℓ' h. destruct ℓ.
+  - simpl. apply potentially_more_R. auto.
+  - destruct ℓ'. 1,2: reflexivity.
+    inversion h. inversion H.
+  - reflexivity.
+Qed.
+
 Lemma pred_le :
   ∀ ℓ,
     ▪ ℓ ⊑ ℓ.
