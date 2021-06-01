@@ -479,6 +479,11 @@ Proof.
       * eapply typed_scoped. eauto.
       * rewrite max_pred. reflexivity.
   - forward IHh1 by auto. scope_inv IHh1 hs. destruct hs as [_ hsB].
+    (* The problem is that subst_scoping ignores the level ℓ in the
+      substitution typing.
+      It seems better to just go for an eliminator for Sum and then have
+      resurrection.
+      *)
     eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hsB.
     + cbn in hsB. eauto.
     + constructor. 2: constructor.
