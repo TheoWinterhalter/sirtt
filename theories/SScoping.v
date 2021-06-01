@@ -515,25 +515,25 @@ Proof.
   - cbn. eauto.
 Qed.
 
-Inductive scoping_subst Γ : scope → list term → Type :=
+Inductive scoping_subst ℓ Γ : scope → list term → Type :=
 | scoping_subst_cons :
-    ∀ ℓ Δ u σ,
-      scoping Γ ℓ u →
-      scoping_subst Γ Δ σ →
-      scoping_subst Γ (ℓ :: Δ) (u :: σ)
+    ∀ ℓ' Δ u σ,
+      scoping Γ (ℓ ⊔ ℓ') u →
+      scoping_subst ℓ Γ Δ σ →
+      scoping_subst ℓ Γ (ℓ' :: Δ) (u :: σ)
 
 | scoping_subst_nil :
-    scoping_subst Γ [] [].
+    scoping_subst ℓ Γ [] [].
 
 Lemma scoping_subst_nth_error :
-  ∀ Γ Δ σ n ℓ u,
-    scoping_subst Γ Δ σ →
-    nth_error Δ n = Some ℓ →
+  ∀ Γ Δ σ n ℓ ℓ' u,
+    scoping_subst ℓ Γ Δ σ →
+    nth_error Δ n = Some ℓ' →
     nth_error σ n = Some u →
-    scoping Γ ℓ u.
+    scoping Γ (ℓ ⊔ ℓ') u.
 Proof.
-  intros Γ Δ σ n ℓ u h eΔ eσ.
-  induction h in n, ℓ, u, eΔ, eσ |- *.
+  intros Γ Δ σ n ℓ ℓ' u h eΔ eσ.
+  induction h in n, ℓ', u, eΔ, eσ |- *.
   2:{ destruct n. all: discriminate. }
   destruct n.
   - cbn in eΔ, eσ. inversion eΔ. inversion eσ. subst. clear eΔ eσ.
@@ -771,23 +771,23 @@ Proof.
 Qed.
 
 Lemma scoping_subst_app :
-  ∀ Γ Δ Ξ σ θ,
-    scoping_subst Γ Δ σ →
-    scoping_subst Γ Ξ θ →
-    scoping_subst Γ (Δ ++ Ξ) (σ ++ θ).
+  ∀ ℓ Γ Δ Ξ σ θ,
+    scoping_subst ℓ Γ Δ σ →
+    scoping_subst ℓ Γ Ξ θ →
+    scoping_subst ℓ Γ (Δ ++ Ξ) (σ ++ θ).
 Proof.
-  intros Γ Δ Ξ σ θ h1 h2.
+  intros ℓ Γ Δ Ξ σ θ h1 h2.
   induction h1 in Ξ, θ, h2 |- *.
   - cbn. constructor. all: eauto.
   - cbn. auto.
 Qed.
 
 Lemma scoping_subst_length :
-  ∀ Γ Δ σ,
-    scoping_subst Γ Δ σ →
+  ∀ ℓ Γ Δ σ,
+    scoping_subst ℓ Γ Δ σ →
     #|σ| = #|Δ|.
 Proof.
-  intros Γ Δ σ h.
+  intros ℓ Γ Δ σ h.
   induction h. all: cbn ; auto.
 Qed.
 
@@ -844,34 +844,56 @@ Proof.
 Qed.
 
 Lemma scoping_subst_psub :
-  ∀ Γ Δ σ,
-    scoping_subst Γ Δ σ →
-    scoping_subst (psc Γ) (psc Δ) (psub σ).
+  ∀ ℓ Γ Δ σ,
+    scoping_subst ℓ Γ Δ σ →
+    scoping_subst (▪ ℓ) (psc Γ) (psc Δ) (psub σ).
 Proof.
-  intros Γ Δ σ h.
+  intros ℓ Γ Δ σ h.
   induction h.
   - cbn. constructor. 2: eauto.
+    rewrite max_pred.
     eapply scoping_ptm. auto.
   - cbn. constructor.
 Qed.
 
+Lemma scoping_subst_sub :
+  ∀ ℓ ℓ' Γ Δ σ,
+    scoping_subst ℓ Γ Δ σ →
+    ℓ ⊑ ℓ' →
+    scoping_subst ℓ' Γ Δ σ.
+Proof.
+  intros ℓ ℓ' Γ Δ σ h hℓ.
+  induction h.
+  - constructor. 2: auto.
+    eapply scope_sub. 1: eauto.
+    apply max_le_cong_l. auto.
+  - constructor.
+Qed.
+
 #[local] Ltac subst_scoping_ih :=
   lazymatch goal with
-  | h : ∀ Γ Δ Ξ ℓ σ, scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
+  | h : ∀ Γ Δ Ξ ℓ σ, scoping _ _ ?t → _, hσ : scoping_subst _ _ ?Δ ?σ |-
     scoping (psc (?Ξ ++ ?Γ)) ?ℓ (subst (psub ?σ) _ ?t) =>
     specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ (psub σ)) ;
     rewrite !psc_app ;
     rewrite !psc_length in h ;
     apply h ; [
       rewrite <- !psc_app ; intuition eauto
-    | eapply scoping_subst_psub ; eauto
+    | eapply scoping_subst_psub ; eauto ;
+      (eapply scoping_subst_sub ; intuition eauto ;
+        try apply max_le_l ; try apply le_I ; try apply max_le_r)
     ]
+  | h : ∀ Γ Δ Ξ ℓ σ, scoping _ _ ?t → _, hσ : scoping_subst _ _ ?Δ ?σ |-
+    scoping (?Ξ ++ ?Γ) ?ℓ (subst ?σ _ ?t) =>
+    eapply h ; intuition eauto ;
+    (eapply scoping_subst_sub ; intuition eauto ;
+      try apply max_le_l ; try apply le_I ; try apply max_le_r)
   end.
 
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
     scoping (Ξ ++ Δ ++ Γ) ℓ t →
-    scoping_subst Γ Δ σ →
+    scoping_subst ℓ Γ Δ σ →
     scoping (Ξ ++ Γ) ℓ (subst σ #|Ξ| t).
 Proof.
   intros Γ Δ Ξ ℓ σ t ht hσ.
@@ -879,10 +901,6 @@ Proof.
   all: try solve [ simpl ; constructor ].
   all: try solve [
     simpl ; scope_inv ht hs ; constructor ; intuition eauto
-  ].
-  all: try solve [
-    simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
-    eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
   ].
   all: try solve [
     simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
@@ -897,8 +915,9 @@ Proof.
         eapply nth_error_Some_length in e1 as h2.
         eapply scoping_subst_length in hσ as eσ.
         rewrite nth_error_app1 in e. 2: lia.
-        eapply scope_sub. 2: eauto.
-        eapply scoping_subst_nth_error. all: eauto.
+        eapply scoping_subst_nth_error in e1. 2,3: eauto.
+        rewrite max_l_le in e1. 2: auto.
+        auto.
       * eapply nth_error_None in e1.
         eapply scoping_subst_length in hσ as eσ.
         rewrite nth_error_app2 in e. 2: lia.
@@ -910,10 +929,12 @@ Proof.
       eapply scope_sub. 2: eauto.
       constructor. rewrite nth_error_app1. 2: auto.
       auto.
-  - simpl. scope_inv ht hs. destruct hs as [hℓ ?h].
-    eapply scope_sub.
-    + constructor. intuition eauto.
-    + auto.
+  - simpl. scope_inv ht hs. eapply scope_sub. 2: intuition eauto.
+    constructor. subst_scoping_ih.
+  - simpl. scope_inv ht hs. constructor. 1: intuition eauto.
+    eapply IHt2 with (Ξ := _ :: _). 1: intuition eauto.
+    eapply scoping_subst_sub. 1: eauto.
+    apply max_le_r.
 Qed.
 
 Lemma scoping_reveal_subst_k :
@@ -934,7 +955,11 @@ Proof.
       scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
       scope_inv hs1 hs1'.
       eapply subst_scoping.
-      2: constructor. 3: constructor. 2: eauto.
+      2:{
+        constructor. 2: constructor.
+        eapply scope_sub. 1: eauto.
+        apply max_le_r.
+      }
       cbn. eapply aux. 1: intuition eauto.
       rewrite <- app_assoc in ht. exact ht.
     + destruct u1. all: try assumption.
@@ -944,7 +969,11 @@ Proof.
       scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
       scope_inv hs1 hs1'.
       eapply subst_scoping.
-      2: constructor. 3: constructor. 2: eauto.
+      2:{
+        constructor. 2: constructor.
+        eapply scope_sub. 1: eauto.
+        apply max_le_r.
+      }
       cbn. eapply aux. 1: intuition eauto.
       rewrite <- app_assoc in ht. exact ht.
   - cbn. destruct u. all: try assumption.
