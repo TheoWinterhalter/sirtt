@@ -503,6 +503,31 @@ Proof.
       eapply scope_sub.
       * eapply typed_scoped. eauto.
       * rewrite max_l_R. reflexivity.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + constructor.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + constructor.
+      change S with (▪ I). rewrite max_pred.
+      apply scoping_ptm. eapply typed_scoped. eauto.
+  - constructor. 1: constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + (* TODO Should we ptm it? Or is the type of P wrong? *)
+      admit.
+    + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
+  - constructor.
+    + eauto.
+    + apply scoping_ptm. eapply typed_scoped. eauto.
+    + apply scoping_ptm. eapply typed_scoped. eauto.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
+  - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+  - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+  - eapply scope_sub.
+    2:{ apply pred_pred_le. eauto. }
+    (* PROBLEM We don't have a strong enough hyp! *)
 Abort.
 
 Lemma meta_conv :
