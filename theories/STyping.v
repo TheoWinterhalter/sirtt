@@ -79,7 +79,8 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] Prod ℓ' A B : univ (if relevant ℓ' then Peano.max i j else j)
 
 | type_ex :
-    ∀ ℓ A P u p,
+    ∀ j ℓ A P u p,
+      ((R, A) :: pctx Γ) ⊢[ S ⊔ ▪ ℓ ] P : univ j →
       Γ ⊢[ ℓ ] u : A →
       Γ ⊢[ I ] p : P{ 0 := ptm u } →
       Γ ⊢[ ℓ ] ex u p : Sum A P
@@ -92,7 +93,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_prf :
     ∀ A P p,
       Γ ⊢[ I ] p : Sum A P →
-      Γ ⊢[ S ] prf p : P{ 0 :=ptm (wit p) }
+      Γ ⊢[ S ] prf p : P{ 0 := ptm (wit p) }
 
 | type_Sum :
     ∀ ℓ A P i j,
@@ -118,7 +119,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
         Prod R Nat
           (app R (lift0 1 P) (var 0) ⇒ app R (lift0 1 P) (succ (var 0))) →
       Γ ⊢[ ℓ ] n : Nat →
-      Γ ⊢[ ℓ ] elim_nat P z s n : app R P n
+      Γ ⊢[ ℓ ] elim_nat P z s n : app R P (ptm n)
 
 | type_Nat :
     ∀ ℓ i,
@@ -135,7 +136,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] a : A →
       Γ ⊢[ I ] n : Nat →
       Γ ⊢[ ℓ ] v : Vec A n →
-      Γ ⊢[ ℓ ] vcons A a n v : Vec A (succ n)
+      Γ ⊢[ ℓ ] vcons A a n v : Vec A (succ (ptm n))
 
 | type_elim_vec :
     ∀ ℓ A P e c n v i j,
@@ -155,7 +156,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
         ) →
       Γ ⊢[ I ] n : Nat →
       Γ ⊢[ ℓ ] v : Vec A n →
-      Γ ⊢[ ℓ ] elim_vec A P e c n v : app R (app I P n) v
+      Γ ⊢[ ℓ ] elim_vec A P e c n v : app R (app I P (ptm n)) (ptm v)
 
 | type_Vec :
     ∀ ℓ A n i,
@@ -167,7 +168,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
     ∀ ℓ A u i,
       pctx Γ ⊢[ ▪ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] u : A →
-      Γ ⊢[ ℓ ] refl A u : Eq A u u
+      Γ ⊢[ ℓ ] refl A u : Eq A (ptm u) (ptm u)
 
 | type_coe :
     ∀ ℓ A P u v e t i j,
@@ -177,7 +178,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] v : A →
       Γ ⊢[ ℓ ] e : Eq A u v →
       Γ ⊢[ ℓ ] t : app R P u →
-      Γ ⊢[ ℓ ] coe A P u v e t : app R P v
+      Γ ⊢[ ℓ ] coe A P u v e t : app R P (ptm v)
 
 | type_Eq :
     ∀ ℓ A u v i,
@@ -485,8 +486,9 @@ Proof.
       rewrite max_pred. eapply scoping_ptm.
       eapply typed_scoped. eauto.
   - constructor. 1: eauto.
-    (* Plainly missing hyp *)
-    give_up.
+    eapply typed_scoped in h1.
+    rewrite psc_context_to_scope.
+    auto.
   - forward IHh by auto. scope_inv IHh hs. intuition eauto.
   - forward IHh by auto. scope_inv IHh hs. destruct hs as [_ hs].
     eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hs.
@@ -497,13 +499,10 @@ Proof.
       eauto.
   - constructor.
     + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
-    + eapply scoping_psc. eapply scope_sub.
+    + change R with (▪ R). rewrite max_pred. eapply scoping_ptm.
+      eapply scope_sub.
       * eapply typed_scoped. eauto.
-      * rewrite max_l_R.
-        (* This is another point for resurrection...
-          It wouldn't make sense to use anything other than R in the type,
-          but we also want to keep ℓ when typing n...
-        *)
+      * rewrite max_l_R. reflexivity.
 Abort.
 
 Lemma meta_conv :

@@ -1005,6 +1005,7 @@ Proof.
       }
       auto.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite !trans_psc.
+    rewrite trans_ptm.
     eapply type_elim_nat. all: try solve [ intuition eauto ].
     + forward IHh1 by reflexivity.
       forward IHh1. { eapply scoping_context_pctx. auto. }
@@ -1072,6 +1073,7 @@ Proof.
       rewrite !context_to_scope_pctx in IHh4. rewrite !trans_psc in IHh4.
       eauto.
   - subst. cbn. rewrite !context_to_scope_pctx. rewrite !trans_psc.
+    rewrite trans_ptm.
     econstructor.
     + forward IHh1 by reflexivity.
       forward IHh1. { eapply scoping_context_pctx. auto. }
@@ -1162,6 +1164,7 @@ Proof.
       rewrite context_to_scope_pctx in IHh6. rewrite trans_psc in IHh6.
       eauto.
   - subst. cbn. rewrite !context_to_scope_pctx. rewrite !trans_psc.
+    rewrite !trans_ptm.
     econstructor.
     + forward IHh1 by reflexivity.
       forward IHh1. { eapply scoping_context_pctx. auto. }
@@ -1173,6 +1176,7 @@ Proof.
       rewrite !context_to_scope_pctx in IHh2. rewrite !trans_psc in IHh2.
       eauto.
   - subst. cbn. rewrite !context_to_scope_pctx. rewrite !trans_psc.
+    rewrite trans_ptm.
     econstructor.
     + forward IHh1 by reflexivity.
       forward IHh1. { eapply scoping_context_pctx. auto. }
