@@ -478,6 +478,14 @@ Proof.
       rewrite psc_context_to_scope. eapply scope_sub.
       * eapply typed_scoped. eauto.
       * rewrite max_pred. reflexivity.
+  - forward IHh1 by auto. scope_inv IHh1 hs. destruct hs as [_ hsB].
+    eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hsB.
+    + cbn in hsB. eauto.
+    + constructor. 2: constructor.
+      eapply scoping_ptm.
+      eapply typed_scoped in h2.
+      eapply scope_sub. 1: eauto.
+      (* The direction is wrong again! *)
 Abort.
 
 Lemma meta_conv :
