@@ -484,6 +484,26 @@ Proof.
     + constructor. 2: constructor.
       rewrite max_pred. eapply scoping_ptm.
       eapply typed_scoped. eauto.
+  - constructor. 1: eauto.
+    (* Plainly missing hyp *)
+    give_up.
+  - forward IHh by auto. scope_inv IHh hs. intuition eauto.
+  - forward IHh by auto. scope_inv IHh hs. destruct hs as [_ hs].
+    eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hs.
+    + cbn in hs. eauto.
+    + constructor. 2: constructor.
+      simpl. constructor.
+      eapply typed_scoped in h. eapply scoping_ptm in h.
+      eauto.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + eapply scoping_psc. eapply scope_sub.
+      * eapply typed_scoped. eauto.
+      * rewrite max_l_R.
+        (* This is another point for resurrection...
+          It wouldn't make sense to use anything other than R in the type,
+          but we also want to keep ℓ when typing n...
+        *)
 Abort.
 
 Lemma meta_conv :
