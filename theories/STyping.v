@@ -527,7 +527,10 @@ Proof.
   - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
   - eapply scope_sub.
     2:{ apply pred_pred_le. eauto. }
-    (* PROBLEM We don't have a strong enough hyp! *)
+    (* PROBLEM We don't have a strong enough hyp!
+      To solve it, maybe there is no other way but have sub-scoping
+      admissible rather than a rule.
+    *)
 Abort.
 
 Lemma meta_conv :
