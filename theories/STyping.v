@@ -530,6 +530,15 @@ Proof.
     (* PROBLEM We don't have a strong enough hyp!
       To solve it, maybe there is no other way but have sub-scoping
       admissible rather than a rule.
+
+      More generally, the property that is not preserved is that when the
+      context is valid in the conlusion, it is valid in the premises of a rule.
+      Because the sub-level rules will ask for a stronger assumption on the
+      context.
+
+      Not clear, we can make the rule admissible without keeping the problem.
+
+      Maybe rather revert the ℓ in scoping of context?
     *)
 Abort.
 
