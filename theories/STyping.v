@@ -207,7 +207,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_conv :
     ∀ t A B ℓ i j,
       Γ ⊢[ ℓ ] t : A →
-      pctx Γ ⊢[ R ] A ≡ B → (* TODO Why not ▪ℓ ? *)
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ B →
       pctx Γ ⊢[ ▪ ℓ ] A : univ i → (* Would follow from validity *)
       pctx Γ ⊢[ ▪ ℓ ] B : univ j →
       Γ ⊢[ ℓ ] t : B
@@ -397,6 +397,7 @@ with conversion (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] v ≡ w →
       Γ ⊢[ ℓ ] u ≡ w
 
+(* TOOD Should it be admissible instead? *)
 | conv_sub :
     ∀ ℓ ℓ' u v,
       Γ ⊢[ ℓ ] u ≡ v →
@@ -447,7 +448,9 @@ Proof.
     + eapply IHht2. apply pred_pred_le. auto.
   - econstructor. 2: eauto.
     eapply IHht1. apply pred_pred_le. auto.
-  - econstructor. 1-2: eauto.
+  - econstructor. 1: eauto.
+    + eapply conv_sub. 1: eauto.
+      apply pred_pred_le. auto.
     + eapply IHht2. apply pred_pred_le. auto.
     + eapply IHht3. apply pred_pred_le. auto.
 Qed.
@@ -612,20 +615,21 @@ Derive Signature for typing.
 
 Lemma inversion_type_var :
   ∀ Γ n ℓ T,
+    scoping_context (▪ ℓ) Γ →
     Γ ⊢[ ℓ ] var n : T →
     ∑ ℓ' A,
       nth_error Γ n = Some (ℓ', A) ×
       ℓ' ⊑ ℓ ×
-      pctx Γ ⊢[ R ] lift0 (Datatypes.S n) A ≡ T.
+      pctx Γ ⊢[ ▪ ℓ ] lift0 (Datatypes.S n) A ≡ T.
 Proof.
-  intros Γ n ℓ T h.
+  intros Γ n ℓ T hΓ h.
   dependent induction h.
   - eexists _, _. intuition eauto.
     apply conv_refl.
-  - destruct IHh1 as [ℓ' [A' [e [? ?]]]].
+  - forward IHh1 by assumption.
+    destruct IHh1 as [ℓ' [A' [e [? ?]]]].
     eexists _,_. intuition eauto.
     eapply conv_trans. all: eauto.
-    (* NEED typed_type_scoped *)
-    (* TODO Maybe R is a bit too much to ask? *)
-    admit.
-Abort.
+    rewrite <- psc_context_to_scope.
+    eapply typed_type_scoped. all: eauto.
+Qed.
