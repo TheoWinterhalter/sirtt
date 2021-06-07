@@ -634,31 +634,6 @@ Proof.
     eapply typed_type_scoped. all: eauto.
 Qed.
 
-(* TODO MOVE *)
-Lemma lift_context_length :
-  ∀ Γ n k,
-    #| lift_context n k Γ | = #|Γ|.
-Proof.
-  intros Γ n k.
-  induction Γ.
-  - reflexivity.
-  - simpl. f_equal. auto.
-Qed.
-
-(* TODO MOVE *)
-Lemma nth_error_lift_context :
-  ∀ n k Γ m,
-    nth_error (lift_context n k Γ) m =
-    option_map (λ '(ℓ, A), (ℓ, lift n (k + (#|Γ| - Datatypes.S m)) A)) (nth_error Γ m).
-Proof.
-  intros n k Γ m.
-  induction Γ as [| [ℓ A] Γ ih] in n, k, m |- *.
-  - simpl. destruct m. all: reflexivity.
-  - simpl. destruct m.
-    + simpl. f_equal. f_equal. f_equal. lia.
-    + simpl. apply ih.
-Qed.
-
 Lemma lift_typing :
   ∀ Γ Δ Ξ t A ℓ,
     (Ξ ++ Γ) ⊢[ ℓ ] t : A →
