@@ -157,6 +157,13 @@ Proof.
   destruct ℓ. all: reflexivity.
 Qed.
 
+Lemma max_l_I :
+  ∀ ℓ, ℓ ⊔ I = I.
+Proof.
+  intro ℓ.
+  destruct ℓ. all: reflexivity.
+Qed.
+
 Lemma relevant_pred :
   ∀ ℓ,
     relevant (▪ ℓ) = relevant ℓ.
