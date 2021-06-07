@@ -661,21 +661,23 @@ Qed.
 #[local] Ltac lift_typing_ih :=
   lazymatch goal with
   | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t : _ |-
-    pctx _ ⊢[ _ ] lift #| ?Δ | _ ?t : _ =>
-    rewrite ?pctx_app in ih ;
-    repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
-    specialize ih with (1 := eq_refl) ;
-    specialize (ih (pctx Δ)) ;
-    rewrite ?pctx_app ; rewrite ?pctx_lift_context ;
-    cbn - [Level.max] in ih ;
-    rewrite ?pctx_length in ih ;
-    apply ih
-  | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t : _ |-
-    _ ⊢[ _ ] lift #| ?Δ | _ ?t : _ =>
-    repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
-    specialize ih with (1 := eq_refl) ;
-    specialize (ih Δ) ;
-    apply ih
+    ?Γ ⊢[ _ ] lift #| ?Δ | _ ?t : _ =>
+    lazymatch Γ with
+    | context [ pctx ] =>
+      rewrite ?pctx_app in ih ;
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih (pctx Δ)) ;
+      rewrite ?pctx_app ; rewrite ?pctx_lift_context ;
+      cbn - [Level.max] in ih ;
+      rewrite ?pctx_length in ih ;
+      apply ih
+    | _ =>
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih Δ) ;
+      apply ih
+    end
   end.
 
 Lemma lift_typing :
@@ -717,16 +719,19 @@ Proof.
       2:{ rewrite lift_context_length. lia. }
       rewrite nth_error_lift_context. rewrite e. simpl. reflexivity.
   - subst. (* Need lemma to commute lift/subst *) admit.
-  - subst. simpl. econstructor. 2: lift_typing_ih.
-    + Fail lift_typing_ih. (* Should the same as below *)
-
-    rewrite ?pctx_app in IHh1.
-    repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in IHh1.
-    specialize IHh1 with (1 := eq_refl).
-    specialize (IHh1 (pctx Δ)).
-    rewrite ?pctx_app ; rewrite ?pctx_lift_context.
-    cbn - [Level.max] in IHh1.
-    rewrite ?pctx_length in IHh1.
-    apply IHh1.
-    +
+  - subst. simpl. econstructor. 1,2: lift_typing_ih.
+    (* Commutation again, also with ptm/lift *)
+    admit.
+  - subst. simpl. admit.
+  - subst. simpl. admit.
+  - subst. simpl. admit.
+  - subst. simpl. admit.
+  - subst. simpl. admit.
+  - subst. simpl. admit.
+  - subst. econstructor.
+    + lift_typing_ih.
+    + (* TODO lift for conv as well, might need to be mutual *)
+      admit.
+    + lift_typing_ih.
+    + lift_typing_ih.
 Abort.
