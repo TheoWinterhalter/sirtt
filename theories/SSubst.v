@@ -90,6 +90,12 @@ Notation subst10 t := (subst1 t 0).
 Notation "M { j := N }" :=
   (subst1 N j M) (at level 10, right associativity) : s_scope.
 
+Fixpoint lift_context n k (Γ : context) : context :=
+  match Γ with
+  | [] => []
+  | (ℓ, A) :: Γ => (ℓ, lift n (k + #|Γ|) A) :: lift_context n k Γ
+  end.
+
 Lemma lift_0 :
   ∀ k t, lift 0 k t = t.
 Proof.
