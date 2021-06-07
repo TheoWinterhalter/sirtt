@@ -539,6 +539,12 @@ Proof.
       Not clear, we can make the rule admissible without keeping the problem.
 
       Maybe rather revert the ℓ in scoping of context?
+
+      We can probably try again to have scope_sub admissible. Or we could
+      also make this lemma slightly more general by having some ℓ ⊑ ℓ' where
+      we conclude at level ℓ'. Probably more complicated though.
+
+      Could the context be typed with a completely different ℓ?
     *)
 Abort.
 
