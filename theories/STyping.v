@@ -158,7 +158,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
         ) →
       Γ ⊢[ I ] n : Nat →
       Γ ⊢[ ℓ ] v : Vec A n →
-      Γ ⊢[ ℓ ] elim_vec A P e c n v : app R (app I P (ptm n)) (ptm v)
+      Γ ⊢[ ℓ ] elim_vec A P e c n v : app R (app I P n) (ptm v)
 
 | type_Vec :
     ∀ ℓ A n i,
@@ -563,8 +563,7 @@ Proof.
       apply scoping_ptm. eapply typed_scoped. eauto.
   - constructor. 1: constructor.
     + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
-    + (* TODO Should we not ptm it? Or is the type of P wrong? *)
-      admit.
+    + rewrite max_l_I. eapply scoping_psc. eapply typed_scoped. eauto.
     + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
   - constructor.
     + eauto.
@@ -575,7 +574,7 @@ Proof.
     + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
   - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
   - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
-Admitted.
+Qed.
 
 Lemma meta_conv :
   ∀ Γ ℓ t A B,
