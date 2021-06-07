@@ -49,9 +49,10 @@ Reserved Notation "Γ ⊢[ l ] u ≡ v"
 
 Inductive typing (Γ : context) : level → term → term → Type :=
 | type_var :
-    ∀ n ℓ A,
+    ∀ n ℓ ℓ' A,
       nth_error Γ n = Some (ℓ, A) →
-      Γ ⊢[ ℓ ] var n : (lift0 (Datatypes.S n) A)
+      ℓ ⊑ ℓ' →
+      Γ ⊢[ ℓ' ] var n : (lift0 (Datatypes.S n) A)
 
 | type_lam :
     ∀ ℓ ℓ' A B t s,
@@ -91,9 +92,10 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] wit p : A
 
 | type_prf :
-    ∀ A P p,
+    ∀ ℓ A P p,
       Γ ⊢[ I ] p : Sum A P →
-      Γ ⊢[ S ] prf p : P{ 0 := ptm (wit p) }
+      S ⊑ ℓ →
+      Γ ⊢[ ℓ ] prf p : P{ 0 := ptm (wit p) }
 
 | type_Sum :
     ∀ ℓ A P i j,
@@ -209,12 +211,6 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       pctx Γ ⊢[ ▪ ℓ ] A : univ i → (* Would follow from validity *)
       pctx Γ ⊢[ ▪ ℓ ] B : univ j →
       Γ ⊢[ ℓ ] t : B
-
-| type_sub :
-    ∀ ℓ ℓ' t A,
-      Γ ⊢[ ℓ ] t : A →
-      ℓ ⊑ ℓ' →
-      Γ ⊢[ ℓ' ] t : A
 
 where "Γ ⊢[ l ] t : A" := (typing Γ l t A) : s_scope
 
@@ -409,6 +405,53 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 where "Γ ⊢[ l ] u ≡ v" := (conversion Γ l u v) : s_scope.
 
+Lemma type_sub :
+  ∀ Γ ℓ ℓ' t A,
+    Γ ⊢[ ℓ ] t : A →
+    ℓ ⊑ ℓ' →
+    Γ ⊢[ ℓ' ] t : A.
+Proof.
+  intros Γ ℓ ℓ' t A ht hs.
+  induction ht in ℓ', hs |- *.
+  all: try solve [ constructor ; intuition eauto ].
+  all: try solve [ econstructor ; intuition eauto ].
+  - econstructor. 1: eauto.
+    etransitivity. all: eauto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le. apply max_le_cong_l. auto.
+  - econstructor. 1: eauto.
+    + eapply IHht2. apply max_le_cong_l. auto.
+    + eapply IHht3. apply pred_pred_le. auto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply max_le_cong_l. auto.
+  - econstructor. 2-3: eauto.
+    eapply IHht1. apply max_le_cong_r. apply pred_pred_le. auto.
+  - econstructor. 1: eauto.
+    etransitivity. all: eauto.
+  - econstructor. 1: auto.
+    eapply IHht2. apply max_le_cong_r. auto.
+  - econstructor. 2-4: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. eapply IHht. apply pred_pred_le. auto.
+  - econstructor. 2-4: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. 3-6: eauto.
+    + eapply IHht1. apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+  - econstructor. 1: auto.
+    eapply IHht2. apply max_le_cong_r. auto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. 3-6: eauto.
+    + eapply IHht1. apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. 1-2: eauto.
+    + eapply IHht2. apply pred_pred_le. auto.
+    + eapply IHht3. apply pred_pred_le. auto.
+Qed.
+
 Inductive wf_context ℓ : context → Type :=
 | wf_nil : wf_context ℓ []
 | wf_cons :
@@ -435,9 +478,9 @@ Proof.
   all: try assumption.
   all: try solve [ constructor ; eauto ].
   all: try solve [ constructor ; rewrite ?psc_context_to_scope ; eauto ].
-  - constructor. unfold context_to_scope. rewrite nth_error_map.
-    rewrite e. cbn. reflexivity.
-  - eapply scope_sub. all: eauto.
+  econstructor. 2: eauto.
+  unfold context_to_scope. rewrite nth_error_map.
+  rewrite e. cbn. reflexivity.
 Qed.
 
 Lemma wf_context_scoped :
@@ -470,7 +513,8 @@ Proof.
       eapply nth_error_Some_length in e as ?.
       rewrite psc_length. rewrite context_to_scope_length. lia.
     }
-    rewrite max_xx in h.
+    rewrite max_pred in h.
+    rewrite max_l_le in h. 2: auto.
     auto.
   - constructor.
     + rewrite psc_context_to_scope. rewrite max_pred.
@@ -490,7 +534,13 @@ Proof.
     rewrite psc_context_to_scope.
     auto.
   - forward IHh by auto. scope_inv IHh hs. intuition eauto.
-  - forward IHh by auto. scope_inv IHh hs. destruct hs as [_ hs].
+  - assert (e : ▪ ℓ = S).
+    { destruct ℓ. 2-3: reflexivity.
+      inversion p0. inversion H.
+    }
+    rewrite e. rewrite e in hΓ.
+    forward IHh by assumption.
+    simpl in IHh. scope_inv IHh hs. destruct hs as [_ hs]. simpl in hs.
     eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hs.
     + cbn in hs. eauto.
     + constructor. 2: constructor.
@@ -513,7 +563,7 @@ Proof.
       apply scoping_ptm. eapply typed_scoped. eauto.
   - constructor. 1: constructor.
     + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
-    + (* TODO Should we ptm it? Or is the type of P wrong? *)
+    + (* TODO Should we not ptm it? Or is the type of P wrong? *)
       admit.
     + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
   - constructor.
@@ -525,28 +575,7 @@ Proof.
     + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
   - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
   - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
-  - eapply scope_sub.
-    2:{ apply pred_pred_le. eauto. }
-    (* PROBLEM We don't have a strong enough hyp!
-      To solve it, maybe there is no other way but have sub-scoping
-      admissible rather than a rule.
-
-      More generally, the property that is not preserved is that when the
-      context is valid in the conlusion, it is valid in the premises of a rule.
-      Because the sub-level rules will ask for a stronger assumption on the
-      context.
-
-      Not clear, we can make the rule admissible without keeping the problem.
-
-      Maybe rather revert the ℓ in scoping of context?
-
-      We can probably try again to have scope_sub admissible. Or we could
-      also make this lemma slightly more general by having some ℓ ⊑ ℓ' where
-      we conclude at level ℓ'. Probably more complicated though.
-
-      Could the context be typed with a completely different ℓ?
-    *)
-Abort.
+Admitted.
 
 Lemma meta_conv :
   ∀ Γ ℓ t A B,
@@ -593,14 +622,11 @@ Proof.
   intros Γ n ℓ T h.
   dependent induction h.
   - eexists _, _. intuition eauto.
-    + reflexivity.
-    + apply conv_refl.
+    apply conv_refl.
   - destruct IHh1 as [ℓ' [A' [e [? ?]]]].
     eexists _,_. intuition eauto.
     eapply conv_trans. all: eauto.
     (* NEED typed_type_scoped *)
+    (* TODO Maybe R is a bit too much to ask? *)
     admit.
-  - destruct IHh as [ℓ'' [A' [e [? ?]]]].
-    eexists _,_. intuition eauto.
-    etransitivity. all: eauto.
 Abort.

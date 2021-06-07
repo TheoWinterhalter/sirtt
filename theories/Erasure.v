@@ -163,15 +163,14 @@ Proof.
     end.
     1:{ intro. lia. }
     rewrite firstn_length. replace (n - min n #|Γ|) with 0 by lia.
-    rewrite firstn_O. cbn. lia.
+    rewrite firstn_O. cbn.
+    eapply Level.potentially_more_R in p. subst. simpl.
+    lia.
+  - inversion p. inversion H.
   - cbn. constructor.
     + simpl in IHh1. specialize IHh1 with (1 := eq_refl).
       rewrite scope_trans_psc in IHh1. rewrite trans_psc in IHh1. auto.
     + constructor.
-  - destruct ℓ.
-    2:{ inversion p. subst. inversion H. }
-    2:{ inversion p. subst. inversion H. }
-    eapply IHh. reflexivity.
 Qed.
 
 #[local] Ltac erase_lift_ih :=
@@ -885,12 +884,11 @@ Proof.
   intros Γ t A hΓ h.
   remember Level.R as ℓR eqn:eℓ.
   induction h in eℓ, hΓ |- *.
-  all: try discriminate.
   all: try solve [ subst ; cbn ; intuition eauto ].
   all: try solve [
     subst ; cbn ; constructor ; intuition eauto
   ].
-  - cbn. subst.
+  - cbn. subst. eapply Level.potentially_more_R in p. subst.
     eapply meta_conv.
     + constructor. eapply context_trans_nth_error. eauto.
     + pose proof erase_lift as h. specialize h with (Ξ := []).
@@ -1004,9 +1002,10 @@ Proof.
         eapply scoping_psc. eapply SIRTT.typed_scoped. eauto.
       }
       auto.
+  - subst. inversion p0. inversion H.
   - subst. cbn. rewrite context_to_scope_pctx. rewrite !trans_psc.
     rewrite trans_ptm.
-    eapply type_elim_nat. all: try solve [ intuition eauto ].
+    eapply type_elim_nat. 4: intuition eauto.
     + forward IHh1 by reflexivity.
       forward IHh1. { eapply scoping_context_pctx. auto. }
       rewrite !context_to_scope_pctx in IHh1.
@@ -1232,10 +1231,6 @@ Proof.
       rewrite !context_to_scope_pctx.
       rewrite psc_idemp in IHh3.
       eauto.
-  - subst. inversion p.
-    1:{ inversion H. }
-    subst.
-    eapply IHh. all: auto.
 Qed.
 
 Lemma erase_cored :
