@@ -658,6 +658,26 @@ Proof.
   - simpl. rewrite ih. rewrite pctx_length. reflexivity.
 Qed.
 
+#[local] Ltac lift_typing_ih :=
+  lazymatch goal with
+  | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t : _ |-
+    pctx _ ⊢[ _ ] lift #| ?Δ | _ ?t : _ =>
+    rewrite ?pctx_app in ih ;
+    repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+    specialize ih with (1 := eq_refl) ;
+    specialize (ih (pctx Δ)) ;
+    rewrite ?pctx_app ; rewrite ?pctx_lift_context ;
+    cbn - [Level.max] in ih ;
+    rewrite ?pctx_length in ih ;
+    apply ih
+  | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t : _ |-
+    _ ⊢[ _ ] lift #| ?Δ | _ ?t : _ =>
+    repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+    specialize ih with (1 := eq_refl) ;
+    specialize (ih Δ) ;
+    apply ih
+  end.
+
 Lemma lift_typing :
   ∀ Γ Δ Ξ t A ℓ,
     (Ξ ++ Γ) ⊢[ ℓ ] t : A →
@@ -666,6 +686,8 @@ Proof.
   intros Γ Δ Ξ t A ℓ h.
   remember (Ξ ++ Γ) as Θ eqn:eΘ.
   induction h in Γ, Δ, Ξ, eΘ |- *.
+  all: try solve [ subst ; econstructor ; eauto ].
+  all: try solve [ subst ; simpl ; econstructor ; eauto ; lift_typing_ih ].
   - subst. cbn.
     destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
     + rewrite nth_error_app2 in e. 2: lia.
@@ -694,11 +716,17 @@ Proof.
       rewrite nth_error_app1.
       2:{ rewrite lift_context_length. lia. }
       rewrite nth_error_lift_context. rewrite e. simpl. reflexivity.
-  - subst. simpl. econstructor.
-    + rewrite !pctx_app. rewrite pctx_lift_context.
-      rewrite <- (pctx_length Δ).
-      rewrite <- (pctx_length Ξ).
-      eapply IHh1.
-      apply pctx_app.
-    + (* rewrite pctx_app in IHh1. *)
+  - subst. (* Need lemma to commute lift/subst *) admit.
+  - subst. simpl. econstructor. 2: lift_typing_ih.
+    + Fail lift_typing_ih. (* Should the same as below *)
+
+    rewrite ?pctx_app in IHh1.
+    repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in IHh1.
+    specialize IHh1 with (1 := eq_refl).
+    specialize (IHh1 (pctx Δ)).
+    rewrite ?pctx_app ; rewrite ?pctx_lift_context.
+    cbn - [Level.max] in IHh1.
+    rewrite ?pctx_length in IHh1.
+    apply IHh1.
+    +
 Abort.
