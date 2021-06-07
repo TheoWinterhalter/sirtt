@@ -118,3 +118,28 @@ Proof.
     f_equal. lia.
   - rewrite e. reflexivity.
 Qed.
+
+Lemma simpl_lift :
+  ∀ t n k p i,
+    i ≤ k + n →
+    k ≤ i →
+    lift p i (lift n k t) = lift (p + n) k t.
+Proof.
+  intros t m k p i h1 h2.
+  induction t in m, k, p, i, h1, h2 |- *.
+  all: try solve [ intuition eauto ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto
+  ].
+  - simpl. destruct (PeanoNat.Nat.leb_spec k n).
+    + destruct (PeanoNat.Nat.leb_spec i (m + n)). 2: lia.
+      f_equal. lia.
+    + destruct (PeanoNat.Nat.leb_spec i n). 1: lia.
+      reflexivity.
+  - simpl. f_equal. 1: eauto.
+    eapply IHt2. all: lia.
+  - simpl. f_equal. 1: eauto.
+    eapply IHt2. all: lia.
+  - simpl. f_equal. 1: eauto.
+    eapply IHt2. all: lia.
+Qed.
