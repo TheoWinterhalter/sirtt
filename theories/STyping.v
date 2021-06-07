@@ -49,13 +49,14 @@ Reserved Notation "Γ ⊢[ l ] u ≡ v"
 
 Inductive typing (Γ : context) : level → term → term → Type :=
 | type_var :
-    ∀ n ℓ A,
+    ∀ n ℓ ℓ' A,
       nth_error Γ n = Some (ℓ, A) →
-      Γ ⊢[ ℓ ] var n : (lift0 (Datatypes.S n) A)
+      ℓ ⊑ ℓ' →
+      Γ ⊢[ ℓ' ] var n : (lift0 (Datatypes.S n) A)
 
 | type_lam :
     ∀ ℓ ℓ' A B t s,
-      pctx Γ ⊢[ ℓ ] A : univ s →
+      pctx Γ ⊢[ ▪ (ℓ ⊔ ℓ') ] A : univ s →
       (ℓ', A) :: Γ ⊢[ ℓ ] t : B →
       Γ ⊢[ ℓ ] lam ℓ' A t : Prod ℓ' A B
 
@@ -66,12 +67,12 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       (* The following would usually follow from validity and inversion
          but this way, it's simpler to make the proof.
       *)
-      (▪ ℓ', A) :: pctx Γ ⊢[ ℓ ] B : univ j →
+      (▪ ℓ', A) :: pctx Γ ⊢[ ▪ ℓ ] B : univ j →
       Γ ⊢[ ℓ ] app ℓ' u v : B{ 0 := ptm v }
 
 | type_Prod :
     ∀ ℓ ℓ' A B i j,
-      Γ ⊢[ ℓ ] A : univ i →
+      Γ ⊢[ ℓ ⊔ ▪ ℓ' ] A : univ i →
       (▪ ℓ', A) :: Γ ⊢[ ℓ ] B : univ j →
       (* NOTE: Prod ℓ A B lives in the universe of B when the binder
         is (shape-)irrelevant.
@@ -79,7 +80,8 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] Prod ℓ' A B : univ (if relevant ℓ' then Peano.max i j else j)
 
 | type_ex :
-    ∀ ℓ A P u p,
+    ∀ j ℓ A P u p,
+      ((R, A) :: pctx Γ) ⊢[ S ⊔ ▪ ℓ ] P : univ j →
       Γ ⊢[ ℓ ] u : A →
       Γ ⊢[ I ] p : P{ 0 := ptm u } →
       Γ ⊢[ ℓ ] ex u p : Sum A P
@@ -90,9 +92,10 @@ Inductive typing (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] wit p : A
 
 | type_prf :
-    ∀ A P p,
+    ∀ ℓ A P p,
       Γ ⊢[ I ] p : Sum A P →
-      Γ ⊢[ S ] prf p : P{ 0 :=ptm (wit p) }
+      S ⊑ ℓ →
+      Γ ⊢[ ℓ ] prf p : P{ 0 := ptm (wit p) }
 
 | type_Sum :
     ∀ ℓ A P i j,
@@ -112,13 +115,13 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_elim_nat :
     ∀ ℓ P z s n i,
-      pctx Γ ⊢[ ℓ ] P : Nat ⇒ univ i →
+      pctx Γ ⊢[ ▪ ℓ ] P : Nat ⇒ univ i →
       Γ ⊢[ ℓ ] z : app R P zero →
       Γ ⊢[ ℓ ] s :
         Prod R Nat
           (app R (lift0 1 P) (var 0) ⇒ app R (lift0 1 P) (succ (var 0))) →
       Γ ⊢[ ℓ ] n : Nat →
-      Γ ⊢[ ℓ ] elim_nat P z s n : app R P n
+      Γ ⊢[ ℓ ] elim_nat P z s n : app R P (ptm n)
 
 | type_Nat :
     ∀ ℓ i,
@@ -126,21 +129,21 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_vnil :
     ∀ ℓ A i,
-      pctx Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] vnil A : Vec A zero
 
 | type_vcons :
     ∀ ℓ A a n v i,
-      pctx Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] a : A →
       Γ ⊢[ I ] n : Nat →
       Γ ⊢[ ℓ ] v : Vec A n →
-      Γ ⊢[ ℓ ] vcons A a n v : Vec A (succ n)
+      Γ ⊢[ ℓ ] vcons A a n v : Vec A (succ (ptm n))
 
 | type_elim_vec :
     ∀ ℓ A P e c n v i j,
-      pctx Γ ⊢[ ℓ ] A : univ i →
-      pctx Γ ⊢[ ℓ ] P : Prod I Nat (Vec (lift0 1 A) (var 0) ⇒ univ j) →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i →
+      pctx Γ ⊢[ ▪ ℓ ] P : Prod I Nat (Vec (lift0 1 A) (var 0) ⇒ univ j) →
       Γ ⊢[ ℓ ] e : app R (app I P zero) (vnil A) →
       Γ ⊢[ ℓ ] c :
         Prod R A
@@ -155,7 +158,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
         ) →
       Γ ⊢[ I ] n : Nat →
       Γ ⊢[ ℓ ] v : Vec A n →
-      Γ ⊢[ ℓ ] elim_vec A P e c n v : app R (app I P n) v
+      Γ ⊢[ ℓ ] elim_vec A P e c n v : app R (app I P n) (ptm v)
 
 | type_Vec :
     ∀ ℓ A n i,
@@ -165,19 +168,19 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_refl :
     ∀ ℓ A u i,
-      pctx Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i →
       Γ ⊢[ ℓ ] u : A →
-      Γ ⊢[ ℓ ] refl A u : Eq A u u
+      Γ ⊢[ ℓ ] refl A u : Eq A (ptm u) (ptm u)
 
 | type_coe :
     ∀ ℓ A P u v e t i j,
-      pctx Γ ⊢[ ℓ ] A : univ i →
-      pctx Γ ⊢[ ℓ ] P : A ⇒ univ j →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i →
+      pctx Γ ⊢[ ▪ ℓ ] P : A ⇒ univ j →
       Γ ⊢[ ℓ ] u : A →
       Γ ⊢[ ℓ ] v : A →
       Γ ⊢[ ℓ ] e : Eq A u v →
       Γ ⊢[ ℓ ] t : app R P u →
-      Γ ⊢[ ℓ ] coe A P u v e t : app R P v
+      Γ ⊢[ ℓ ] coe A P u v e t : app R P (ptm v)
 
 | type_Eq :
     ∀ ℓ A u v i,
@@ -188,7 +191,7 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 
 | type_exfalso :
     ∀ ℓ A p i,
-      pctx Γ ⊢[ ℓ ] A : univ i →
+      pctx Γ ⊢[ ▪ ℓ ] A : univ i →
       Γ ⊢[ I ] p : Empty →
       Γ ⊢[ ℓ ] exfalso A p : A
 
@@ -204,16 +207,10 @@ Inductive typing (Γ : context) : level → term → term → Type :=
 | type_conv :
     ∀ t A B ℓ i j,
       Γ ⊢[ ℓ ] t : A →
-      pctx Γ ⊢[ R ] A ≡ B →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ B →
       pctx Γ ⊢[ ▪ ℓ ] A : univ i → (* Would follow from validity *)
       pctx Γ ⊢[ ▪ ℓ ] B : univ j →
       Γ ⊢[ ℓ ] t : B
-
-| type_sub :
-    ∀ ℓ ℓ' t A,
-      Γ ⊢[ ℓ ] t : A →
-      ℓ ⊑ ℓ' →
-      Γ ⊢[ ℓ' ] t : A
 
 where "Γ ⊢[ l ] t : A" := (typing Γ l t A) : s_scope
 
@@ -260,7 +257,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_lam :
     ∀ ℓ ℓ' A A' t t',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
       (ℓ', A) :: Γ ⊢[ ℓ ] t ≡ t' →
       Γ ⊢[ ℓ ] lam ℓ' A t ≡ lam ℓ' A' t'
 
@@ -299,7 +296,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_elim_nat :
     ∀ ℓ P P' z z' s s' n n',
-      pctx Γ ⊢[ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ▪ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] z ≡ z' →
       Γ ⊢[ ℓ ] s ≡ s' →
       Γ ⊢[ ℓ ] n ≡ n' →
@@ -307,20 +304,20 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_vnil :
     ∀ ℓ A A',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] vnil A ≡ vnil A'
 
 | cong_vcons :
     ∀ ℓ A A' a a' n n' v v',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] a ≡ a' →
       Γ ⊢[ ℓ ] v ≡ v' →
       Γ ⊢[ ℓ ] vcons A a n v ≡ vcons A' a' n' v'
 
 | cong_elim_vec :
     ∀ ℓ A A' P P' e e' c c' n n' v v',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
-      pctx Γ ⊢[ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] e ≡ e' →
       Γ ⊢[ ℓ ] c ≡ c' →
       Γ ⊢[ ℓ ] v ≡ v' →
@@ -334,14 +331,14 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_refl :
     ∀ ℓ A A' u u',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] u ≡ u' →
       Γ ⊢[ ℓ ] refl A u ≡ refl A' u'
 
 | cong_coe :
     ∀ ℓ A A' P P' u u' v v' e e' t t',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
-      pctx Γ ⊢[ ℓ ] P ≡ P' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] u ≡ u' →
       Γ ⊢[ ℓ ] v ≡ v' →
       Γ ⊢[ ℓ ] e ≡ e' →
@@ -357,7 +354,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 | cong_exfalso :
     ∀ ℓ A A' p p',
-      pctx Γ ⊢[ ℓ ] A ≡ A' →
+      pctx Γ ⊢[ ▪ ℓ ] A ≡ A' →
       Γ ⊢[ ℓ ] exfalso A p ≡ exfalso A' p'
 
 (* Specific rules *)
@@ -400,6 +397,7 @@ with conversion (Γ : context) : level → term → term → Type :=
       Γ ⊢[ ℓ ] v ≡ w →
       Γ ⊢[ ℓ ] u ≡ w
 
+(* TOOD Should it be admissible instead? *)
 | conv_sub :
     ∀ ℓ ℓ' u v,
       Γ ⊢[ ℓ ] u ≡ v →
@@ -408,13 +406,62 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 where "Γ ⊢[ l ] u ≡ v" := (conversion Γ l u v) : s_scope.
 
-Inductive wf_context : context → Type :=
-| wf_nil : wf_context []
+Lemma type_sub :
+  ∀ Γ ℓ ℓ' t A,
+    Γ ⊢[ ℓ ] t : A →
+    ℓ ⊑ ℓ' →
+    Γ ⊢[ ℓ' ] t : A.
+Proof.
+  intros Γ ℓ ℓ' t A ht hs.
+  induction ht in ℓ', hs |- *.
+  all: try solve [ constructor ; intuition eauto ].
+  all: try solve [ econstructor ; intuition eauto ].
+  - econstructor. 1: eauto.
+    etransitivity. all: eauto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le. apply max_le_cong_l. auto.
+  - econstructor. 1: eauto.
+    + eapply IHht2. apply max_le_cong_l. auto.
+    + eapply IHht3. apply pred_pred_le. auto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply max_le_cong_l. auto.
+  - econstructor. 2-3: eauto.
+    eapply IHht1. apply max_le_cong_r. apply pred_pred_le. auto.
+  - econstructor. 1: eauto.
+    etransitivity. all: eauto.
+  - econstructor. 1: auto.
+    eapply IHht2. apply max_le_cong_r. auto.
+  - econstructor. 2-4: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. eapply IHht. apply pred_pred_le. auto.
+  - econstructor. 2-4: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. 3-6: eauto.
+    + eapply IHht1. apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+  - econstructor. 1: auto.
+    eapply IHht2. apply max_le_cong_r. auto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. 3-6: eauto.
+    + eapply IHht1. apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+  - econstructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - econstructor. 1: eauto.
+    + eapply conv_sub. 1: eauto.
+      apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+    + eapply IHht3. apply pred_pred_le. auto.
+Qed.
+
+Inductive wf_context ℓ : context → Type :=
+| wf_nil : wf_context ℓ []
 | wf_cons :
-    ∀ Γ A ℓ s,
-      wf_context Γ →
-      pctx Γ ⊢[ R ] A : univ s → (* TODO or ▪ ℓ *)
-      wf_context ((ℓ, A) :: Γ).
+    ∀ Γ A ℓ' s,
+      wf_context ℓ Γ →
+      pctx Γ ⊢[ ℓ ⊔ ▪ ℓ' ] A : univ s →
+      wf_context ℓ ((ℓ', A) :: Γ).
 
 Lemma psc_context_to_scope :
   ∀ Γ, psc (context_to_scope Γ) = pctx Γ.
@@ -434,17 +481,17 @@ Proof.
   all: try assumption.
   all: try solve [ constructor ; eauto ].
   all: try solve [ constructor ; rewrite ?psc_context_to_scope ; eauto ].
-  - constructor. unfold context_to_scope. rewrite nth_error_map.
-    rewrite e. cbn. reflexivity.
-  - eapply scope_sub. all: eauto.
+  econstructor. 2: eauto.
+  unfold context_to_scope. rewrite nth_error_map.
+  rewrite e. cbn. reflexivity.
 Qed.
 
 Lemma wf_context_scoped :
-  ∀ Γ,
-    wf_context Γ →
-    scoping_context Γ.
+  ∀ ℓ Γ,
+    wf_context ℓ Γ →
+    scoping_context ℓ Γ.
 Proof.
-  intros Γ h.
+  intros ℓ Γ h.
   induction h.
   - constructor.
   - constructor. 1: auto.
@@ -453,14 +500,14 @@ Qed.
 
 Lemma typed_type_scoped :
   ∀ Γ ℓ t A,
-    scoping_context Γ →
+    scoping_context (▪ ℓ) Γ →
     Γ ⊢[ ℓ ] t : A →
     scoping (psc Γ) (▪ ℓ) A.
 Proof.
   intros Γ ℓ t A hΓ h.
   induction h.
   all: try solve [ constructor ; eauto ].
-  - eapply scoping_context_nth_error in e as h. 2: auto.
+  - eapply scoping_context_nth_error in e as h. 2: eauto.
     eapply lift_scoping with (Ξ := []) in h.
     cbn - [skipn] in h.
     rewrite firstn_skipn in h.
@@ -469,26 +516,68 @@ Proof.
       eapply nth_error_Some_length in e as ?.
       rewrite psc_length. rewrite context_to_scope_length. lia.
     }
-    (* Here we can conlude by sub scoping, but it might be better to simply
-      update the lemma to conclude R.
-      We'll see which is best.
-
-      This should probably be an exact fit.
-      So the question is at what level should we see types?
-      Solving this question would mean being consistent with lam/Prod typing
-      and wf_context.
-
-      For uniformity and to be able to have irrelevant types as well as
-      irrelevant terms, it seems we need to change it.
-    *)
-    admit.
+    rewrite max_pred in h.
+    rewrite max_l_le in h. 2: auto.
+    auto.
   - constructor.
-    + rewrite psc_context_to_scope. eapply typed_scoped.
-      (* Again a discrepancy. *)
-      admit.
+    + rewrite psc_context_to_scope. rewrite max_pred.
+      eapply typed_scoped. eauto.
     + eapply IHh2. constructor. 1: auto.
-      (* Wrong as well *)
-Abort.
+      rewrite psc_context_to_scope. eapply scope_sub.
+      * eapply typed_scoped. eauto.
+      * rewrite max_pred. reflexivity.
+  - forward IHh1 by auto. scope_inv IHh1 hs. destruct hs as [_ hsB].
+    eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hsB.
+    + cbn in hsB. eauto.
+    + constructor. 2: constructor.
+      rewrite max_pred. eapply scoping_ptm.
+      eapply typed_scoped. eauto.
+  - constructor. 1: eauto.
+    eapply typed_scoped in h1.
+    rewrite psc_context_to_scope.
+    auto.
+  - forward IHh by auto. scope_inv IHh hs. intuition eauto.
+  - assert (e : ▪ ℓ = S).
+    { destruct ℓ. 2-3: reflexivity.
+      inversion p0. inversion H.
+    }
+    rewrite e. rewrite e in hΓ.
+    forward IHh by assumption.
+    simpl in IHh. scope_inv IHh hs. destruct hs as [_ hs]. simpl in hs.
+    eapply subst_scoping with (Ξ := []) (Δ := [ _ ]) in hs.
+    + cbn in hs. eauto.
+    + constructor. 2: constructor.
+      simpl. constructor.
+      eapply typed_scoped in h. eapply scoping_ptm in h.
+      eauto.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + change R with (▪ R). rewrite max_pred. eapply scoping_ptm.
+      eapply scope_sub.
+      * eapply typed_scoped. eauto.
+      * rewrite max_l_R. reflexivity.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + constructor.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + constructor.
+      change S with (▪ I). rewrite max_pred.
+      apply scoping_ptm. eapply typed_scoped. eauto.
+  - constructor. 1: constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + rewrite max_l_I. eapply scoping_psc. eapply typed_scoped. eauto.
+    + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
+  - constructor.
+    + eauto.
+    + apply scoping_ptm. eapply typed_scoped. eauto.
+    + apply scoping_ptm. eapply typed_scoped. eauto.
+  - constructor.
+    + rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+    + rewrite max_l_R. apply scoping_ptm. eapply typed_scoped. eauto.
+  - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+  - rewrite psc_context_to_scope. eapply typed_scoped. eauto.
+Qed.
 
 Lemma meta_conv :
   ∀ Γ ℓ t A B,
@@ -510,38 +599,37 @@ Proof.
 Qed.
 
 Lemma scoping_context_pctx :
-  ∀ Γ,
-    scoping_context Γ →
-    scoping_context (pctx Γ).
+  ∀ ℓ Γ,
+    scoping_context ℓ Γ →
+    scoping_context ℓ (pctx Γ).
 Proof.
-  intros Γ h.
+  intros ℓ Γ h.
   induction h.
   - cbn. constructor.
   - cbn. fold (pctx Γ). constructor. 1: auto.
-    rewrite context_to_scope_pctx. rewrite psc_idemp. auto.
+    rewrite context_to_scope_pctx. rewrite psc_idemp.
+    rewrite pred_idemp. auto.
 Qed.
 
 Derive Signature for typing.
 
 Lemma inversion_type_var :
   ∀ Γ n ℓ T,
+    scoping_context (▪ ℓ) Γ →
     Γ ⊢[ ℓ ] var n : T →
     ∑ ℓ' A,
       nth_error Γ n = Some (ℓ', A) ×
       ℓ' ⊑ ℓ ×
-      pctx Γ ⊢[ R ] lift0 (Datatypes.S n) A ≡ T.
+      pctx Γ ⊢[ ▪ ℓ ] lift0 (Datatypes.S n) A ≡ T.
 Proof.
-  intros Γ n ℓ T h.
+  intros Γ n ℓ T hΓ h.
   dependent induction h.
   - eexists _, _. intuition eauto.
-    + reflexivity.
-    + apply conv_refl.
-  - destruct IHh1 as [ℓ' [A' [e [? ?]]]].
+    apply conv_refl.
+  - forward IHh1 by assumption.
+    destruct IHh1 as [ℓ' [A' [e [? ?]]]].
     eexists _,_. intuition eauto.
     eapply conv_trans. all: eauto.
-    (* NEED typed_type_scoped *)
-    admit.
-  - destruct IHh as [ℓ'' [A' [e [? ?]]]].
-    eexists _,_. intuition eauto.
-    etransitivity. all: eauto.
-Abort.
+    rewrite <- psc_context_to_scope.
+    eapply typed_type_scoped. all: eauto.
+Qed.

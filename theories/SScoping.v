@@ -15,13 +15,14 @@ Definition psc (Γ : scope) : scope :=
 
 Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_var :
-    ∀ n ℓ,
+    ∀ n ℓ ℓ',
       nth_error Γ n = Some ℓ →
-      scoping Γ ℓ (var n)
+      ℓ ⊑ ℓ' →
+      scoping Γ ℓ' (var n)
 
 | scope_lam :
     ∀ ℓ ℓ' A t,
-      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) (▪ (ℓ ⊔ ℓ')) A →
       scoping (ℓ' :: Γ) ℓ t →
       scoping Γ ℓ (lam ℓ' A t)
 
@@ -33,8 +34,8 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_Prod :
     ∀ ℓ ℓ' A B,
-      scoping Γ ℓ A →
-      scoping (▪ℓ' :: Γ) ℓ B →
+      scoping Γ (ℓ ⊔ ▪ ℓ') A →
+      scoping (▪ ℓ' :: Γ) ℓ B →
       scoping Γ ℓ (Prod ℓ' A B)
 
 | scope_ex :
@@ -49,9 +50,10 @@ Inductive scoping (Γ : scope) : level → term → Type :=
       scoping Γ ℓ (wit t)
 
 | scope_prf :
-    ∀ t,
+    ∀ t ℓ,
       scoping Γ I t →
-      scoping Γ S (prf t)
+      S ⊑ ℓ →
+      scoping Γ ℓ (prf t)
 
 | scope_Sum :
     ∀ ℓ A P,
@@ -70,7 +72,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_elim_nat :
     ∀ ℓ P z s n,
-      scoping (psc Γ) ℓ P →
+      scoping (psc Γ) (▪ ℓ) P →
       scoping Γ ℓ z →
       scoping Γ ℓ s →
       scoping Γ ℓ n →
@@ -82,12 +84,12 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_vnil :
     ∀ ℓ A,
-      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) (▪ ℓ) A →
       scoping Γ ℓ (vnil A)
 
 | scope_vcons :
     ∀ ℓ A a n v,
-      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) (▪ ℓ) A →
       scoping Γ ℓ a →
       scoping Γ I n →
       scoping Γ ℓ v →
@@ -95,8 +97,8 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_elim_vec :
     ∀ ℓ A P e c n v,
-      scoping (psc Γ) ℓ A →
-      scoping (psc Γ) ℓ P →
+      scoping (psc Γ) (▪ ℓ) A →
+      scoping (psc Γ) (▪ ℓ) P →
       scoping Γ ℓ e →
       scoping Γ ℓ c →
       scoping Γ I n →
@@ -111,14 +113,14 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_refl :
     ∀ ℓ A u,
-      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) (▪ ℓ) A →
       scoping Γ ℓ u →
       scoping Γ ℓ (refl A u)
 
 | scope_coe :
     ∀ ℓ A P u v e t,
-      scoping (psc Γ) ℓ A →
-      scoping (psc Γ) ℓ P →
+      scoping (psc Γ) (▪ ℓ) A →
+      scoping (psc Γ) (▪ ℓ) P →
       scoping Γ ℓ u →
       scoping Γ ℓ v →
       scoping Γ ℓ e →
@@ -134,7 +136,7 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 
 | scope_exfalso :
     ∀ ℓ A p,
-      scoping (psc Γ) ℓ A →
+      scoping (psc Γ) (▪ ℓ) A →
       scoping Γ I p →
       scoping Γ ℓ (exfalso A p)
 
@@ -145,21 +147,56 @@ Inductive scoping (Γ : scope) : level → term → Type :=
 | scope_univ :
     ∀ ℓ s,
       scoping Γ ℓ (univ s)
-
-| scope_sub :
-    ∀ ℓ ℓ' t,
-      scoping Γ ℓ t →
-      ℓ ⊑ ℓ' → (* Could also be ⊏ *)
-      scoping Γ ℓ' t
 .
 
-Inductive scoping_context : context → Type :=
-| scope_nil : scoping_context []
+Lemma scope_sub :
+  ∀ Γ ℓ ℓ' t,
+    scoping Γ ℓ t →
+    ℓ ⊑ ℓ' →
+    scoping Γ ℓ' t.
+Proof.
+  intros Γ ℓ ℓ' t ht hs.
+  induction ht in ℓ', hs |- *.
+  all: try solve [ constructor ; intuition eauto ].
+  - econstructor. 1: eauto.
+    etransitivity. all: eauto.
+  - constructor. 2: eauto.
+    eapply IHht1. apply pred_pred_le.
+    apply max_le_cong_l. auto.
+  - constructor. 1: eauto.
+    eapply IHht2. apply max_le_cong_l. auto.
+  - constructor. 2: eauto.
+    eapply IHht1. apply max_le_cong_l. auto.
+  - constructor. 1: auto.
+    etransitivity. all: eauto.
+  - constructor. 1: auto.
+    eapply IHht2. apply max_le_cong_r. auto.
+  - constructor. 2-4: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - constructor. eapply IHht. apply pred_pred_le. auto.
+  - constructor. 2-4: eauto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - constructor. 3-6: eauto.
+    + eapply IHht1. apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+  - constructor. 1: auto.
+    eapply IHht2. apply max_le_cong_r. auto.
+  - constructor. 2: auto.
+    eapply IHht1. apply pred_pred_le. auto.
+  - constructor. 3-6: eauto.
+    + eapply IHht1. apply pred_pred_le. auto.
+    + eapply IHht2. apply pred_pred_le. auto.
+  - constructor. 2: auto.
+    eapply IHht1. apply pred_pred_le. auto.
+Qed.
+
+Inductive scoping_context ℓ : context → Type :=
+| scope_nil : scoping_context ℓ []
 | scope_cons :
-    ∀ ℓ A Γ,
-      scoping_context Γ →
-      scoping (psc Γ) R A →
-      scoping_context ((ℓ, A) :: Γ).
+    ∀ ℓ' A Γ,
+      scoping_context ℓ Γ →
+      scoping (psc Γ) (ℓ ⊔ ▪ ℓ') A →
+      scoping_context ℓ ((ℓ', A) :: Γ).
 
 (* Inversion lemmata for scoping *)
 
@@ -168,23 +205,6 @@ Set Equations With UIP.
 Derive Signature for scoping.
 Derive NoConfusion NoConfusionHom EqDec for level.
 Derive NoConfusion NoConfusionHom EqDec for term.
-(* Derive NoConfusionHom for scoping. *)
-
-(* Local Ltac invtac h :=
-  dependent induction h ; [
-    eexists ; split ; [
-      right
-    | intuition eauto
-    ]
-  | match goal with
-    | ih : ∑ x : _, _ |- _ =>
-      destruct ih as [ℓ₀ [? ?]] ;
-      exists ℓ₀ ; split ; [
-        etransitivity ; eauto
-      | intuition eauto
-      ]
-    end
-  ]. *)
 
 Lemma inversion_scope_var :
   ∀ Γ ℓ n,
@@ -193,26 +213,18 @@ Lemma inversion_scope_var :
 Proof.
   intros Γ ℓ n h.
   dependent induction h.
-  - eexists. split.
-    + right.
-    + auto.
-  - destruct IHh as [ℓ₀ [? ?]].
-    exists ℓ₀. split.
-    + etransitivity. all: eauto.
-    + auto.
+  eexists. intuition eauto.
 Qed.
 
 Lemma inversion_scope_lam :
   ∀ Γ ℓ ℓ' A t,
     scoping Γ ℓ (lam ℓ' A t) →
-    scoping (psc Γ) ℓ A ×
+    scoping (psc Γ) (▪ (ℓ ⊔ ℓ')) A ×
     scoping (ℓ' :: Γ) ℓ t.
 Proof.
   intros Γ ℓ ℓ' A t h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub ; eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_app :
@@ -223,25 +235,18 @@ Lemma inversion_scope_app :
 Proof.
   intros Γ ℓ ℓ' u v h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    + eapply scope_sub. all: eauto.
-    + eapply scope_sub. 1: eauto.
-      eapply max_le_cong_l. auto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_Prod :
   ∀ Γ ℓ ℓ' A B,
     scoping Γ ℓ (Prod ℓ' A B) →
-    scoping Γ ℓ A ×
-    scoping (▪ℓ' :: Γ) ℓ B.
+    scoping Γ (ℓ ⊔ ▪ ℓ') A ×
+    scoping (▪ ℓ' :: Γ) ℓ B.
 Proof.
   intros Γ ℓ ℓ' A B h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    + eapply scope_sub. all: eauto.
-    + eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_ex :
@@ -252,9 +257,7 @@ Lemma inversion_scope_ex :
 Proof.
   intros Γ ℓ u p h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_wit :
@@ -264,8 +267,7 @@ Lemma inversion_scope_wit :
 Proof.
   intros Γ ℓ t h.
   dependent induction h.
-  - intuition auto.
-  - eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_prf :
@@ -276,9 +278,7 @@ Lemma inversion_scope_prf :
 Proof.
   intros Γ ℓ t h.
   dependent induction h.
-  - intuition auto. reflexivity.
-  - intuition auto.
-    etransitivity. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_Sum :
@@ -289,12 +289,7 @@ Lemma inversion_scope_Sum :
 Proof.
   intros Γ ℓ A P h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    + eapply scope_sub. all: eauto.
-    + eapply scope_sub. 1: eauto.
-      rewrite max_sym. etransitivity. 1: eapply max_le_cong_l. 1: eauto.
-      rewrite max_sym. reflexivity.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_succ :
@@ -304,56 +299,50 @@ Lemma inversion_scope_succ :
 Proof.
   intros Γ ℓ t h.
   dependent induction h.
-  - intuition auto.
-  - eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_elim_nat :
   ∀ Γ ℓ P z s n,
     scoping Γ ℓ (elim_nat P z s n) →
-    scoping (psc Γ) ℓ P ×
+    scoping (psc Γ) (▪ ℓ) P ×
     scoping Γ ℓ z ×
     scoping Γ ℓ s ×
     scoping Γ ℓ n.
 Proof.
   intros Γ ℓ P z s n h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_vnil :
   ∀ Γ ℓ A,
     scoping Γ ℓ (vnil A) →
-    scoping (psc Γ) ℓ A.
+    scoping (psc Γ) (▪ ℓ) A.
 Proof.
   intros Γ ℓ A h.
   dependent induction h.
-  - intuition auto.
-  - eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_vcons :
   ∀ Γ ℓ A a n v,
     scoping Γ ℓ (vcons A a n v) →
-    scoping (psc Γ) ℓ A ×
+    scoping (psc Γ) (▪ ℓ) A ×
     scoping Γ ℓ a ×
     scoping Γ I n ×
     scoping Γ ℓ v.
 Proof.
   intros Γ ℓ A a n v h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_elim_vec :
   ∀ Γ ℓ A P e c n v,
     scoping Γ ℓ (elim_vec A P e c n v) →
-    scoping (psc Γ) ℓ A ×
-    scoping (psc Γ) ℓ P ×
+    scoping (psc Γ) (▪ ℓ) A ×
+    scoping (psc Γ) (▪ ℓ) P ×
     scoping Γ ℓ e ×
     scoping Γ ℓ c ×
     scoping Γ I n ×
@@ -361,9 +350,7 @@ Lemma inversion_scope_elim_vec :
 Proof.
   intros Γ ℓ A P e c n v h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_Vec :
@@ -374,32 +361,25 @@ Lemma inversion_scope_Vec :
 Proof.
   intros Γ ℓ A n h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    + eapply scope_sub. all: eauto.
-    + eapply scope_sub. 1: eauto.
-      rewrite max_sym. etransitivity. 1: eapply max_le_cong_l. 1: eauto.
-      rewrite max_sym. reflexivity.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_refl :
   ∀ Γ ℓ A u,
     scoping Γ ℓ (refl A u) →
-    scoping (psc Γ) ℓ A ×
+    scoping (psc Γ) (▪ ℓ) A ×
     scoping Γ ℓ u.
 Proof.
   intros Γ ℓ A u h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_coe :
   ∀ Γ ℓ A P u v e t,
     scoping Γ ℓ (coe A P u v e t) →
-    scoping (psc Γ) ℓ A ×
-    scoping (psc Γ) ℓ P ×
+    scoping (psc Γ) (▪ ℓ) A ×
+    scoping (psc Γ) (▪ ℓ) P ×
     scoping Γ ℓ u ×
     scoping Γ ℓ v ×
     scoping Γ ℓ e ×
@@ -407,9 +387,7 @@ Lemma inversion_scope_coe :
 Proof.
   intros Γ ℓ A P u v e t h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_Eq :
@@ -421,22 +399,18 @@ Lemma inversion_scope_Eq :
 Proof.
   intros Γ ℓ A u v h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    all: eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Lemma inversion_scope_exfalso :
   ∀ Γ ℓ A p,
     scoping Γ ℓ (exfalso A p) →
-    scoping (psc Γ) ℓ A ×
+    scoping (psc Γ) (▪ ℓ) A ×
     scoping Γ I p.
 Proof.
   intros Γ ℓ A p h.
   dependent induction h.
-  - intuition auto.
-  - intuition auto.
-    eapply scope_sub. all: eauto.
+  intuition auto.
 Qed.
 
 Ltac scope_inv h h' :=
@@ -467,13 +441,13 @@ Ltac scope_inv h h' :=
   end.
 
 Lemma scoping_context_nth_error :
-  ∀ (Γ : context) n ℓ A,
-    scoping_context Γ →
-    nth_error Γ n = Some (ℓ, A) →
-    scoping (skipn (Datatypes.S n) (psc Γ)) R A.
+  ∀ (Γ : context) n ℓ ℓ' A,
+    scoping_context ℓ Γ →
+    nth_error Γ n = Some (ℓ', A) →
+    scoping (skipn (Datatypes.S n) (psc Γ)) (ℓ ⊔ ▪ ℓ') A.
 Proof.
-  intros Γ n ℓ A h e.
-  induction h in n, ℓ, A, e |- *.
+  intros Γ n ℓ ℓ' A h e.
+  induction h in n, ℓ', A, e |- *.
   1:{ destruct n. all: discriminate. }
   destruct n.
   - cbn in e. inversion e. subst. clear e.
@@ -521,25 +495,25 @@ Proof.
   - cbn. eauto.
 Qed.
 
-Inductive scoping_subst Γ : scope → list term → Type :=
+Inductive scoping_subst ℓ Γ : scope → list term → Type :=
 | scoping_subst_cons :
-    ∀ ℓ Δ u σ,
-      scoping Γ ℓ u →
-      scoping_subst Γ Δ σ →
-      scoping_subst Γ (ℓ :: Δ) (u :: σ)
+    ∀ ℓ' Δ u σ,
+      scoping Γ (ℓ ⊔ ℓ') u →
+      scoping_subst ℓ Γ Δ σ →
+      scoping_subst ℓ Γ (ℓ' :: Δ) (u :: σ)
 
 | scoping_subst_nil :
-    scoping_subst Γ [] [].
+    scoping_subst ℓ Γ [] [].
 
 Lemma scoping_subst_nth_error :
-  ∀ Γ Δ σ n ℓ u,
-    scoping_subst Γ Δ σ →
-    nth_error Δ n = Some ℓ →
+  ∀ Γ Δ σ n ℓ ℓ' u,
+    scoping_subst ℓ Γ Δ σ →
+    nth_error Δ n = Some ℓ' →
     nth_error σ n = Some u →
-    scoping Γ ℓ u.
+    scoping Γ (ℓ ⊔ ℓ') u.
 Proof.
-  intros Γ Δ σ n ℓ u h eΔ eσ.
-  induction h in n, ℓ, u, eΔ, eσ |- *.
+  intros Γ Δ σ n ℓ ℓ' u h eΔ eσ.
+  induction h in n, ℓ', u, eΔ, eσ |- *.
   2:{ destruct n. all: discriminate. }
   destruct n.
   - cbn in eΔ, eσ. inversion eΔ. inversion eσ. subst. clear eΔ eσ.
@@ -620,9 +594,9 @@ Proof.
   induction h in Δ, hw |- *.
   all: try solve [ constructor ; eauto ].
   - eapply weaker_scope_nth_error in hw as h. 2: eauto.
-    destruct h as [ℓ' [e' hℓ]].
-    eapply scope_sub. 2: eauto.
-    constructor. auto.
+    destruct h as [ℓ'' [e' hℓ]].
+    econstructor. 1: eauto.
+    etransitivity. all: eauto.
   - constructor.
     + eapply IHh1. eapply weaker_scope_psc. auto.
     + eapply IHh2. constructor. 1: auto.
@@ -648,8 +622,6 @@ Proof.
     + eapply IHh2. eapply weaker_scope_psc. auto.
   - constructor. all: eauto.
     eapply IHh1. eapply weaker_scope_psc. auto.
-  - eapply scope_sub. 2: eauto.
-    eapply IHh. auto.
 Qed.
 
 Lemma weaker_psc :
@@ -690,33 +662,33 @@ Qed.
 Lemma scoping_ptm :
   ∀ Γ ℓ t,
     scoping Γ ℓ t →
-    scoping (psc Γ) (Level.pred ℓ) (ptm t).
+    scoping (psc Γ) (▪ ℓ) (ptm t).
 Proof.
   intros Γ ℓ t h.
   induction t in Γ, ℓ, h |- *.
   all: try solve [ constructor ; eauto ].
   all: try solve [ scope_inv h hs ; constructor ; intuition eauto ].
   - scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
-    eapply scope_sub.
-    + constructor. unfold psc. rewrite nth_error_map. rewrite e. cbn.
-      reflexivity.
-    + eapply pred_pred_le. auto.
+    simpl. econstructor.
+    + unfold psc. rewrite nth_error_map. rewrite e. cbn. reflexivity.
+    + apply pred_pred_le. auto.
   - cbn. scope_inv h hs.
-    constructor. 1: intuition eauto.
-    eapply IHt2 with (Γ := _ :: _). intuition eauto.
+    constructor.
+    + eapply IHt1. rewrite max_pred. intuition eauto.
+    + eapply IHt2 with (Γ := _ :: _). intuition eauto.
   - cbn. scope_inv h hs.
     constructor. 1: intuition eauto.
     rewrite max_pred. intuition eauto.
   - cbn. scope_inv h hs.
-    constructor. 1: intuition eauto.
-    eapply IHt2 with (Γ := _ :: _). intuition eauto.
+    constructor.
+    + rewrite max_pred. eapply IHt1. intuition eauto.
+    + eapply IHt2 with (Γ := _ :: _). intuition eauto.
   - cbn. scope_inv h hs. constructor. 1: intuition eauto.
     eapply scoping_psc. intuition eauto.
   - cbn. scope_inv h hs. destruct hs as [hs ?h].
-    eapply scope_sub.
-    + constructor. eapply scoping_psc. auto.
-    + destruct ℓ. all: cbn. 1: auto.
-      all: reflexivity.
+    constructor.
+    + eapply scoping_psc. auto.
+    + destruct ℓ. all: cbn. 1: auto. all: reflexivity.
   - cbn. scope_inv h hs. constructor. 1: intuition eauto.
     destruct hs as [h1 h2].
     eapply IHt2 in h2 as ih. rewrite <- max_pred in ih.
@@ -775,23 +747,23 @@ Proof.
 Qed.
 
 Lemma scoping_subst_app :
-  ∀ Γ Δ Ξ σ θ,
-    scoping_subst Γ Δ σ →
-    scoping_subst Γ Ξ θ →
-    scoping_subst Γ (Δ ++ Ξ) (σ ++ θ).
+  ∀ ℓ Γ Δ Ξ σ θ,
+    scoping_subst ℓ Γ Δ σ →
+    scoping_subst ℓ Γ Ξ θ →
+    scoping_subst ℓ Γ (Δ ++ Ξ) (σ ++ θ).
 Proof.
-  intros Γ Δ Ξ σ θ h1 h2.
+  intros ℓ Γ Δ Ξ σ θ h1 h2.
   induction h1 in Ξ, θ, h2 |- *.
   - cbn. constructor. all: eauto.
   - cbn. auto.
 Qed.
 
 Lemma scoping_subst_length :
-  ∀ Γ Δ σ,
-    scoping_subst Γ Δ σ →
+  ∀ ℓ Γ Δ σ,
+    scoping_subst ℓ Γ Δ σ →
     #|σ| = #|Δ|.
 Proof.
-  intros Γ Δ σ h.
+  intros ℓ Γ Δ σ h.
   induction h. all: cbn ; auto.
 Qed.
 
@@ -820,21 +792,17 @@ Proof.
     end ;
     eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
   ].
-  - cbn. scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
-    destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
-    + eapply scope_sub. 2: eauto.
-      constructor.
-      rewrite nth_error_app2 in e. 2: auto.
-      rewrite nth_error_app2. 2: lia.
-      rewrite nth_error_app2. 2: lia.
-      rewrite <- e. f_equal. lia.
-    + eapply scope_sub. 2: eauto.
-      constructor. rewrite nth_error_app1 in e. 2: lia.
-      rewrite nth_error_app1. 2: lia.
-      auto.
-  - simpl. scope_inv h hs. destruct hs as [hℓ ?h].
-    eapply scope_sub. 2: eauto.
-    constructor. auto.
+  cbn. scope_inv h hs. destruct hs as [ℓ' [hℓ e]].
+  destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
+  - econstructor. 2: eauto.
+    rewrite nth_error_app2 in e. 2: auto.
+    rewrite nth_error_app2. 2: lia.
+    rewrite nth_error_app2. 2: lia.
+    rewrite <- e. f_equal. lia.
+  - econstructor. 2: eauto.
+    rewrite nth_error_app1 in e. 2: lia.
+    rewrite nth_error_app1. 2: lia.
+    auto.
 Qed.
 
 Lemma weaker_scope_refl :
@@ -848,34 +816,56 @@ Proof.
 Qed.
 
 Lemma scoping_subst_psub :
-  ∀ Γ Δ σ,
-    scoping_subst Γ Δ σ →
-    scoping_subst (psc Γ) (psc Δ) (psub σ).
+  ∀ ℓ Γ Δ σ,
+    scoping_subst ℓ Γ Δ σ →
+    scoping_subst (▪ ℓ) (psc Γ) (psc Δ) (psub σ).
 Proof.
-  intros Γ Δ σ h.
+  intros ℓ Γ Δ σ h.
   induction h.
   - cbn. constructor. 2: eauto.
+    rewrite max_pred.
     eapply scoping_ptm. auto.
   - cbn. constructor.
 Qed.
 
+Lemma scoping_subst_sub :
+  ∀ ℓ ℓ' Γ Δ σ,
+    scoping_subst ℓ Γ Δ σ →
+    ℓ ⊑ ℓ' →
+    scoping_subst ℓ' Γ Δ σ.
+Proof.
+  intros ℓ ℓ' Γ Δ σ h hℓ.
+  induction h.
+  - constructor. 2: auto.
+    eapply scope_sub. 1: eauto.
+    apply max_le_cong_l. auto.
+  - constructor.
+Qed.
+
 #[local] Ltac subst_scoping_ih :=
   lazymatch goal with
-  | h : ∀ Γ Δ Ξ ℓ σ, scoping _ _ ?t → _, hσ : scoping_subst _ ?Δ ?σ |-
+  | h : ∀ Γ Δ Ξ ℓ σ, scoping _ _ ?t → _, hσ : scoping_subst _ _ ?Δ ?σ |-
     scoping (psc (?Ξ ++ ?Γ)) ?ℓ (subst (psub ?σ) _ ?t) =>
     specialize (h (psc Γ) (psc Δ) (psc Ξ) ℓ (psub σ)) ;
     rewrite !psc_app ;
     rewrite !psc_length in h ;
     apply h ; [
       rewrite <- !psc_app ; intuition eauto
-    | eapply scoping_subst_psub ; eauto
+    | eapply scoping_subst_psub ; eauto ;
+      (eapply scoping_subst_sub ; intuition eauto ;
+        try apply max_le_l ; try apply le_I ; try apply max_le_r)
     ]
+  | h : ∀ Γ Δ Ξ ℓ σ, scoping _ _ ?t → _, hσ : scoping_subst _ _ ?Δ ?σ |-
+    scoping (?Ξ ++ ?Γ) ?ℓ (subst ?σ _ ?t) =>
+    eapply h ; intuition eauto ;
+    (eapply scoping_subst_sub ; intuition eauto ;
+      try apply max_le_l ; try apply le_I ; try apply max_le_r)
   end.
 
 Lemma subst_scoping :
   ∀ Γ Δ Ξ ℓ σ t,
     scoping (Ξ ++ Δ ++ Γ) ℓ t →
-    scoping_subst Γ Δ σ →
+    scoping_subst ℓ Γ Δ σ →
     scoping (Ξ ++ Γ) ℓ (subst σ #|Ξ| t).
 Proof.
   intros Γ Δ Ξ ℓ σ t ht hσ.
@@ -883,10 +873,6 @@ Proof.
   all: try solve [ simpl ; constructor ].
   all: try solve [
     simpl ; scope_inv ht hs ; constructor ; intuition eauto
-  ].
-  all: try solve [
-    simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
-    eapply IHt2 with (Ξ := _ :: _) ; intuition eauto
   ].
   all: try solve [
     simpl ; scope_inv ht hs ; constructor ; intuition eauto ;
@@ -901,23 +887,24 @@ Proof.
         eapply nth_error_Some_length in e1 as h2.
         eapply scoping_subst_length in hσ as eσ.
         rewrite nth_error_app1 in e. 2: lia.
-        eapply scope_sub. 2: eauto.
-        eapply scoping_subst_nth_error. all: eauto.
+        eapply scoping_subst_nth_error in e1. 2,3: eauto.
+        rewrite max_l_le in e1. 2: auto.
+        auto.
       * eapply nth_error_None in e1.
         eapply scoping_subst_length in hσ as eσ.
         rewrite nth_error_app2 in e. 2: lia.
-        eapply scope_sub. 2: eauto.
-        constructor. rewrite nth_error_app2. 2: lia.
+        econstructor. 2: eauto.
+        rewrite nth_error_app2. 2: lia.
         rewrite <- e. f_equal. lia.
     + apply PeanoNat.Nat.nle_gt in h1.
       rewrite nth_error_app1 in e. 2: auto.
-      eapply scope_sub. 2: eauto.
-      constructor. rewrite nth_error_app1. 2: auto.
+      econstructor. 2: eauto.
+      rewrite nth_error_app1. 2: auto.
       auto.
-  - simpl. scope_inv ht hs. destruct hs as [hℓ ?h].
-    eapply scope_sub.
-    + constructor. intuition eauto.
-    + auto.
+  - simpl. scope_inv ht hs. constructor. 1: intuition eauto.
+    eapply IHt2 with (Ξ := _ :: _). 1: intuition eauto.
+    eapply scoping_subst_sub. 1: eauto.
+    apply max_le_r.
 Qed.
 
 Lemma scoping_reveal_subst_k :
@@ -938,7 +925,11 @@ Proof.
       scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
       scope_inv hs1 hs1'.
       eapply subst_scoping.
-      2: constructor. 3: constructor. 2: eauto.
+      2:{
+        constructor. 2: constructor.
+        eapply scope_sub. 1: eauto.
+        apply max_le_r.
+      }
       cbn. eapply aux. 1: intuition eauto.
       rewrite <- app_assoc in ht. exact ht.
     + destruct u1. all: try assumption.
@@ -948,7 +939,11 @@ Proof.
       scope_inv hu hs. cbn in hs. destruct hs as [hs1 hs2].
       scope_inv hs1 hs1'.
       eapply subst_scoping.
-      2: constructor. 3: constructor. 2: eauto.
+      2:{
+        constructor. 2: constructor.
+        eapply scope_sub. 1: eauto.
+        apply max_le_r.
+      }
       cbn. eapply aux. 1: intuition eauto.
       rewrite <- app_assoc in ht. exact ht.
   - cbn. destruct u. all: try assumption.

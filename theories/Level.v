@@ -90,9 +90,15 @@ Definition max u v :=
 
 Notation "u ⊔ v" := (max u v) (at level 19).
 
+Lemma max_xx :
+  ∀ ℓ, ℓ ⊔ ℓ = ℓ.
+Proof.
+  intros []. all: reflexivity.
+Qed.
+
 Lemma max_sym :
   ∀ u v,
-    max u v = max v u.
+    u ⊔ v = v ⊔ u.
 Proof.
   intros u v.
   destruct u, v. all: reflexivity.
@@ -131,8 +137,28 @@ Proof.
   - right.
 Qed.
 
+Lemma max_le_cong_r :
+  ∀ ℓ₀ ℓ₁ ℓ₂,
+    ℓ₁ ⊑ ℓ₂ →
+    ℓ₀ ⊔ ℓ₁ ⊑ ℓ₀ ⊔ ℓ₂.
+Proof.
+  intros u v w h.
+  destruct h as [w h |].
+  - destruct h, u. all: cbn.
+    all: try right.
+    all: left ; constructor.
+  - right.
+Qed.
+
 Lemma max_l_R :
   ∀ ℓ, ℓ ⊔ R = ℓ.
+Proof.
+  intro ℓ.
+  destruct ℓ. all: reflexivity.
+Qed.
+
+Lemma max_l_I :
+  ∀ ℓ, ℓ ⊔ I = I.
 Proof.
   intro ℓ.
   destruct ℓ. all: reflexivity.
@@ -159,6 +185,18 @@ Lemma potentially_more_R :
 Proof.
   intros ℓ h. inversion h.
   - inversion H.
+  - reflexivity.
+Qed.
+
+Lemma max_l_le :
+  ∀ ℓ ℓ',
+    ℓ' ⊑ ℓ →
+    ℓ ⊔ ℓ' = ℓ.
+Proof.
+  intros ℓ ℓ' h. destruct ℓ.
+  - simpl. apply potentially_more_R. auto.
+  - destruct ℓ'. 1,2: reflexivity.
+    inversion h. inversion H.
   - reflexivity.
 Qed.
 
@@ -192,4 +230,12 @@ Lemma max_pred :
 Proof.
   intros ℓ₀ ℓ₁.
   destruct ℓ₀, ℓ₁. all: reflexivity.
+Qed.
+
+Lemma le_I :
+  ∀ ℓ, ℓ ⊑ I.
+Proof.
+  intros ℓ.
+  destruct ℓ. 3: reflexivity.
+  all: left. all: constructor.
 Qed.
