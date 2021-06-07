@@ -137,6 +137,19 @@ Proof.
   - right.
 Qed.
 
+Lemma max_le_cong_r :
+  ∀ ℓ₀ ℓ₁ ℓ₂,
+    ℓ₁ ⊑ ℓ₂ →
+    ℓ₀ ⊔ ℓ₁ ⊑ ℓ₀ ⊔ ℓ₂.
+Proof.
+  intros u v w h.
+  destruct h as [w h |].
+  - destruct h, u. all: cbn.
+    all: try right.
+    all: left ; constructor.
+  - right.
+Qed.
+
 Lemma max_l_R :
   ∀ ℓ, ℓ ⊔ R = ℓ.
 Proof.
