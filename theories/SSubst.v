@@ -131,15 +131,40 @@ Proof.
   all: try solve [
     simpl ; f_equal ; intuition eauto
   ].
-  - simpl. destruct (PeanoNat.Nat.leb_spec k n).
-    + destruct (PeanoNat.Nat.leb_spec i (m + n)). 2: lia.
-      f_equal. lia.
-    + destruct (PeanoNat.Nat.leb_spec i n). 1: lia.
+  all: try solve [
+    simpl ; f_equal ; eauto ;
+    eapply IHt2 ; lia
+  ].
+  simpl. destruct (PeanoNat.Nat.leb_spec k n).
+  - destruct (PeanoNat.Nat.leb_spec i (m + n)). 2: lia.
+    f_equal. lia.
+  - destruct (PeanoNat.Nat.leb_spec i n). 1: lia.
+    reflexivity.
+Qed.
+
+Lemma permute_lift :
+  ∀ t n k p i,
+    i ≤ k →
+    lift p i (lift n k t) = lift n (k + p) (lift p i t).
+Proof.
+  intros t m k p i h.
+  induction t in m, k, p, i, h |- *.
+  all: try solve [ intuition eauto ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; f_equal ; eauto ;
+    eapply IHt2 ; lia
+  ].
+  simpl. destruct (PeanoNat.Nat.leb_spec k n).
+  - destruct (PeanoNat.Nat.leb_spec i n). 2: lia.
+    destruct (PeanoNat.Nat.leb_spec i (m + n)). 2: lia.
+    destruct (PeanoNat.Nat.leb_spec (k + p) (p + n)). 2: lia.
+    f_equal. lia.
+  - destruct (PeanoNat.Nat.leb_spec i n).
+    + destruct (PeanoNat.Nat.leb_spec (k + p) (p + n)). 1: lia.
       reflexivity.
-  - simpl. f_equal. 1: eauto.
-    eapply IHt2. all: lia.
-  - simpl. f_equal. 1: eauto.
-    eapply IHt2. all: lia.
-  - simpl. f_equal. 1: eauto.
-    eapply IHt2. all: lia.
+    + destruct (PeanoNat.Nat.leb_spec (k + p) n). 1: lia.
+      reflexivity.
 Qed.
