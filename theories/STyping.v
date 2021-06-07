@@ -634,10 +634,35 @@ Proof.
     eapply typed_type_scoped. all: eauto.
 Qed.
 
+(* TODO MOVE *)
+Lemma lift_context_length :
+  ∀ Γ n k,
+    #| lift_context n k Γ | = #|Γ|.
+Proof.
+  intros Γ n k.
+  induction Γ.
+  - reflexivity.
+  - simpl. f_equal. auto.
+Qed.
+
+(* TODO MOVE *)
+Lemma nth_error_lift_context :
+  ∀ n k Γ m,
+    nth_error (lift_context n k Γ) m =
+    option_map (λ '(ℓ, A), (ℓ, lift n (k + (#|Γ| - Datatypes.S m)) A)) (nth_error Γ m).
+Proof.
+  intros n k Γ m.
+  induction Γ as [| [ℓ A] Γ ih] in n, k, m |- *.
+  - simpl. destruct m. all: reflexivity.
+  - simpl. destruct m.
+    + simpl. f_equal. f_equal. f_equal. lia.
+    + simpl. apply ih.
+Qed.
+
 Lemma lift_typing :
   ∀ Γ Δ Ξ t A ℓ,
     (Ξ ++ Γ) ⊢[ ℓ ] t : A →
-    (Ξ ++ Δ ++ Γ) ⊢[ ℓ ] (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A).
+    (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ] (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A).
 Proof.
   intros Γ Δ Ξ t A ℓ h.
   remember (Ξ ++ Γ) as Θ eqn:eΘ.
@@ -648,7 +673,9 @@ Proof.
       rewrite simpl_lift. 2,3: lia.
       eapply meta_conv.
       * econstructor. 2: eauto.
-        rewrite nth_error_app2. 2: lia.
+        rewrite nth_error_app2.
+        2:{ rewrite lift_context_length. lia. }
+        rewrite lift_context_length.
         rewrite nth_error_app2. 2: lia.
         rewrite <- e. f_equal. lia.
       * f_equal. lia.
@@ -664,9 +691,8 @@ Proof.
         f_equal. lia.
       }
       rewrite <- h. clear h.
-      eapply meta_conv.
-      * econstructor. 2: eauto.
-        rewrite nth_error_app1. 2: lia.
-        eauto.
-      * (* TODO Missing lift_context in Ξ! *)
+      econstructor. 2: eauto.
+      rewrite nth_error_app1.
+      2:{ rewrite lift_context_length. lia. }
+      rewrite nth_error_lift_context. rewrite e. simpl. reflexivity.
 Abort.
