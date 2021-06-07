@@ -634,6 +634,30 @@ Proof.
     eapply typed_type_scoped. all: eauto.
 Qed.
 
+Lemma pctx_app :
+  ∀ Γ Δ,
+    pctx (Γ ++ Δ) = pctx Γ ++ pctx Δ.
+Proof.
+  intros Γ Δ. apply map_app.
+Qed.
+
+Lemma pctx_length :
+  ∀ Γ,
+    #| pctx Γ | = #|Γ|.
+Proof.
+  apply map_length.
+Qed.
+
+Lemma pctx_lift_context :
+  ∀ n k Γ,
+    pctx (lift_context n k Γ) = lift_context n k (pctx Γ).
+Proof.
+  intros n k Γ.
+  induction Γ as [| [ℓ A] Γ ih] in n, k |- *.
+  - reflexivity.
+  - simpl. rewrite ih. rewrite pctx_length. reflexivity.
+Qed.
+
 Lemma lift_typing :
   ∀ Γ Δ Ξ t A ℓ,
     (Ξ ++ Γ) ⊢[ ℓ ] t : A →
@@ -670,4 +694,11 @@ Proof.
       rewrite nth_error_app1.
       2:{ rewrite lift_context_length. lia. }
       rewrite nth_error_lift_context. rewrite e. simpl. reflexivity.
+  - subst. simpl. econstructor.
+    + rewrite !pctx_app. rewrite pctx_lift_context.
+      rewrite <- (pctx_length Δ).
+      rewrite <- (pctx_length Ξ).
+      eapply IHh1.
+      apply pctx_app.
+    + (* rewrite pctx_app in IHh1. *)
 Abort.
