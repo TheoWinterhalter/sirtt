@@ -633,3 +633,40 @@ Proof.
     rewrite <- psc_context_to_scope.
     eapply typed_type_scoped. all: eauto.
 Qed.
+
+Lemma lift_typing :
+  ∀ Γ Δ Ξ t A ℓ,
+    (Ξ ++ Γ) ⊢[ ℓ ] t : A →
+    (Ξ ++ Δ ++ Γ) ⊢[ ℓ ] (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A).
+Proof.
+  intros Γ Δ Ξ t A ℓ h.
+  remember (Ξ ++ Γ) as Θ eqn:eΘ.
+  induction h in Γ, Δ, Ξ, eΘ |- *.
+  - subst. cbn.
+    destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
+    + rewrite nth_error_app2 in e. 2: lia.
+      rewrite simpl_lift. 2,3: lia.
+      eapply meta_conv.
+      * econstructor. 2: eauto.
+        rewrite nth_error_app2. 2: lia.
+        rewrite nth_error_app2. 2: lia.
+        rewrite <- e. f_equal. lia.
+      * f_equal. lia.
+    + rewrite nth_error_app1 in e. 2: lia.
+      assert (h :
+        ∀ t,
+          lift0 (Datatypes.S n) (lift #|Δ| (#|Ξ| - Datatypes.S n) t) =
+          lift #|Δ| #|Ξ| (lift0 (Datatypes.S n) t)
+      ).
+      { intro t.
+        replace #|Ξ| with (Datatypes.S n + (#|Ξ| - Datatypes.S n)) at 2 by lia.
+        rewrite permute_lift. 2: lia.
+        f_equal. lia.
+      }
+      rewrite <- h. clear h.
+      eapply meta_conv.
+      * econstructor. 2: eauto.
+        rewrite nth_error_app1. 2: lia.
+        eauto.
+      * (* TODO Missing lift_context in Ξ! *)
+Abort.
