@@ -718,16 +718,39 @@ Proof.
       rewrite nth_error_app1.
       2:{ rewrite lift_context_length. lia. }
       rewrite nth_error_lift_context. rewrite e. simpl. reflexivity.
-  - subst. (* Need lemma to commute lift/subst *) admit.
+  - subst. rewrite distr_lift_subst10. rewrite <- ptm_lift. simpl.
+    econstructor. all: lift_typing_ih.
   - subst. simpl. econstructor. 1,2: lift_typing_ih.
-    (* Commutation again, also with ptm/lift *)
-    admit.
-  - subst. simpl. admit.
-  - subst. simpl. admit.
-  - subst. simpl. admit.
-  - subst. simpl. admit.
-  - subst. simpl. admit.
-  - subst. simpl. admit.
+    rewrite ptm_lift. rewrite <- distr_lift_subst10.
+    lift_typing_ih.
+  - subst. simpl. rewrite distr_lift_subst10. simpl.
+    rewrite <- ptm_lift. econstructor. 2: auto.
+    lift_typing_ih.
+  - subst. simpl. rewrite <- ptm_lift. econstructor.
+    1,2,4: lift_typing_ih.
+    rewrite permute_lift. 2: lia.
+    unfold "⇒". simpl.
+    rewrite (permute_lift (lift0 _ _)). 2: lia.
+    replace (#|Ξ| + 1 + 1) with (Datatypes.S (Datatypes.S #|Ξ|)) by lia.
+    replace (#|Ξ| + 1) with (Datatypes.S #|Ξ|) by lia.
+    lift_typing_ih.
+  - subst. simpl. rewrite <- ptm_lift. econstructor.
+    all: lift_typing_ih.
+  - subst. simpl. rewrite <- ptm_lift. econstructor.
+    1,3,5,6: lift_typing_ih.
+    + rewrite permute_lift. 2: lia.
+      replace (#|Ξ| + 1) with (Datatypes.S #|Ξ|) by lia.
+      lift_typing_ih.
+    + rewrite permute_lift. 2: lia.
+      unfold "⇒". simpl.
+      repeat rewrite (permute_lift _ #|Δ|). 2-5: lia.
+      replace (#|Ξ| + 3 + 1) with (4 + #|Ξ|) by lia.
+      replace (#|Ξ| + 3) with (3 + #|Ξ|) by lia.
+      replace (#|Ξ| + 2) with (2 + #|Ξ|) by lia.
+      simpl.
+      lift_typing_ih.
+  - subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
+  - subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
   - subst. econstructor.
     + lift_typing_ih.
     + (* TODO lift for conv as well, might need to be mutual *)
