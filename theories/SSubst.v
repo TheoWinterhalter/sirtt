@@ -175,6 +175,105 @@ Proof.
       reflexivity.
 Qed.
 
+Lemma ptm_lift :
+  ∀ n k t,
+    ptm (lift n k t) = lift n k (ptm t).
+Proof.
+  intros m k t.
+  induction t in m, k |- *.
+  all: try reflexivity.
+  all: solve [ simpl ; f_equal ; eauto ].
+Qed.
+
+Lemma psub_map_lift :
+  ∀ n k σ,
+    psub (map (lift n k) σ) = map (lift n k) (psub σ).
+Proof.
+  intros n k σ.
+  unfold psub.
+  rewrite !map_map. apply map_ext. intro t.
+  apply ptm_lift.
+Qed.
+
+Lemma psub_length :
+  ∀ σ, #| psub σ | = #|σ|.
+Proof.
+  apply map_length.
+Qed.
+
+#[local] Ltac distr_lift_subst_rec_ih :=
+  lazymatch goal with
+  | ih : ∀ σ m p k, lift _ _ (subst _ _ ?t) = _ |-
+    lift _ _ (subst (psub ?σ) _ ?t) = _ =>
+    specialize (ih (psub σ)) ;
+    rewrite psub_length in ih ;
+    apply ih
+  | ih : ∀ σ m p k, lift _ _ (subst _ _ ?t) = _ |-
+    lift _ _ (subst ?σ _ ?t) = subst (map (lift ?m ?k) _) ?p _ =>
+    specialize (ih σ m p k) ;
+    apply ih
+  end.
+
+Lemma distr_lift_subst_rec :
+  ∀ u σ m p k,
+    lift m (p + k) (subst σ p u) =
+    subst (map (lift m k) σ) p (lift m (p + #|σ| + k) u).
+Proof.
+  intros u σ m p k.
+  induction u in σ, m, p, k |- *.
+  all: try solve [ intuition eauto ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; rewrite ?psub_map_lift ; f_equal ;
+    intuition eauto ; distr_lift_subst_rec_ih
+  ].
+  simpl. rewrite map_length.
+  rewrite nth_error_map.
+  destruct (PeanoNat.Nat.leb_spec p n).
+  - destruct (PeanoNat.Nat.leb_spec (p + #|σ| + k) n).
+    + destruct (PeanoNat.Nat.leb_spec p (m + n)). 2: lia.
+      destruct nth_error eqn:e.
+      1:{ apply nth_error_Some_length in e. lia. }
+      clear e.
+      destruct nth_error eqn:e.
+      1:{ apply nth_error_Some_length in e. lia. }
+      clear e. simpl.
+      destruct (PeanoNat.Nat.leb_spec (p + k) (n - #|σ|)). 2: lia.
+      f_equal. lia.
+    + destruct (PeanoNat.Nat.leb_spec p n). 2: lia.
+      destruct nth_error eqn:e.
+      * simpl. replace (p + k) with (k + p) by lia.
+        rewrite <- permute_lift. 2: lia.
+        reflexivity.
+      * simpl. apply nth_error_None in e as ?.
+        destruct (PeanoNat.Nat.leb_spec (p + k) (n - #|σ|)). 1: lia.
+        reflexivity.
+  - destruct (PeanoNat.Nat.leb_spec (p + #|σ| + k) n). 1: lia.
+    destruct (PeanoNat.Nat.leb_spec p n). 1: lia.
+    simpl. destruct (PeanoNat.Nat.leb_spec (p + k) n). 1: lia.
+    reflexivity.
+Qed.
+
+Lemma distr_lift_subst :
+  ∀ σ t n k,
+    lift n k (subst0 σ t) = subst0 (map (lift n k) σ) (lift n (#|σ| + k) t).
+Proof.
+  intros σ t n k.
+  change k with (0 + k).
+  apply distr_lift_subst_rec.
+Qed.
+
+Lemma distr_lift_subst10 :
+  ∀ u v n k,
+    lift n k (subst10 v u) = subst10 (lift n k v) (lift n (S k) u).
+Proof.
+  intros u v n k.
+  change k with (0 + k).
+  apply distr_lift_subst_rec.
+Qed.
+
 Lemma lift_context_length :
   ∀ Γ n k,
     #| lift_context n k Γ | = #|Γ|.
@@ -188,7 +287,9 @@ Qed.
 Lemma nth_error_lift_context :
   ∀ n k Γ m,
     nth_error (lift_context n k Γ) m =
-    option_map (λ '(ℓ, A), (ℓ, lift n (k + (#|Γ| - Datatypes.S m)) A)) (nth_error Γ m).
+    option_map
+      (λ '(ℓ, A), (ℓ, lift n (k + (#|Γ| - Datatypes.S m)) A))
+      (nth_error Γ m).
 Proof.
   intros n k Γ m.
   induction Γ as [| [ℓ A] Γ ih] in n, k, m |- *.
