@@ -678,6 +678,24 @@ Qed.
       specialize (ih Δ) ;
       apply ih
     end
+  | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t ≡ _ |-
+    ?Γ ⊢[ _ ] lift #| ?Δ | _ ?t ≡ _ =>
+    lazymatch Γ with
+    | context [ pctx ] =>
+      rewrite ?pctx_app in ih ;
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih (pctx Δ)) ;
+      rewrite ?pctx_app ; rewrite ?pctx_lift_context ;
+      cbn - [Level.max] in ih ;
+      rewrite ?pctx_length in ih ;
+      apply ih
+    | _ =>
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih Δ) ;
+      apply ih
+    end
   end.
 
 (* TODO MOVE *)
@@ -782,13 +800,13 @@ Proof.
       replace (#|Ξ| + 2) with (2 + #|Ξ|) by lia.
       simpl.
       lift_typing_ih.
-  - intros. subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
-  - intros. subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
-  - intros. subst. econstructor.
-    + lift_typing_ih.
-    + admit.
-    + lift_typing_ih.
-    + lift_typing_ih.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor.
+    all: lift_typing_ih.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor.
+    all: lift_typing_ih.
+  - intros. subst. admit.
+  - admit.
+  - admit.
 Admitted.
 
 Lemma lift_typing :
