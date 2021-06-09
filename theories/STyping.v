@@ -286,7 +286,7 @@ with conversion (Γ : context) : level → term → term → Type :=
 | cong_Sum :
     ∀ ℓ A A' P P',
       Γ ⊢[ ℓ ] A ≡ A' →
-      Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
+      (R, A) :: Γ ⊢[ S ⊔ ℓ ] P ≡ P' →
       Γ ⊢[ ℓ ] Sum A P ≡ Sum A' P'
 
 | cong_succ :
@@ -703,6 +703,28 @@ Scheme typing_rect' := Minimality for typing Sort Type
 with conversion_rect' := Minimality for conversion Sort Type.
 Combined Scheme typing_mutrect from typing_rect', conversion_rect'.
 
+(* TODO MOVE *)
+Lemma context_to_scope_lift_context :
+  ∀ n k Γ,
+    context_to_scope (lift_context n k Γ) = context_to_scope Γ.
+Proof.
+  intros n k Γ.
+  induction Γ as [| [] Γ ih].
+  - reflexivity.
+  - cbn. f_equal. eauto.
+Qed.
+
+(* TODO MOVE *)
+Lemma context_to_scope_app :
+  ∀ Γ Δ,
+    context_to_scope (Γ ++ Δ) = context_to_scope Γ ++ context_to_scope Δ.
+Proof.
+  intros Γ Δ.
+  induction Γ as [| [] Γ ih].
+  - reflexivity.
+  - cbn. f_equal. eauto.
+Qed.
+
 Lemma lift_typing_conversion :
   ∀ Θ,
     (∀ ℓ t A,
@@ -804,10 +826,16 @@ Proof.
     all: lift_typing_ih.
   - intros. subst. simpl. rewrite <- ptm_lift. econstructor.
     all: lift_typing_ih.
-  - intros. subst. admit.
-  - admit.
-  - admit.
-Admitted.
+  - intros. subst. rewrite distr_lift_subst10. econstructor.
+  - intros ? ? ? ? ? hs ? ? ? ? ? Δ ? ?.
+    subst. eapply conv_trans. 2,3: lift_typing_ih.
+    rewrite !context_to_scope_app.
+    rewrite context_to_scope_lift_context.
+    rewrite context_to_scope_app in hs.
+    eapply lift_scoping with (Δ := context_to_scope Δ) in hs.
+    rewrite !context_to_scope_length in hs.
+    exact hs.
+Qed.
 
 Lemma lift_typing :
   ∀ Γ Δ Ξ t A ℓ,
