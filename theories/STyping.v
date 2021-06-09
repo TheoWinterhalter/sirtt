@@ -680,17 +680,50 @@ Qed.
     end
   end.
 
-Lemma lift_typing :
-  ∀ Γ Δ Ξ t A ℓ,
-    (Ξ ++ Γ) ⊢[ ℓ ] t : A →
-    (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ] (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A).
+(* TODO MOVE *)
+Scheme typing_rect' := Minimality for typing Sort Type
+with conversion_rect' := Minimality for conversion Sort Type.
+Combined Scheme typing_mutrect from typing_rect', conversion_rect'.
+
+Lemma lift_typing_conversion :
+  ∀ Θ,
+    (∀ ℓ t A,
+      Θ ⊢[ ℓ ] t : A →
+      ∀ Γ Δ Ξ,
+        Θ = Ξ ++ Γ →
+        (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ]
+        (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A)
+    ) *
+    (∀ ℓ u v,
+      Θ ⊢[ ℓ ] u ≡ v →
+      ∀ Γ Δ Ξ,
+        Θ = Ξ ++ Γ →
+        (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ]
+        (lift #|Δ| #|Ξ| u) ≡ (lift #|Δ| #|Ξ| v)
+    ).
 Proof.
-  intros Γ Δ Ξ t A ℓ h.
-  remember (Ξ ++ Γ) as Θ eqn:eΘ.
-  induction h in Γ, Δ, Ξ, eΘ |- *.
+  pose (P := λ Θ ℓ t A,
+  ∀ Γ Δ Ξ,
+    Θ = Ξ ++ Γ →
+    (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ]
+    (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A)
+  ).
+  pose (P0 := λ Θ ℓ u v,
+    ∀ Γ Δ Ξ,
+      Θ = Ξ ++ Γ →
+      (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ]
+      (lift #|Δ| #|Ξ| u) ≡ (lift #|Δ| #|Ξ| v)
+  ).
+  intro Θ.
+  eapply typing_mutrect with (P := P) (P0 := P0).
+  all: subst P P0.
+  all: simpl.
   all: try solve [ subst ; econstructor ; eauto ].
-  all: try solve [ subst ; simpl ; econstructor ; eauto ; lift_typing_ih ].
-  - subst. cbn.
+  all: try solve [
+    intros ; subst ; simpl ; econstructor ; eauto ; lift_typing_ih
+  ].
+  all: clear Θ.
+  - intros Θ n ℓ ℓ' A e ? Γ Δ Ξ ?. subst.
     destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
     + rewrite nth_error_app2 in e. 2: lia.
       rewrite simpl_lift. 2,3: lia.
@@ -718,15 +751,15 @@ Proof.
       rewrite nth_error_app1.
       2:{ rewrite lift_context_length. lia. }
       rewrite nth_error_lift_context. rewrite e. simpl. reflexivity.
-  - subst. rewrite distr_lift_subst10. rewrite <- ptm_lift. simpl.
+  - intros. subst. rewrite distr_lift_subst10. rewrite <- ptm_lift. simpl.
     econstructor. all: lift_typing_ih.
-  - subst. simpl. econstructor. 1,2: lift_typing_ih.
+  - intros. subst. simpl. econstructor. 1,2: lift_typing_ih.
     rewrite ptm_lift. rewrite <- distr_lift_subst10.
     lift_typing_ih.
-  - subst. simpl. rewrite distr_lift_subst10. simpl.
+  - intros. subst. simpl. rewrite distr_lift_subst10. simpl.
     rewrite <- ptm_lift. econstructor. 2: auto.
     lift_typing_ih.
-  - subst. simpl. rewrite <- ptm_lift. econstructor.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor.
     1,2,4: lift_typing_ih.
     rewrite permute_lift. 2: lia.
     unfold "⇒". simpl.
@@ -734,9 +767,9 @@ Proof.
     replace (#|Ξ| + 1 + 1) with (Datatypes.S (Datatypes.S #|Ξ|)) by lia.
     replace (#|Ξ| + 1) with (Datatypes.S #|Ξ|) by lia.
     lift_typing_ih.
-  - subst. simpl. rewrite <- ptm_lift. econstructor.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor.
     all: lift_typing_ih.
-  - subst. simpl. rewrite <- ptm_lift. econstructor.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor.
     1,3,5,6: lift_typing_ih.
     + rewrite permute_lift. 2: lia.
       replace (#|Ξ| + 1) with (Datatypes.S #|Ξ|) by lia.
@@ -749,12 +782,30 @@ Proof.
       replace (#|Ξ| + 2) with (2 + #|Ξ|) by lia.
       simpl.
       lift_typing_ih.
-  - subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
-  - subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
-  - subst. econstructor.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
+  - intros. subst. simpl. rewrite <- ptm_lift. econstructor. all: lift_typing_ih.
+  - intros. subst. econstructor.
     + lift_typing_ih.
-    + (* TODO lift for conv as well, might need to be mutual *)
-      admit.
+    + admit.
     + lift_typing_ih.
     + lift_typing_ih.
-Abort.
+Admitted.
+
+Lemma lift_typing :
+  ∀ Γ Δ Ξ t A ℓ,
+    (Ξ ++ Γ) ⊢[ ℓ ] t : A →
+    (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ]
+    (lift #|Δ| #|Ξ| t) : (lift #|Δ| #|Ξ| A).
+Proof.
+  intros Γ Δ Ξ t A ℓ h.
+  eapply lift_typing_conversion. all: eauto.
+Qed.
+
+Lemma lift_conversion :
+  ∀ Γ Δ Ξ u v ℓ,
+    (Ξ ++ Γ) ⊢[ ℓ ] u ≡ v →
+    (lift_context #|Δ| 0 Ξ ++ Δ ++ Γ) ⊢[ ℓ ]
+    (lift #|Δ| #|Ξ| u) ≡ (lift #|Δ| #|Ξ| v).
+Proof.
+  intros. eapply lift_typing_conversion. all: eauto.
+Qed.
