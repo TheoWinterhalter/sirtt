@@ -68,6 +68,16 @@ Proof.
   induction Γ as [| [[] A] Γ ih]. all: cbn ; eauto.
 Qed.
 
+Lemma context_to_scope_app :
+  ∀ Γ Δ,
+    context_to_scope (Γ ++ Δ) = context_to_scope Γ ++ context_to_scope Δ.
+Proof.
+  intros Γ Δ.
+  induction Γ as [| [] Γ ih].
+  - reflexivity.
+  - cbn. f_equal. eauto.
+Qed.
+
 Lemma context_to_scope_nth_error :
   ∀ (Γ : context) n ℓ A,
     nth_error Γ n = Some (ℓ, A) →

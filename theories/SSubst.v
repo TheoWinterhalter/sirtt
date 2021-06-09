@@ -298,3 +298,13 @@ Proof.
     + simpl. f_equal. f_equal. f_equal. lia.
     + simpl. apply ih.
 Qed.
+
+Lemma context_to_scope_lift_context :
+  ∀ n k Γ,
+    context_to_scope (lift_context n k Γ) = context_to_scope Γ.
+Proof.
+  intros n k Γ.
+  induction Γ as [| [] Γ ih].
+  - reflexivity.
+  - cbn. f_equal. eauto.
+Qed.

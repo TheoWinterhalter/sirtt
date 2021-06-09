@@ -406,6 +406,10 @@ with conversion (Γ : context) : level → term → term → Type :=
 
 where "Γ ⊢[ l ] u ≡ v" := (conversion Γ l u v) : s_scope.
 
+Scheme typing_rect' := Minimality for typing Sort Type
+with conversion_rect' := Minimality for conversion Sort Type.
+Combined Scheme typing_mutrect from typing_rect', conversion_rect'.
+
 Lemma type_sub :
   ∀ Γ ℓ ℓ' t A,
     Γ ⊢[ ℓ ] t : A →
@@ -697,33 +701,6 @@ Qed.
       apply ih
     end
   end.
-
-(* TODO MOVE *)
-Scheme typing_rect' := Minimality for typing Sort Type
-with conversion_rect' := Minimality for conversion Sort Type.
-Combined Scheme typing_mutrect from typing_rect', conversion_rect'.
-
-(* TODO MOVE *)
-Lemma context_to_scope_lift_context :
-  ∀ n k Γ,
-    context_to_scope (lift_context n k Γ) = context_to_scope Γ.
-Proof.
-  intros n k Γ.
-  induction Γ as [| [] Γ ih].
-  - reflexivity.
-  - cbn. f_equal. eauto.
-Qed.
-
-(* TODO MOVE *)
-Lemma context_to_scope_app :
-  ∀ Γ Δ,
-    context_to_scope (Γ ++ Δ) = context_to_scope Γ ++ context_to_scope Δ.
-Proof.
-  intros Γ Δ.
-  induction Γ as [| [] Γ ih].
-  - reflexivity.
-  - cbn. f_equal. eauto.
-Qed.
 
 Lemma lift_typing_conversion :
   ∀ Θ,
