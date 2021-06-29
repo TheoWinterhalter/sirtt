@@ -832,3 +832,180 @@ Lemma lift_conversion :
 Proof.
   intros. eapply lift_typing_conversion. all: eauto.
 Qed.
+
+Inductive typing_subst ℓ Γ : context → list term → Type :=
+| typing_subst_cons :
+    ∀ A ℓ' Δ u σ,
+      Γ ⊢[ ℓ ⊔ ℓ' ] u : subst0 σ A →
+      typing_subst ℓ Γ Δ σ →
+      typing_subst ℓ Γ ((ℓ', A) :: Δ) (u :: σ)
+
+| typing_subst_nil :
+    typing_subst ℓ Γ [] [].
+
+Lemma typing_subst_nth_error :
+  ∀ Γ Δ σ n ℓ ℓ' A u,
+    typing_subst ℓ Γ Δ σ →
+    nth_error Δ n = Some (ℓ',A) →
+    nth_error σ n = Some u →
+    Γ ⊢[ ℓ ⊔ ℓ' ] u : subst0 (skipn (Datatypes.S n) σ) A.
+Proof.
+  intros Γ Δ σ n ℓ ℓ' A u h eΔ eσ.
+  induction h in n, ℓ', A, u, eΔ, eσ |- *.
+  2:{ destruct n. all: discriminate. }
+  destruct n.
+  - cbn in eΔ, eσ. inversion eΔ. inversion eσ. subst. clear eΔ eσ.
+    auto.
+  - cbn in eΔ, eσ. eapply IHh. all: eauto.
+Qed.
+
+Lemma typing_subst_length :
+  ∀ ℓ Γ Δ σ,
+    typing_subst ℓ Γ Δ σ →
+    #|Δ| = #|σ|.
+Proof.
+  intros ℓ Γ Δ σ h.
+  induction h.
+  - simpl. eauto.
+  - reflexivity.
+Qed.
+
+(* TODO MOVE *)
+Fixpoint subst_context σ (Γ : context) : context :=
+  match Γ with
+  | [] => []
+  | (ℓ, A) :: Γ => (ℓ, subst σ #|Γ| A) :: subst_context σ Γ
+  end.
+
+(* TODO MOVE *)
+Lemma subst_context_length :
+  ∀ σ Γ,
+    #| subst_context σ Γ | = #|Γ|.
+Proof.
+  intros σ Γ.
+  induction Γ.
+  - reflexivity.
+  - simpl. f_equal. assumption.
+Qed.
+
+(* #[local] Ltac subst_typing_ih :=
+  lazymatch goal with
+  | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t : _ |-
+    ?Γ ⊢[ _ ] lift #| ?Δ | _ ?t : _ =>
+    lazymatch Γ with
+    | context [ pctx ] =>
+      rewrite ?pctx_app in ih ;
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih (pctx Δ)) ;
+      rewrite ?pctx_app ; rewrite ?pctx_lift_context ;
+      cbn - [Level.max] in ih ;
+      rewrite ?pctx_length in ih ;
+      apply ih
+    | _ =>
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih Δ) ;
+      apply ih
+    end
+  | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t ≡ _ |-
+    ?Γ ⊢[ _ ] lift #| ?Δ | _ ?t ≡ _ =>
+    lazymatch Γ with
+    | context [ pctx ] =>
+      rewrite ?pctx_app in ih ;
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih (pctx Δ)) ;
+      rewrite ?pctx_app ; rewrite ?pctx_lift_context ;
+      cbn - [Level.max] in ih ;
+      rewrite ?pctx_length in ih ;
+      apply ih
+    | _ =>
+      repeat change (?x :: ?l ++ ?l') with ((x :: l) ++ l') in ih ;
+      specialize ih with (1 := eq_refl) ;
+      specialize (ih Δ) ;
+      apply ih
+    end
+  end. *)
+
+Lemma subst_typing_conversion :
+  ∀ Θ,
+    (∀ ℓ t A,
+      Θ ⊢[ ℓ ] t : A →
+      ∀ Γ Δ Ξ σ,
+        Θ = Ξ ++ Δ ++ Γ →
+        typing_subst ℓ Γ Δ σ →
+        (subst_context σ Ξ ++ Γ) ⊢[ ℓ ]
+        (subst σ #|Ξ| t) : (subst σ #|Ξ| A)
+    ) *
+    (∀ ℓ u v,
+      Θ ⊢[ ℓ ] u ≡ v →
+      ∀ Γ Δ Ξ σ,
+        Θ = Ξ ++ Δ ++ Γ →
+        (subst_context σ Ξ ++ Γ) ⊢[ ℓ ]
+        (subst σ #|Ξ| u) ≡ (subst σ #|Ξ| v)
+    ).
+Proof.
+  pose (P := λ Θ ℓ t A,
+    ∀ Γ Δ Ξ σ,
+      Θ = Ξ ++ Δ ++ Γ →
+      typing_subst ℓ Γ Δ σ →
+      (subst_context σ Ξ ++ Γ) ⊢[ ℓ ]
+      (subst σ #|Ξ| t) : (subst σ #|Ξ| A)
+  ).
+  pose (P0 := λ Θ ℓ u v,
+    ∀ Γ Δ Ξ σ,
+      Θ = Ξ ++ Δ ++ Γ →
+      (subst_context σ Ξ ++ Γ) ⊢[ ℓ ]
+      (subst σ #|Ξ| u) ≡ (subst σ #|Ξ| v)
+  ).
+  intro Θ.
+  eapply typing_mutrect with (P := P) (P0 := P0).
+  all: subst P P0.
+  all: simpl.
+  all: try solve [ subst ; econstructor ; eauto ].
+  (* all: try solve [
+    intros ; subst ; simpl ; econstructor ; eauto ; subst_typing_ih
+  ]. *)
+  all: clear Θ.
+  - intros ? n ℓ ℓ' A hn hℓ Γ Δ Ξ σ ? hσ. subst.
+    destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
+    + rewrite nth_error_app2 in hn. 2: lia.
+      destruct (nth_error σ _) eqn:e.
+      * rewrite nth_error_app1 in hn.
+        2:{
+          apply nth_error_Some_length in e.
+          apply typing_subst_length in hσ.
+          lia.
+        }
+        eapply typing_subst_nth_error in hσ. 2,3: eauto.
+        rewrite max_l_le in hσ. 2: auto.
+        eapply lift_typing with (Ξ := []) (Δ := subst_context σ Ξ) in hσ.
+        cbn - [skipn] in hσ. rewrite subst_context_length in hσ.
+        (* rewrite commut_lift_subst_rec. *)
+        admit.
+      * {
+        apply typing_subst_length in hσ as lσ.
+        rewrite nth_error_app2 in hn.
+        2:{ apply nth_error_None in e. lia. }
+        eapply meta_conv.
+        - econstructor. 2: eauto.
+          rewrite nth_error_app2.
+          2:{
+            rewrite subst_context_length.
+            apply nth_error_None in e.
+            lia.
+          }
+          rewrite subst_context_length. rewrite <- hn. f_equal. lia.
+        - (* rewrite commut_lift_subst_rec. *)
+          admit.
+      }
+    + rewrite nth_error_app1 in hn. 2: lia.
+      eapply meta_conv.
+      * econstructor. 2: eauto.
+        rewrite nth_error_app1.
+        2:{ rewrite subst_context_length. lia. }
+        (* rewrite nth_error_subst_context. *)
+        admit.
+      * admit.
+Abort.
