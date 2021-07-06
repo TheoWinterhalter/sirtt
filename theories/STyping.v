@@ -982,8 +982,26 @@ Proof.
         rewrite max_l_le in hσ. 2: auto.
         eapply lift_typing with (Ξ := []) (Δ := subst_context σ Ξ) in hσ.
         cbn - [skipn] in hσ. rewrite subst_context_length in hσ.
-        (* rewrite commut_lift_subst_rec. *)
-        admit.
+        rewrite commut_lift_subst_rec in hσ. 2: auto.
+        cbn - [skipn] in hσ.
+        replace (subst σ)
+        with (subst (firstn (Datatypes.S (n - #|Ξ|)) σ ++ skipn (Datatypes.S (n - #|Ξ|)) σ)).
+        2:{ f_equal. apply firstn_skipn. }
+        rewrite subst_app_decomp.
+        eapply meta_conv. 1: eauto.
+        f_equal.
+        replace (Datatypes.S n) with ((Datatypes.S n - #|Ξ|) + #|Ξ|) by lia.
+        assert (eq :
+          #|map (lift0 #|skipn (Datatypes.S (n - #|Ξ|)) σ|) (firstn (Datatypes.S (n - #|Ξ|)) σ)| =
+          Datatypes.S n - #|Ξ|
+        ).
+        { rewrite map_length. rewrite firstn_length by lia.
+          apply nth_error_Some_length in e.
+          lia.
+        }
+        rewrite <- eq.
+        rewrite simpl_subst_rec. 2-3: lia.
+        reflexivity.
       * {
         apply typing_subst_length in hσ as lσ.
         rewrite nth_error_app2 in hn.

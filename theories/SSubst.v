@@ -274,6 +274,126 @@ Proof.
   apply distr_lift_subst_rec.
 Qed.
 
+Lemma commut_lift_subst_rec :
+  ∀ u σ m p k,
+    k ≤ p →
+    lift m k (subst σ p u) = subst σ (p + m) (lift m k u).
+Proof.
+  intros u σ m p k h.
+  induction u in σ, m, p, k, h |- *.
+  all: try solve [ intuition eauto ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto
+  ].
+  - cbn. destruct (PeanoNat.Nat.leb_spec p n).
+    + destruct (PeanoNat.Nat.leb_spec k n). 2: lia.
+      destruct (PeanoNat.Nat.leb_spec (p + m) (m + n)). 2: lia.
+      replace (m + n - (p + m)) with (n - p) by lia.
+      destruct nth_error eqn:e.
+      * rewrite simpl_lift. 2-3: lia.
+        f_equal. lia.
+      * cbn. apply nth_error_None in e.
+        destruct (PeanoNat.Nat.leb_spec k (n - #|σ|)). 2: lia.
+        f_equal. lia.
+    + destruct (PeanoNat.Nat.leb_spec k n).
+      * destruct (PeanoNat.Nat.leb_spec (p + m) (m + n)). 1: lia.
+        cbn. destruct (PeanoNat.Nat.leb_spec k n). 2: lia.
+        reflexivity.
+      * destruct (PeanoNat.Nat.leb_spec (p + m) n). 1: lia.
+        cbn. destruct (PeanoNat.Nat.leb_spec k n). 1: lia.
+        reflexivity.
+  - simpl. f_equal. 1: intuition eauto.
+    eapply IHu2. lia.
+  - simpl. f_equal. 1: intuition eauto.
+    eapply IHu2. lia.
+  - simpl. f_equal. 1: intuition eauto.
+    eapply IHu2. lia.
+Qed.
+
+Lemma commut_lift_subst :
+  ∀ u σ k,
+    subst σ (S k) (lift0 1 u) = lift0 1 (subst σ k u).
+Proof.
+  intros. rewrite commut_lift_subst_rec. 2: lia.
+  f_equal. lia.
+Qed.
+
+Lemma simpl_subst_rec :
+  ∀ u σ m p k,
+    p ≤ m + k →
+    k ≤ p →
+    subst σ p (lift (#|σ| + m) k u) = lift m k u.
+Proof.
+  intros u σ m p k h1 h2.
+  induction u in σ, m, p, k, h1, h2 |- *.
+  all: try solve [ intuition eauto ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto ;
+    try rewrite <- psub_length ; intuition eauto
+  ].
+  - cbn. destruct (PeanoNat.Nat.leb_spec k n).
+    + destruct (PeanoNat.Nat.leb_spec p (#|σ| + m + n)). 2: lia.
+      destruct nth_error eqn:e.
+      1:{ apply nth_error_Some_length in e. lia. }
+      f_equal. lia.
+    + destruct (PeanoNat.Nat.leb_spec p n). 1: lia.
+      reflexivity.
+  - cbn. f_equal.
+    + rewrite <- psub_length. eauto.
+    + eapply IHu2. all: lia.
+  - cbn. f_equal. 1: intuition eauto.
+    eapply IHu2. all: lia.
+  - cbn. f_equal. 1: intuition eauto.
+    eapply IHu2. all: lia.
+Qed.
+
+Lemma simpl_subst :
+  ∀ u σ m p,
+    p ≤ m →
+    subst σ p (lift0 (#|σ| + m) u) = lift0 m u.
+Proof.
+  intros u σ m p h.
+  apply simpl_subst_rec. all: lia.
+Qed.
+
+Lemma subst_app_decomp :
+  ∀ σ θ k u,
+    subst (σ ++ θ) k u = subst θ k (subst (map (lift0 #|θ|) σ) k u).
+Proof.
+  intros σ θ k u.
+  induction u in σ, θ, k |- *.
+  all: try solve [ intuition eauto ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto
+  ].
+  all: try solve [
+    simpl ; f_equal ; intuition eauto ;
+    rewrite ?psub_app, ?psub_map_lift ; try rewrite <- psub_length ;
+    intuition eauto
+  ].
+  cbn. destruct (PeanoNat.Nat.leb_spec k n).
+  - rewrite nth_error_map. destruct (nth_error σ) eqn:e.
+    + cbn. rewrite nth_error_app1.
+      2:{ apply nth_error_Some_length in e. auto. }
+      rewrite e. rewrite permute_lift. 2: auto.
+      simpl. replace #|θ| with (#|θ| + 0) by lia.
+      rewrite simpl_subst_rec. 2-3: lia.
+      rewrite lift_0. reflexivity.
+    + cbn. rewrite map_length.
+      apply nth_error_None in e as ?.
+      rewrite nth_error_app2. 2: auto.
+      replace (n - #|σ| - k) with (n - k - #|σ|) by lia.
+      destruct (PeanoNat.Nat.leb_spec k (n - #|σ|)). 2: lia.
+      destruct (nth_error θ) eqn:e'.
+      * reflexivity.
+      * rewrite app_length. f_equal. lia.
+  - cbn. destruct (PeanoNat.Nat.leb_spec k n). 1: lia.
+    reflexivity.
+Qed.
+
 Lemma lift_context_length :
   ∀ Γ n k,
     #| lift_context n k Γ | = #|Γ|.

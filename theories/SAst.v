@@ -160,3 +160,13 @@ Fixpoint head (t : term) : option term_head :=
   | univ s => Some huniv
   | _ => None
   end.
+
+Lemma psub_app :
+  ∀ σ θ,
+    psub (σ ++ θ) = psub σ ++ psub θ.
+Proof.
+  intros σ θ.
+  induction σ in θ |- *.
+  - simpl. reflexivity.
+  - simpl. f_equal. eauto.
+Qed.
