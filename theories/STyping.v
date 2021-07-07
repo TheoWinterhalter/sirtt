@@ -953,7 +953,7 @@ Proof.
   - intros ? n ℓ ℓ' A hn hℓ Γ Δ Ξ σ ? hσ. subst.
     destruct (PeanoNat.Nat.leb_spec0 #|Ξ| n) as [h1|h1].
     + rewrite nth_error_app2 in hn. 2: lia.
-      destruct (nth_error σ _) eqn:e.
+      destruct (nth_error σ) eqn:e.
       * rewrite nth_error_app1 in hn.
         2:{
           apply nth_error_Some_length in e.
@@ -986,19 +986,16 @@ Proof.
         reflexivity.
       * {
         apply typing_subst_length in hσ as lσ.
-        rewrite nth_error_app2 in hn.
-        2:{ apply nth_error_None in e. lia. }
+        apply nth_error_None in e.
+        rewrite nth_error_app2 in hn. 2: lia.
+        replace (Datatypes.S n) with (#|σ| + (Datatypes.S n - #|σ|)). 2: lia.
+        rewrite simpl_subst. 2: lia.
         eapply meta_conv.
         - econstructor. 2: eauto.
           rewrite nth_error_app2.
-          2:{
-            rewrite subst_context_length.
-            apply nth_error_None in e.
-            lia.
-          }
+          2:{ rewrite subst_context_length. lia. }
           rewrite subst_context_length. rewrite <- hn. f_equal. lia.
-        - (* rewrite commut_lift_subst_rec. *)
-          admit.
+        - f_equal. lia.
       }
     + rewrite nth_error_app1 in hn. 2: lia.
       eapply meta_conv.
