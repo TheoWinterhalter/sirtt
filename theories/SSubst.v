@@ -96,6 +96,12 @@ Fixpoint lift_context n k (Γ : context) : context :=
   | (ℓ, A) :: Γ => (ℓ, lift n (k + #|Γ|) A) :: lift_context n k Γ
   end.
 
+Fixpoint subst_context σ (Γ : context) : context :=
+  match Γ with
+  | [] => []
+  | (ℓ, A) :: Γ => (ℓ, subst σ #|Γ| A) :: subst_context σ Γ
+  end.
+
 Lemma lift_0 :
   ∀ k t, lift 0 k t = t.
 Proof.
@@ -427,4 +433,29 @@ Proof.
   induction Γ as [| [] Γ ih].
   - reflexivity.
   - cbn. f_equal. eauto.
+Qed.
+
+Lemma subst_context_length :
+  ∀ σ Γ,
+    #| subst_context σ Γ | = #|Γ|.
+Proof.
+  intros σ Γ.
+  induction Γ.
+  - reflexivity.
+  - simpl. f_equal. assumption.
+Qed.
+
+Lemma nth_error_subst_context :
+  ∀ σ Γ n,
+    nth_error (subst_context σ Γ) n =
+    option_map
+      (λ '(ℓ, A), (ℓ, subst σ (#|Γ| - Datatypes.S n) A))
+      (nth_error Γ n).
+Proof.
+  intros σ Γ n.
+  induction Γ as [| [ℓ A] Γ ih] in n, σ |- *.
+  - simpl. destruct n. all: reflexivity.
+  - simpl. destruct n.
+    + simpl. f_equal. f_equal. f_equal. lia.
+    + simpl. apply ih.
 Qed.

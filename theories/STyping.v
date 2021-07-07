@@ -870,24 +870,6 @@ Proof.
   - reflexivity.
 Qed.
 
-(* TODO MOVE *)
-Fixpoint subst_context σ (Γ : context) : context :=
-  match Γ with
-  | [] => []
-  | (ℓ, A) :: Γ => (ℓ, subst σ #|Γ| A) :: subst_context σ Γ
-  end.
-
-(* TODO MOVE *)
-Lemma subst_context_length :
-  ∀ σ Γ,
-    #| subst_context σ Γ | = #|Γ|.
-Proof.
-  intros σ Γ.
-  induction Γ.
-  - reflexivity.
-  - simpl. f_equal. assumption.
-Qed.
-
 (* #[local] Ltac subst_typing_ih :=
   lazymatch goal with
   | ih : ∀ Γ Δ Ξ, _ → _ ⊢[ _ ] lift _ _ ?t : _ |-
@@ -1023,7 +1005,8 @@ Proof.
       * econstructor. 2: eauto.
         rewrite nth_error_app1.
         2:{ rewrite subst_context_length. lia. }
-        (* rewrite nth_error_subst_context. *)
-        admit.
-      * admit.
+        rewrite nth_error_subst_context. rewrite hn. simpl.
+        reflexivity.
+      * rewrite commut_lift_subst_rec. 2: lia.
+        f_equal. lia.
 Abort.
